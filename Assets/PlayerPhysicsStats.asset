@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4d6ab563c52d14340b4dff3d8cd24933, type: 3}
+  m_Name: PlayerPhysicsStats
+  m_EditorClassIdentifier: 
+  playerLayer:
+    serializedVersion: 2
+    m_Bits: 320
+  climbableLayer:
+    serializedVersion: 2
+    m_Bits: 65536
+  maxRunSpeed: 10
+  acceleration: 120
+  groundDeceleration: 60
+  airDeceleration: 30
+  groundingForce: -3
+  jumpStrength: 25
+  maxFallSpeed: 40
+  fallAcceleration: 100
+  jumpEndEarlyGravityModifier: 3
+  coyoteFrames: 5
+  jumpBufferFrames: 7
+  wallFallAcceleration: 8
+  maxWallFallSpeed: 15
+  wallJumpStrength: {x: 8, y: 25}
+  wallJumpInputLossFrames: 18
+  wallJumpCoyoteFrames: 5
+  raycastDistance: 0.05
+  externalVelocityDecay: 100

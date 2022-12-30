@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Windows;
@@ -185,34 +186,15 @@ namespace Loppy
 
             #endregion
 
-
             #region Vertical
 
-            // On ground
-            if (grounded && velocity.y <= 0f)
-            {
-                velocity.y = playerPhysicsStats.groundingForce;
+            float airborneAcceleration = playerPhysicsStats.fallAcceleration;
 
-                // Handle slopes
-                groundNormal = getGroundNormal();
+            // Check if player ended jump early
+            if (endedJumpEarly && velocity.y > 0) airborneAcceleration *= playerPhysicsStats.jumpEndEarlyGravityModifier;
 
-                if (groundNormal != Vector2.zero)
-                {
-                    if (!Mathf.Approximately(groundNormal.y, 1f))
-                    {
-                        // Slope
-                        velocity.y = velocity.x * -groundNormal.x / groundNormal.y;
-                        if (velocity.x != 0) velocity.y += playerPhysicsStats.groundingForce;
-                    }
-                }
-            }
-            // In air
-            else
-            {
-                var inAirGravity = playerPhysicsStats.fallAcceleration;
-                if (endedJumpEarly && velocity.y > 0) inAirGravity *= playerPhysicsStats.jumpEndEarlyGravityModifier;
-                velocity.y = Mathf.MoveTowards(velocity.y, -playerPhysicsStats.maxFallSpeed, inAirGravity * Time.fixedDeltaTime);
-            }
+            // Accelerate towards maxFallSpeed using airborneAcceleration
+            velocity.y = Mathf.MoveTowards(velocity.y, -playerPhysicsStats.maxFallSpeed, airborneAcceleration * Time.fixedDeltaTime);
 
             #endregion
         }
@@ -229,8 +211,6 @@ namespace Loppy
             groundHitCount = Physics2D.CapsuleCastNonAlloc(activeCollider.bounds.center, activeCollider.size, activeCollider.direction, 0, Vector2.down, groundHits, playerPhysicsStats.raycastDistance, ~playerPhysicsStats.playerLayer);
             ceilingHitCount = Physics2D.CapsuleCastNonAlloc(activeCollider.bounds.center, activeCollider.size, activeCollider.direction, 0, Vector2.up, ceilingHits, playerPhysicsStats.raycastDistance, ~playerPhysicsStats.playerLayer);
 
-            Debug.Log(activeCollider.bounds.center);
-
             //groundNormal = getGroundNormal();
 
             // Ground collision detected
@@ -243,8 +223,28 @@ namespace Loppy
                 // Invoke groundedChanged event action
                 groundedChanged?.Invoke(true, Mathf.Abs(velocity.y));
             }
+            // On ground
+            else if (grounded && groundHitCount > 0)
+            {
+                // Give the player a constant downwards velocity so that they stick to the ground on slopes
+                velocity.y = playerPhysicsStats.groundingForce;
+
+                // Handle slopes
+                groundNormal = getGroundNormal();
+
+                if (groundNormal != Vector2.zero)
+                {
+                    if (!Mathf.Approximately(groundNormal.y, 1f))
+                    {
+                        // Change y velocity to match ground slope
+                        float groundSlope = -groundNormal.x / groundNormal.y;
+                        velocity.y = velocity.x * groundSlope;
+                        if (velocity.x != 0) velocity.y += playerPhysicsStats.groundingForce;
+                    }
+                }
+            }
             // Leave ground
-            if (grounded && groundHitCount == 0)
+            else if (grounded && groundHitCount == 0)
             {
                 grounded = false;
 
@@ -272,19 +272,19 @@ namespace Loppy
 
             if (!hit.collider) return Vector2.zero;
 
-            return hit.normal; // defaults to Vector2.zero if nothing was hit
+            return hit.normal; // Defaults to Vector2.zero if nothing was hit
         }
 
         #endregion
 
         #region Jumping
 
-        private bool hasBufferedJump => bufferedJumpUsable && jumpBufferFramesCounter < playerPhysicsStats.jumpBufferFrames;
-        private bool canUseCoyote => coyoteUsable && !grounded && coyoteFramesCounter < playerPhysicsStats.coyoteFrames;
-        private bool canAirJump => airJumpsRemaining > 0;
-
         private void handleJump()
         {
+            bool hasBufferedJump = bufferedJumpUsable && jumpBufferFramesCounter < playerPhysicsStats.jumpBufferFrames;
+            bool canUseCoyote = coyoteUsable && !grounded && coyoteFramesCounter < playerPhysicsStats.coyoteFrames;
+            bool canAirJump = airJumpsRemaining > 0;
+
             if (!endedJumpEarly && !grounded && !jumpKey && rigidbody.velocity.y > 0) endedJumpEarly = true; // Early end detection
 
             if (!jumpToConsume && !hasBufferedJump) return;

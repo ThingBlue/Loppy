@@ -23,9 +23,9 @@ MonoBehaviour:
   groundDeceleration: 60
   airDeceleration: 30
   groundingForce: -3
-  jumpStrength: 25
+  jumpStrength: 20
   maxFallSpeed: 40
-  fallAcceleration: 100
+  fallAcceleration: 80
   jumpEndEarlyGravityModifier: 3
   coyoteFrames: 5
   jumpBufferFrames: 7

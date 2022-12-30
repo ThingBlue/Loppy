@@ -255,7 +255,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerTransform: {fileID: 2118610471}
+  offset: {x: 0, y: 2, z: 0}
   smoothTime: 0.2
+  lookAheadDistance: 5
+  lookAheadSmoothTime: 0.5
 --- !u!1 &717045608
 GameObject:
   m_ObjectHideFlags: 0

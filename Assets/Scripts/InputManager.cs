@@ -14,10 +14,8 @@ namespace Loppy
         private void Awake()
         {
             // Singleton
-            if (instance == null)
-                instance = this;
-            else
-                Destroy(this);
+            if (instance == null) instance = this;
+            else Destroy(this);
         }
 
         private void Start()
@@ -30,11 +28,11 @@ namespace Loppy
             addKeyToMap("left", KeyCode.LeftArrow);
             addKeyToMap("right", KeyCode.D);
             addKeyToMap("right", KeyCode.RightArrow);
-            addKeyToMap("jump", KeyCode.W);
-            addKeyToMap("jump", KeyCode.UpArrow);
-            addKeyToMap("jump", KeyCode.Space);
+            addKeyToMap("up", KeyCode.W);
+            addKeyToMap("up", KeyCode.UpArrow);
             addKeyToMap("down", KeyCode.S);
             addKeyToMap("down", KeyCode.DownArrow);
+            addKeyToMap("jump", KeyCode.Space);
 
             // Todo:
             // Read key mapping from config file
@@ -43,53 +41,69 @@ namespace Loppy
         // Getters for specfic key states
         public bool getKey(string key)
         {
+            if (!keyMap.ContainsKey(key)) return false;
+
             foreach (KeyCode keyCode in keyMap[key])
             {
-                if (Input.GetKey(keyCode))
-                    return true;
+                if (Input.GetKey(keyCode)) return true;
             }
             return false;
         }
 
         public bool getKeyDown(string key)
         {
+            if (!keyMap.ContainsKey(key)) return false;
+
             foreach (KeyCode keyCode in keyMap[key])
             {
-                if (Input.GetKeyDown(keyCode))
-                    return true;
+                if (Input.GetKeyDown(keyCode)) return true;
             }
             return false;
         }
 
         public bool getKeyUp(string key)
         {
+            if (!keyMap.ContainsKey(key)) return false;
+
             foreach (KeyCode keyCode in keyMap[key])
             {
-                if (Input.GetKeyUp(keyCode))
-                    return true;
+                if (Input.GetKeyUp(keyCode)) return true;
             }
             return false;
         }
 
         // Getter for key map
-        public List<KeyCode> GetKeysInMap(string key) { return keyMap[key]; }
+        public List<KeyCode> GetKeysInMap(string key)
+        {
+            if (!keyMap.ContainsKey(key)) return new List<KeyCode>();
+
+            return keyMap[key];
+        }
 
         // Setters for key map
-        public void clearKeyListInMap(string key) { keyMap[key].Clear(); }
+        public void clearKeyListInMap(string key)
+        {
+            if (!keyMap.ContainsKey(key)) return;
+
+            keyMap[key].Clear();
+        }
 
         public void addKeyToMap(string key, KeyCode value)
         {
             // Create new keycode mapping if it doesn't exist
-            if (!keyMap.ContainsKey(key))
-                keyMap.Add(key, new List<KeyCode>());
+            if (!keyMap.ContainsKey(key)) keyMap.Add(key, new List<KeyCode>());
 
             // Check if current value already exists in the list
-            if (keyMap[key].Contains(value))
-                return;
+            if (keyMap[key].Contains(value)) return;
 
             keyMap[key].Add(value);
         }
 
-        public void setKeyListInMap(string key, List<KeyCode> value) { keyMap[key] = value; }
+        public void setKeyListInMap(string key, List<KeyCode> value)
+        {
+            // Create new keycode mapping if it doesn't exist
+            if (!keyMap.ContainsKey(key)) keyMap.Add(key, value);
+            else keyMap[key] = value;
+        }
     }
 }

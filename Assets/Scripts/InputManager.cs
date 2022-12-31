@@ -34,7 +34,7 @@ namespace Loppy
             addKeyToMap("down", KeyCode.DownArrow);
             addKeyToMap("jump", KeyCode.Space);
 
-            // Todo:
+            // TO DO:
             // Read key mapping from config file
         }
 

@@ -29,9 +29,10 @@ MonoBehaviour:
   jumpEndEarlyGravityModifier: 3
   coyoteFrames: 5
   jumpBufferFrames: 7
-  wallFallAcceleration: 8
-  maxWallFallSpeed: 15
-  wallJumpStrength: {x: 8, y: 25}
+  wallClimbSpeed: 5
+  wallFallAcceleration: 16
+  maxWallFallSpeed: 8
+  wallJumpStrength: {x: 16, y: 20}
   wallJumpInputLossFrames: 18
   wallJumpCoyoteFrames: 5
   raycastDistance: 0.05

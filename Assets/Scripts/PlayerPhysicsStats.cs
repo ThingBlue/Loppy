@@ -7,7 +7,6 @@ namespace Loppy
     [CreateAssetMenu]
     public class PlayerPhysicsStats : ScriptableObject
     {
-
         [Header("LAYERS")]
         [Tooltip("Set this to the layer your player is on")]
         public LayerMask playerLayer;
@@ -51,6 +50,9 @@ namespace Loppy
         public int jumpBufferFrames = 7;
 
         [Header("WALLS")]
+        [Tooltip("How fast you climb walls.")]
+        public float wallClimbSpeed = 5;
+
         [Tooltip("The player's capacity to gain wall sliding speed. 0 = stick to wall")]
         public float wallFallAcceleration = 8;
 
@@ -67,7 +69,6 @@ namespace Loppy
         public int wallJumpCoyoteFrames = 5;
 
         [Header("COLLISION")]
-
         [Tooltip("The raycast distance for collision detection"), Range(0f, 1.0f)]
         public float raycastDistance = 0.4f;
 

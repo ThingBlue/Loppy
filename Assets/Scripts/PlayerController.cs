@@ -48,15 +48,17 @@ namespace Loppy
         private bool jumpKeyUp = true;
 
         public int maxAirJumps = 1;
+        private int airJumpsRemaining;
 
         private bool jumpToConsume;
         private bool bufferedJumpUsable;
         private bool endedJumpEarly;
         private bool coyoteUsable;
-        private int airJumpsRemaining;
+        private bool wallJumpCoyoteUsable;
 
         private int jumpBufferFramesCounter = 0;
         private int coyoteFramesCounter = 0;
+        private int wallJumpCoyoteFramesCounter = 0;
 
         #endregion
 
@@ -64,19 +66,18 @@ namespace Loppy
 
         private Vector2 velocity;
         private Vector2 externalVelocity;
+        private float currentWallJumpMoveMultiplier = 1f;
 
         #endregion
 
         #region Collision variables
 
-        private readonly RaycastHit2D[] groundHits = new RaycastHit2D[2];
-        private readonly RaycastHit2D[] ceilingHits = new RaycastHit2D[2];
-        private int groundHitCount;
-        private int ceilingHitCount;
-
         private bool grounded;
-
         private Vector2 groundNormal;
+
+        private bool onWall;
+        private int wallDirection;
+        private Vector2 wallNormal;
 
         private bool detectTriggers;
 
@@ -91,7 +92,9 @@ namespace Loppy
         #region Event actions
 
         public event Action<bool, float> groundedChanged;
-        public event Action<bool> jumped;
+        public event Action<bool, float> onWallChanged;
+        public event Action jumped;
+        public event Action wallJumped;
         public event Action airJumped;
 
         #endregion
@@ -130,6 +133,7 @@ namespace Loppy
             // Increment frame counters
             jumpBufferFramesCounter++;
             coyoteFramesCounter++;
+            wallJumpCoyoteFramesCounter++;
 
             handlePhysics();
 
@@ -148,9 +152,13 @@ namespace Loppy
         {
             playerInput = Vector2.zero;
 
-            // Horizontal movement
+            // Horizontal input
             if (InputManager.instance.getKey("left")) playerInput.x -= 1;
             if (InputManager.instance.getKey("right")) playerInput.x += 1;
+
+            // Vertical input
+            if (InputManager.instance.getKey("up")) playerInput.y += 1;
+            if (InputManager.instance.getKey("down")) playerInput.y -= 1;
 
             // Jump
             jumpKey = InputManager.instance.getKey("jump");
@@ -167,7 +175,34 @@ namespace Loppy
 
         private void handlePhysics()
         {
-            #region Horizontal
+            #region Vertical physics
+
+            // Wall
+            if (onWall)
+            {
+                if (playerInput.y > 0) velocity.y = playerPhysicsStats.wallClimbSpeed;
+                else if (playerInput.y < 0) velocity.y = -playerPhysicsStats.maxWallFallSpeed;
+                //else if (GrabbingLedge) velocity.y = Mathf.MoveTowards(velocity.y, 0, playerPhysicsStats.ledgeGrabDeceleration * Time.fixedDeltaTime);
+                else velocity.y = Mathf.MoveTowards(Mathf.Min(velocity.y, 0), -playerPhysicsStats.maxWallFallSpeed, playerPhysicsStats.wallFallAcceleration * Time.fixedDeltaTime);
+                //else velocity.y = 0;
+            }
+            // Airborne
+            else if (!grounded)
+            {
+                float airborneAcceleration = playerPhysicsStats.fallAcceleration;
+
+                // Check if player ended jump early
+                if (endedJumpEarly && velocity.y > 0) airborneAcceleration *= playerPhysicsStats.jumpEndEarlyGravityModifier;
+
+                // Accelerate towards maxFallSpeed using airborneAcceleration
+                velocity.y = Mathf.MoveTowards(velocity.y, -playerPhysicsStats.maxFallSpeed, airborneAcceleration * Time.fixedDeltaTime);
+            }
+
+            #endregion
+
+            #region Horizontal physics
+
+            currentWallJumpMoveMultiplier = Mathf.MoveTowards(currentWallJumpMoveMultiplier, 1f, 1f / playerPhysicsStats.wallJumpInputLossFrames);
 
             // Deceleration
             if (playerInput.x == 0)
@@ -181,20 +216,8 @@ namespace Loppy
             else
             {
                 // Accelerate towards max speed
-                velocity.x = Mathf.MoveTowards(velocity.x, playerInput.x * playerPhysicsStats.maxRunSpeed, /*currentWallJumpMoveMultiplier * */playerPhysicsStats.acceleration * Time.fixedDeltaTime);
+                velocity.x = Mathf.MoveTowards(velocity.x, playerInput.x * playerPhysicsStats.maxRunSpeed, currentWallJumpMoveMultiplier * playerPhysicsStats.acceleration * Time.fixedDeltaTime);
             }
-
-            #endregion
-
-            #region Vertical
-
-            float airborneAcceleration = playerPhysicsStats.fallAcceleration;
-
-            // Check if player ended jump early
-            if (endedJumpEarly && velocity.y > 0) airborneAcceleration *= playerPhysicsStats.jumpEndEarlyGravityModifier;
-
-            // Accelerate towards maxFallSpeed using airborneAcceleration
-            velocity.y = Mathf.MoveTowards(velocity.y, -playerPhysicsStats.maxFallSpeed, airborneAcceleration * Time.fixedDeltaTime);
 
             #endregion
         }
@@ -207,13 +230,22 @@ namespace Loppy
         {
             Physics2D.queriesHitTriggers = false;
 
-            // Ground and Ceiling
+            RaycastHit2D[] groundHits = new RaycastHit2D[2];
+            RaycastHit2D[] ceilingHits = new RaycastHit2D[2];
+            RaycastHit2D[] wallHits = new RaycastHit2D[2];
+            int groundHitCount;
+            int ceilingHitCount;
+            int wallHitCount;
+
+            #region Vertical collisions
+
+            // Raycast to check for vertical collisions
             groundHitCount = Physics2D.CapsuleCastNonAlloc(activeCollider.bounds.center, activeCollider.size, activeCollider.direction, 0, Vector2.down, groundHits, playerPhysicsStats.raycastDistance, ~playerPhysicsStats.playerLayer);
             ceilingHitCount = Physics2D.CapsuleCastNonAlloc(activeCollider.bounds.center, activeCollider.size, activeCollider.direction, 0, Vector2.up, ceilingHits, playerPhysicsStats.raycastDistance, ~playerPhysicsStats.playerLayer);
 
             //groundNormal = getGroundNormal();
 
-            // Ground collision detected
+            // Enter ground
             if (!grounded && groundHitCount > 0)
             // && Math.Abs(groundNormal.x) <= Math.Abs(groundNormal.y)
             {
@@ -262,12 +294,78 @@ namespace Loppy
                 externalVelocity.y = Mathf.Min(0f, externalVelocity.y);
                 velocity.y = Mathf.Min(0, velocity.y);
             }
+
+            #endregion
+
+            #region Horizontal collisions
+               
+            // Raycast to check for horizontal collisions
+            wallHitCount = Physics2D.CapsuleCastNonAlloc(activeCollider.bounds.center, activeCollider.size, activeCollider.direction, 0, new(playerInput.x, 0), wallHits, playerPhysicsStats.raycastDistance, ~playerPhysicsStats.playerLayer);
+
+            // Enter wall
+            if (!onWall && wallHitCount > 0 && !grounded && ceilingHitCount == 0 && velocity.y < 0)
+            {
+                onWall = true;
+                wallDirection = (int)playerInput.x;
+                velocity = Vector2.zero;
+                resetJump();
+
+                // Invoke onWallChanged event action
+                onWallChanged?.Invoke(true, Mathf.Abs(velocity.x));
+            }
+            // On wall
+            /*
+            else if (onWall && wallHitCount > 0 && !grounded)
+            {
+                // Give the player a constant x velocity so that they stick to the ground on slopes
+                velocity.x = playerPhysicsStats.groundingForce * wallDirection;
+
+                // Handle slopes
+                wallNormal = getWallNormal();
+
+                if (wallNormal != Vector2.zero)
+                {
+                    if (!Mathf.Approximately(wallNormal.x, 1f))
+                    {
+                        // Change x velocity to match wall slope
+                        float wallSlope = -wallNormal.y / wallNormal.x;
+                        velocity.x = velocity.y * wallSlope;
+                        if (velocity.y != 0) velocity.x += playerPhysicsStats.groundingForce * wallDirection;
+                    }
+                }
+            }
+            */
+            // Leave wall
+            else if (onWall && (wallHitCount == 0 || grounded))
+            {
+                onWall = false;
+                wallDirection = 0;
+
+                // Start wall jump coyote frames counter
+                wallJumpCoyoteFramesCounter = 0;
+
+                // Invoke onWallChanged event action
+                onWallChanged?.Invoke(false, 0);
+            }
+
+            #endregion
         }
 
         private Vector2 getGroundNormal()
         {
             Physics2D.queriesHitTriggers = false;
             var hit = Physics2D.Raycast(rigidbody.position, Vector2.down, playerPhysicsStats.raycastDistance * 2, ~playerPhysicsStats.playerLayer);
+            Physics2D.queriesHitTriggers = detectTriggers;
+
+            if (!hit.collider) return Vector2.zero;
+
+            return hit.normal; // Defaults to Vector2.zero if nothing was hit
+        }
+
+        private Vector2 getWallNormal()
+        {
+            Physics2D.queriesHitTriggers = false;
+            var hit = Physics2D.Raycast(rigidbody.position, new(playerInput.x, 0), playerPhysicsStats.raycastDistance * 2, ~playerPhysicsStats.playerLayer);
             Physics2D.queriesHitTriggers = detectTriggers;
 
             if (!hit.collider) return Vector2.zero;
@@ -283,13 +381,16 @@ namespace Loppy
         {
             bool hasBufferedJump = bufferedJumpUsable && jumpBufferFramesCounter < playerPhysicsStats.jumpBufferFrames;
             bool canUseCoyote = coyoteUsable && !grounded && coyoteFramesCounter < playerPhysicsStats.coyoteFrames;
+            bool canWallJump = onWall || (wallJumpCoyoteUsable && wallJumpCoyoteFramesCounter < playerPhysicsStats.wallJumpCoyoteFrames);
             bool canAirJump = airJumpsRemaining > 0;
 
             if (!endedJumpEarly && !grounded && !jumpKey && rigidbody.velocity.y > 0) endedJumpEarly = true; // Early end detection
 
+            // Check for jump input
             if (!jumpToConsume && !hasBufferedJump) return;
 
-            if (grounded || canUseCoyote) normalJump();
+            if (canWallJump) wallJump();
+            else if (grounded || canUseCoyote) normalJump();
             else if (jumpToConsume && canAirJump) airJump();
 
             jumpToConsume = false; // Always consume the flag
@@ -297,24 +398,54 @@ namespace Loppy
 
         private void normalJump()
         {
+            // Reset jump flags
             endedJumpEarly = false;
             bufferedJumpUsable = false;
             coyoteUsable = false;
+
+            // Apply jump velocity
             velocity.y = playerPhysicsStats.jumpStrength;
-            jumped?.Invoke(false);
+
+            // Invoke jumped event action
+            jumped?.Invoke();
+        }
+
+        protected void wallJump()
+        {
+            // Reset jump flags
+            endedJumpEarly = false;
+            bufferedJumpUsable = false;
+            wallJumpCoyoteUsable = false;
+
+            // Apply jump velocity
+            velocity = Vector2.Scale(playerPhysicsStats.wallJumpStrength, new(-wallDirection, 1));
+            currentWallJumpMoveMultiplier = 0;
+
+            // Reset onWall status
+            onWall = false;
+            wallDirection = 0;
+
+            // Invoke wall jumped event action
+            wallJumped?.Invoke();
         }
 
         private void airJump()
         {
+            // Reset jump flags
             endedJumpEarly = false;
             airJumpsRemaining--;
+
+            // Apply jump velocity
             velocity.y = playerPhysicsStats.jumpStrength;
             externalVelocity.y = 0; // Air jump cancels out vertical external forces
+
+            // Invoke air jumped event action
             airJumped?.Invoke();
         }
 
         private void resetJump()
         {
+            // Reset jump flags
             bufferedJumpUsable = true;
             coyoteUsable = true;
             endedJumpEarly = false;

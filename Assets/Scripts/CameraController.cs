@@ -44,6 +44,7 @@ namespace Loppy
             Vector3 lookAheadPos = input * lookAheadDistance;
             lookAheadOffset = Vector3.SmoothDamp(lookAheadOffset, lookAheadPos, ref lookAheadVelocity, lookAheadSmoothTime);
 
+            // Disable look ahead if enabled flag is set to false
             if (lookAheadEnabled == false) lookAheadOffset = Vector3.zero;
 
             #endregion

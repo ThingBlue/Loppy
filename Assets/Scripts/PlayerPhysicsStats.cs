@@ -68,9 +68,28 @@ namespace Loppy
         [Tooltip("The amount of fixed frames where you can still wall jump after pressing to leave a wall")]
         public int wallJumpCoyoteFrames = 5;
 
+        [Header("LEDGES")]
+        [Tooltip("The rate at which we slow our velocity to grab a ledge. Too low, we slide off. Too high, we won't match our GrabPoint")]
+        public float ledgeGrabDeceleration = 4f;
+
+        [Tooltip("Relative point from the player's position where the ledge corner will be when hanging")]
+        public Vector2 ledgeGrabPoint = new(0.3f, 0.75f);
+
+        [Tooltip("Relative point from the ledge corner where the new player position will be after climbing up (Tip: have Y be slightly > 0)")]
+        public Vector2 standUpOffset = new(0.2f, 0.02f);
+
+        [Tooltip("Vertical offset above and below your grab point to detect a nearby ledge"), Min(0.05f)]
+        public float ledgeRaycastSpacing = 0.3f;
+
+        [Tooltip("The raycast distance for ledge detection"), Min(0.05f)]
+        public float ledgeRaycastDistance = 0.1f;
+
+        [Tooltip("How long movement will be locked out. Animation clip length")]
+        public float ledgeClimbDuration = 0.5f;
+
         [Header("COLLISION")]
         [Tooltip("The raycast distance for collision detection"), Range(0f, 1.0f)]
-        public float raycastDistance = 0.4f;
+        public float raycastDistance = 0.05f;
 
         [Header("EXTERNAL")]
         [Tooltip("The rate at which external velocity decays. Should be close to Fall Acceleration")]

@@ -46,6 +46,8 @@ namespace Loppy
 
         #region Input variables
 
+        private bool hasControl = true;
+
         private Vector2 playerInput;
         private bool jumpKey = false;
         private bool jumpKeyUp = true;
@@ -75,13 +77,17 @@ namespace Loppy
 
         #region Collision variables
 
-        private bool grounded;
+        private bool onGround;
         private Vector2 groundNormal;
         private Vector2 ceilingNormal;
 
         private bool onWall;
         private int wallDirection;
         private Vector2 wallNormal;
+
+        private bool onLedge;
+        private bool climbingLedge;
+        private Vector2 ledgeCornerPosition;
 
         private bool detectTriggers;
 
@@ -95,8 +101,9 @@ namespace Loppy
 
         #region Event actions
 
-        public event Action<bool, float> groundedChanged;
+        public event Action<bool, float> onGroundChanged;
         public event Action<bool, float> onWallChanged;
+        public event Action<bool> ledgeClimbChanged;
         public event Action jumped;
         public event Action wallJumped;
         public event Action airJumped;
@@ -115,6 +122,7 @@ namespace Loppy
             else externalVelocity = vel;
         }
 
+        public void toggleControl(bool control) { hasControl = control; }
 
         private void Awake()
         {
@@ -184,14 +192,18 @@ namespace Loppy
             // Wall
             if (onWall)
             {
+                // Climb wall
                 if (playerInput.y > 0) velocity.y = playerPhysicsStats.wallClimbSpeed;
+                // Fast fall on wall
                 else if (playerInput.y < 0) velocity.y = -playerPhysicsStats.maxWallFallSpeed;
-                //else if (GrabbingLedge) velocity.y = Mathf.MoveTowards(velocity.y, 0, playerPhysicsStats.ledgeGrabDeceleration * Time.fixedDeltaTime);
+                // Decelerate rapidly when grabbing ledge
+                else if (onLedge) velocity.y = Mathf.MoveTowards(velocity.y, 0, playerPhysicsStats.ledgeGrabDeceleration * Time.fixedDeltaTime);
+                // Slow fall on wall
                 else velocity.y = Mathf.MoveTowards(Mathf.Min(velocity.y, 0), -playerPhysicsStats.maxWallFallSpeed, playerPhysicsStats.wallFallAcceleration * Time.fixedDeltaTime);
                 //else velocity.y = 0;
             }
             // Airborne
-            else if (!grounded)
+            else if (!onGround)
             {
                 float airborneAcceleration = playerPhysicsStats.fallAcceleration;
 
@@ -211,7 +223,7 @@ namespace Loppy
             // Deceleration
             if (playerInput.x == 0)
             {
-                var deceleration = grounded ? playerPhysicsStats.groundDeceleration : playerPhysicsStats.airDeceleration;
+                var deceleration = onGround ? playerPhysicsStats.groundDeceleration : playerPhysicsStats.airDeceleration;
 
                 // Decelerate towards 0
                 velocity.x = Mathf.MoveTowards(velocity.x, 0, deceleration * Time.fixedDeltaTime);
@@ -252,28 +264,28 @@ namespace Loppy
             ceilingNormal = getRaycastNormal(Vector2.up);
 
             // Enter ground
-            if (!grounded && groundHitCount > 0 && Math.Abs(groundNormal.y) > Math.Abs(groundNormal.x))
+            if (!onGround && groundHitCount > 0 && Math.Abs(groundNormal.y) > Math.Abs(groundNormal.x))
             // && Math.Abs(groundNormal.x) <= Math.Abs(groundNormal.y)
             {
-                grounded = true;
+                onGround = true;
                 resetJump();
 
-                // Invoke groundedChanged event action
-                groundedChanged?.Invoke(true, Mathf.Abs(velocity.y));
+                // Invoke onGroundChanged event action
+                onGroundChanged?.Invoke(true, Mathf.Abs(velocity.y));
             }
             // Leave ground
-            else if (grounded && (groundHitCount == 0 || Math.Abs(groundNormal.y) < Math.Abs(groundNormal.x)))
+            else if (onGround && (groundHitCount == 0 || Math.Abs(groundNormal.y) < Math.Abs(groundNormal.x)))
             {
-                grounded = false;
+                onGround = false;
 
                 // Start coyote frames counter
                 coyoteFramesCounter = 0;
 
-                // Invoke groundedChanged event action
-                groundedChanged?.Invoke(false, 0);
+                // Invoke onGroundChanged event action
+                onGroundChanged?.Invoke(false, 0);
             }
             // On ground
-            else if (grounded && groundHitCount > 0)
+            else if (onGround && groundHitCount > 0)
             {
                 // Give the player a constant downwards velocity so that they stick to the ground on slopes
                 velocity.y = playerPhysicsStats.groundingForce;
@@ -312,7 +324,7 @@ namespace Loppy
 
             // Enter wall
             // Make sure we're not colliding with ground or ceiling
-            if (!onWall && wallHitCount > 0 && !grounded && !ceilingCollision && velocity.y < 0)
+            if (!onWall && wallHitCount > 0 && !onGround && !ceilingCollision && velocity.y < 0)
             {
                 onWall = true;
                 wallDirection = (int)playerInput.x;
@@ -323,7 +335,7 @@ namespace Loppy
                 onWallChanged?.Invoke(true, Mathf.Abs(velocity.x));
             }
             // On wall
-            else if (onWall && wallHitCount > 0 && !grounded)
+            else if (onWall && wallHitCount > 0 && !onGround)
             {
                 // Give the player a constant velocity so that they stick to sloped walls
                 //velocity.x = playerPhysicsStats.groundingForce * -wallDirection;
@@ -339,9 +351,31 @@ namespace Loppy
                         //if (velocity.y != 0) velocity.x += playerPhysicsStats.groundingForce * -wallDirection;
                     }
                 }
+
+                // Handle ledges
+                onLedge = getLedgeCorner(out ledgeCornerPosition);
+                if (onLedge)
+                {
+                    // Nudge towards better grabbing position
+                    if ( /*Input.y != 0 &&*/ playerInput.x == 0 && hasControl)
+                    {
+                        Vector2 pos = rigidbody.position;
+                        Vector2 targetPos = ledgeCornerPosition - Vector2.Scale(playerPhysicsStats.ledgeGrabPoint, new(wallDirection, 1f));
+                        rigidbody.position = Vector2.MoveTowards(pos, targetPos, playerPhysicsStats.ledgeGrabDeceleration * Time.fixedDeltaTime);
+                    }
+
+                    // Detect ledge climb input
+                    if (playerInput.y > 0)
+                    {
+                        Vector2 finalPos = ledgeCornerPosition + Vector2.Scale(playerPhysicsStats.standUpOffset, new(wallDirection, 1f));
+                        //if (!canClimbLedge(finalPos)) return; // TODO: Split this into 2 different ledge climb animations - standing & crawling
+
+                        StartCoroutine(climbLedge());
+                    }
+                }
             }
             // Leave wall
-            else if (onWall && (wallHitCount == 0 || grounded))
+            else if (onWall && (wallHitCount == 0 || onGround))
             {
                 onWall = false;
 
@@ -358,13 +392,65 @@ namespace Loppy
         private Vector2 getRaycastNormal(Vector2 castDirection)
         {
             Physics2D.queriesHitTriggers = false;
-            //var hit = Physics2D.Raycast(activeCollider.bounds.center, castDirection, playerPhysicsStats.raycastDistance * 2, ~playerPhysicsStats.playerLayer);
             var hit = Physics2D.CapsuleCast(activeCollider.bounds.center, activeCollider.size, activeCollider.direction, 0, castDirection, playerPhysicsStats.raycastDistance * 2, ~playerPhysicsStats.playerLayer);
             Physics2D.queriesHitTriggers = detectTriggers;
 
             if (!hit.collider) return Vector2.zero;
 
             return hit.normal; // Defaults to Vector2.zero if nothing was hit
+        }
+
+        private bool getLedgeCorner(out Vector2 cornerPos)
+        {
+            cornerPos = Vector2.zero;
+            var grabHeight = rigidbody.position + playerPhysicsStats.ledgeGrabPoint.y * Vector2.up;
+
+            var hit1 = Physics2D.Raycast(grabHeight + playerPhysicsStats.ledgeRaycastSpacing * Vector2.down, wallDirection * Vector2.right, playerPhysicsStats.ledgeRaycastDistance, ~playerPhysicsStats.playerLayer);
+            if (!hit1.collider) return false; // Should hit below the ledge. Mainly used to determine xPos accurately
+
+            var hit2 = Physics2D.Raycast(grabHeight + playerPhysicsStats.ledgeRaycastSpacing * Vector2.up, wallDirection * Vector2.right, playerPhysicsStats.ledgeRaycastDistance, ~playerPhysicsStats.playerLayer);
+            if (hit2.collider) return false; // We only are within ledge-grab range when the first hits and second doesn't
+
+            var hit3 = Physics2D.Raycast(grabHeight + new Vector2(wallDirection * 0.5f, playerPhysicsStats.ledgeRaycastSpacing), Vector2.down, playerPhysicsStats.ledgeRaycastDistance, ~playerPhysicsStats.playerLayer);
+            if (!hit3.collider) return false; // Gets our yPos of the corner
+
+            cornerPos = new(hit1.point.x, hit3.point.y);
+            return true;
+        }
+
+        private IEnumerator climbLedge()
+        {
+            // Invoke ledgeClimbChanged event action at the start
+            ledgeClimbChanged?.Invoke(true);
+
+            // Take away player control
+            hasControl = false;
+            rigidbody.velocity = Vector2.zero;
+
+            // Reset ledge flags
+            climbingLedge = true;
+            onLedge = false;
+
+            // Set startup position
+            transform.position = ledgeCornerPosition - Vector2.Scale(playerPhysicsStats.ledgeGrabPoint, new(wallDirection, 1f));
+
+            // Wait for ledge climb animation to finish
+            float animationEndTime = Time.time + playerPhysicsStats.ledgeClimbDuration;
+            while (Time.time < animationEndTime) yield return new WaitForFixedUpdate();
+
+            // Set final position
+            transform.position = ledgeCornerPosition + Vector2.Scale(playerPhysicsStats.standUpOffset, new(wallDirection, 1f));
+            
+            // Reset flags
+            climbingLedge = false;
+            onWall = false;
+
+            // Return control to player
+            hasControl = true;
+            velocity = Vector2.zero;
+
+            // Invoke ledgeClimbChanged event action at the end
+            ledgeClimbChanged?.Invoke(false);
         }
 
         #endregion
@@ -374,17 +460,17 @@ namespace Loppy
         private void handleJump()
         {
             bool hasBufferedJump = bufferedJumpUsable && jumpBufferFramesCounter < playerPhysicsStats.jumpBufferFrames;
-            bool canUseCoyote = coyoteUsable && !grounded && coyoteFramesCounter < playerPhysicsStats.coyoteFrames;
-            bool canUseWallJumpCoyote = wallJumpCoyoteUsable && !grounded && wallJumpCoyoteFramesCounter < playerPhysicsStats.wallJumpCoyoteFrames;
+            bool canUseCoyote = coyoteUsable && !onGround && coyoteFramesCounter < playerPhysicsStats.coyoteFrames;
+            bool canUseWallJumpCoyote = wallJumpCoyoteUsable && !onGround && wallJumpCoyoteFramesCounter < playerPhysicsStats.wallJumpCoyoteFrames;
             bool canAirJump = airJumpsRemaining > 0;
 
-            if (!endedJumpEarly && !grounded && !jumpKey && rigidbody.velocity.y > 0) endedJumpEarly = true; // Early end detection
+            if (!endedJumpEarly && !onGround && !jumpKey && rigidbody.velocity.y > 0) endedJumpEarly = true; // Early end detection
 
             // Check for jump input
             if (!jumpToConsume && !hasBufferedJump) return;
 
             if (onWall || canUseWallJumpCoyote) wallJump();
-            else if (grounded || canUseCoyote) normalJump();
+            else if (onGround || canUseCoyote) normalJump();
             else if (canAirJump) airJump();
 
             jumpToConsume = false; // Always consume the flag
@@ -452,6 +538,9 @@ namespace Loppy
 
         private void move()
         {
+            // Check if player has control
+            if (!hasControl) return;
+
             // Apply velocity to rigidbody
             rigidbody.velocity = velocity + externalVelocity;
 
@@ -487,7 +576,7 @@ namespace Loppy
             sprite.color = Color.blue;
 
             // Switch states
-            if      (!grounded)          playerState = PlayerState.AIRBORNE;
+            if      (!onGround)          playerState = PlayerState.AIRBORNE;
             else if (playerInput.x != 0) playerState = PlayerState.RUN;
         }
 
@@ -496,7 +585,7 @@ namespace Loppy
             sprite.color = Color.red;
 
             // Switch states
-            if      (!grounded)       playerState = PlayerState.AIRBORNE;
+            if      (!onGround)       playerState = PlayerState.AIRBORNE;
             else if (velocity.x == 0) playerState = PlayerState.IDLE;
         }
 
@@ -505,8 +594,8 @@ namespace Loppy
             sprite.color = Color.yellow;
 
             // Switch states
-            if      (grounded && velocity.x == 0) playerState = PlayerState.IDLE;
-            else if (grounded)                    playerState = PlayerState.RUN;
+            if      (onGround && velocity.x == 0) playerState = PlayerState.IDLE;
+            else if (onGround)                    playerState = PlayerState.RUN;
             else if (onWall)                      playerState = PlayerState.WALL;
         }
 
@@ -515,9 +604,9 @@ namespace Loppy
             sprite.color = Color.cyan;
 
             // Switch states
-            if (!onWall && !grounded)        playerState = PlayerState.AIRBORNE;
-            else if (grounded && velocity.x == 0) playerState = PlayerState.IDLE;
-            else if (grounded)                    playerState = PlayerState.RUN;
+            if (!onWall && !onGround)        playerState = PlayerState.AIRBORNE;
+            else if (onGround && velocity.x == 0) playerState = PlayerState.IDLE;
+            else if (onGround)                    playerState = PlayerState.RUN;
         }
 
         #endregion

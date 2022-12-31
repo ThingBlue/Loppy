@@ -74,6 +74,7 @@ namespace Loppy
 
         private bool grounded;
         private Vector2 groundNormal;
+        private Vector2 ceilingNormal;
 
         private bool onWall;
         private int wallDirection;
@@ -243,7 +244,8 @@ namespace Loppy
             groundHitCount = Physics2D.CapsuleCastNonAlloc(activeCollider.bounds.center, activeCollider.size, activeCollider.direction, 0, Vector2.down, groundHits, playerPhysicsStats.raycastDistance, ~playerPhysicsStats.playerLayer);
             ceilingHitCount = Physics2D.CapsuleCastNonAlloc(activeCollider.bounds.center, activeCollider.size, activeCollider.direction, 0, Vector2.up, ceilingHits, playerPhysicsStats.raycastDistance, ~playerPhysicsStats.playerLayer);
 
-            groundNormal = getGroundNormal();
+            groundNormal = getRaycastNormal(Vector2.down);
+            ceilingNormal = getRaycastNormal(Vector2.up);
 
             // Enter ground
             if (!grounded && groundHitCount > 0 && Math.Abs(groundNormal.y) > Math.Abs(groundNormal.x))
@@ -286,7 +288,7 @@ namespace Loppy
             }
 
             // Ceiling collision detected
-            if (ceilingHitCount > 0)
+            if (ceilingHitCount > 0 && Math.Abs(ceilingNormal.y) > Math.Abs(ceilingNormal.x))
             {
                 // Prevent sticking to ceiling if we did an air jump after receiving external velocity w/ PlayerForce.Decay
                 externalVelocity.y = Mathf.Min(0f, externalVelocity.y);
@@ -299,6 +301,7 @@ namespace Loppy
                
             // Raycast to check for horizontal collisions
             wallHitCount = Physics2D.CapsuleCastNonAlloc(activeCollider.bounds.center, activeCollider.size, activeCollider.direction, 0, new(playerInput.x, 0), wallHits, playerPhysicsStats.raycastDistance, ~playerPhysicsStats.playerLayer);
+            wallNormal = getRaycastNormal(new(playerInput.x, 0));
 
             // Enter wall
             if (!onWall && wallHitCount > 0 && !grounded && ceilingHitCount == 0 && velocity.y < 0)
@@ -315,20 +318,14 @@ namespace Loppy
             /*
             else if (onWall && wallHitCount > 0 && !grounded)
             {
-                // Give the player a constant x velocity so that they stick to the ground on slopes
-                velocity.x = playerPhysicsStats.groundingForce * wallDirection;
-
                 // Handle slopes
-                wallNormal = getWallNormal();
-
                 if (wallNormal != Vector2.zero) // Make sure wall normal exists
                 {
                     if (!Mathf.Approximately(Math.Abs(wallNormal.x), 1f))
                     {
                         // Change x velocity to match wall slope
-                        float wallSlope = -groundNormal.y / groundNormal.x;
-                        velocity.x = velocity.y * wallSlope * wallDirection;
-                        if (velocity.y != 0) velocity.x += playerPhysicsStats.groundingForce * wallDirection;
+                        float wallSlope = -wallNormal.x / wallNormal.y;
+                        velocity.x = velocity.y * wallSlope;
                     }
                 }
             }
@@ -349,21 +346,10 @@ namespace Loppy
             #endregion
         }
 
-        private Vector2 getGroundNormal()
+        private Vector2 getRaycastNormal(Vector2 castDirection)
         {
             Physics2D.queriesHitTriggers = false;
-            var hit = Physics2D.Raycast(rigidbody.position, Vector2.down, playerPhysicsStats.raycastDistance * 2, ~playerPhysicsStats.playerLayer);
-            Physics2D.queriesHitTriggers = detectTriggers;
-
-            if (!hit.collider) return Vector2.zero;
-
-            return hit.normal; // Defaults to Vector2.zero if nothing was hit
-        }
-
-        private Vector2 getWallNormal()
-        {
-            Physics2D.queriesHitTriggers = false;
-            var hit = Physics2D.Raycast(rigidbody.position, new(playerInput.x, 0), playerPhysicsStats.raycastDistance * 2, ~playerPhysicsStats.playerLayer);
+            var hit = Physics2D.Raycast(rigidbody.position, castDirection, playerPhysicsStats.raycastDistance * 2, ~playerPhysicsStats.playerLayer);
             Physics2D.queriesHitTriggers = detectTriggers;
 
             if (!hit.collider) return Vector2.zero;

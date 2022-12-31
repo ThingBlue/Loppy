@@ -344,7 +344,6 @@ namespace Loppy
             else if (onWall && (wallHitCount == 0 || grounded))
             {
                 onWall = false;
-                wallDirection = 0;
 
                 // Start wall jump coyote frames counter
                 wallJumpCoyoteFramesCounter = 0;
@@ -376,7 +375,7 @@ namespace Loppy
         {
             bool hasBufferedJump = bufferedJumpUsable && jumpBufferFramesCounter < playerPhysicsStats.jumpBufferFrames;
             bool canUseCoyote = coyoteUsable && !grounded && coyoteFramesCounter < playerPhysicsStats.coyoteFrames;
-            bool canWallJump = onWall || (wallJumpCoyoteUsable && wallJumpCoyoteFramesCounter < playerPhysicsStats.wallJumpCoyoteFrames);
+            bool canUseWallJumpCoyote = wallJumpCoyoteUsable && !grounded && wallJumpCoyoteFramesCounter < playerPhysicsStats.wallJumpCoyoteFrames;
             bool canAirJump = airJumpsRemaining > 0;
 
             if (!endedJumpEarly && !grounded && !jumpKey && rigidbody.velocity.y > 0) endedJumpEarly = true; // Early end detection
@@ -384,9 +383,9 @@ namespace Loppy
             // Check for jump input
             if (!jumpToConsume && !hasBufferedJump) return;
 
-            if (canWallJump) wallJump();
+            if (onWall || canUseWallJumpCoyote) wallJump();
             else if (grounded || canUseCoyote) normalJump();
-            else if (jumpToConsume && canAirJump) airJump();
+            else if (canAirJump) airJump();
 
             jumpToConsume = false; // Always consume the flag
         }
@@ -418,7 +417,6 @@ namespace Loppy
 
             // Reset onWall status
             onWall = false;
-            wallDirection = 0;
 
             // Invoke wall jumped event action
             wallJumped?.Invoke();
@@ -443,6 +441,7 @@ namespace Loppy
             // Reset jump flags
             bufferedJumpUsable = true;
             coyoteUsable = true;
+            wallJumpCoyoteUsable = true;
             endedJumpEarly = false;
 
             // Reset number of air jumps

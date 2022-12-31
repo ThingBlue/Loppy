@@ -32,7 +32,7 @@ MonoBehaviour:
   wallClimbSpeed: 5
   wallFallAcceleration: 16
   maxWallFallSpeed: 8
-  wallJumpStrength: {x: 3, y: 20}
+  wallJumpStrength: {x: 4, y: 20}
   wallJumpInputLossFrames: 18
   wallJumpCoyoteFrames: 5
   raycastDistance: 0.05

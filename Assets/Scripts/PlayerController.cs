@@ -49,6 +49,7 @@ namespace Loppy
         private bool hasControl = true;
 
         private Vector2 playerInput;
+        private Vector2 lastPlayerInput;
         private bool jumpKey = false;
         private bool jumpKeyUp = true;
 
@@ -167,10 +168,12 @@ namespace Loppy
             // Horizontal input
             if (InputManager.instance.getKey("left")) playerInput.x -= 1;
             if (InputManager.instance.getKey("right")) playerInput.x += 1;
+            if (playerInput.x != 0) lastPlayerInput.x = playerInput.x; // Set last horizontal input
 
             // Vertical input
             if (InputManager.instance.getKey("up")) playerInput.y += 1;
             if (InputManager.instance.getKey("down")) playerInput.y -= 1;
+            if (playerInput.y != 0) lastPlayerInput.y = playerInput.y; // Set last horizontal input
 
             // Jump
             jumpKey = InputManager.instance.getKey("jump");
@@ -319,20 +322,31 @@ namespace Loppy
             #region Horizontal collisions
                
             // Raycast to check for horizontal collisions
-            wallHitCount = Physics2D.CapsuleCastNonAlloc(activeCollider.bounds.center, activeCollider.size, activeCollider.direction, 0, new(playerInput.x, 0), wallHits, playerPhysicsStats.raycastDistance, ~playerPhysicsStats.playerLayer);
-            wallNormal = getRaycastNormal(new(playerInput.x, 0));
+            wallHitCount = Physics2D.CapsuleCastNonAlloc(activeCollider.bounds.center, activeCollider.size, activeCollider.direction, 0, new(lastPlayerInput.x, 0), wallHits, playerPhysicsStats.raycastDistance, ~playerPhysicsStats.playerLayer);
+            wallNormal = getRaycastNormal(new(lastPlayerInput.x, 0));
 
             // Enter wall
             // Make sure we're not colliding with ground or ceiling
             if (!onWall && wallHitCount > 0 && !onGround && !ceilingCollision && velocity.y < 0)
             {
                 onWall = true;
-                wallDirection = (int)playerInput.x;
+                wallDirection = (int)lastPlayerInput.x;
                 velocity = Vector2.zero;
                 resetJump();
 
                 // Invoke onWallChanged event action
                 onWallChanged?.Invoke(true, Mathf.Abs(velocity.x));
+            }
+            // Leave wall
+            else if (onWall && (wallHitCount == 0 || onGround))
+            {
+                onWall = false;
+
+                // Start wall jump coyote frames counter
+                wallJumpCoyoteFramesCounter = 0;
+
+                // Invoke onWallChanged event action
+                onWallChanged?.Invoke(false, 0);
             }
             // On wall
             else if (onWall && wallHitCount > 0 && !onGround)
@@ -373,17 +387,6 @@ namespace Loppy
                         StartCoroutine(climbLedge());
                     }
                 }
-            }
-            // Leave wall
-            else if (onWall && (wallHitCount == 0 || onGround))
-            {
-                onWall = false;
-
-                // Start wall jump coyote frames counter
-                wallJumpCoyoteFramesCounter = 0;
-
-                // Invoke onWallChanged event action
-                onWallChanged?.Invoke(false, 0);
             }
 
             #endregion

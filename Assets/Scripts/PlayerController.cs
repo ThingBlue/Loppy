@@ -25,13 +25,16 @@ namespace Loppy
         NONE = 0,
         IDLE,
         RUN,
-        JUMP
+        AIRBORNE,
+        WALL
     }
 
     [RequireComponent(typeof(Rigidbody2D), typeof(Collider2D))]
     public class PlayerController : MonoBehaviour
     {
         #region Inspector members
+
+        public SpriteRenderer sprite;
 
         public Rigidbody2D rigidbody;
         public CapsuleCollider2D standingCollider;
@@ -237,6 +240,7 @@ namespace Loppy
             int groundHitCount;
             int ceilingHitCount;
             int wallHitCount;
+            bool ceilingCollision = false;
 
             #region Vertical collisions
 
@@ -293,6 +297,9 @@ namespace Loppy
                 // Prevent sticking to ceiling if we did an air jump after receiving external velocity w/ PlayerForce.Decay
                 externalVelocity.y = Mathf.Min(0f, externalVelocity.y);
                 velocity.y = Mathf.Min(0, velocity.y);
+
+                // Set ceiling collision flag to true
+                ceilingCollision = true;
             }
 
             #endregion
@@ -304,7 +311,8 @@ namespace Loppy
             wallNormal = getRaycastNormal(new(playerInput.x, 0));
 
             // Enter wall
-            if (!onWall && wallHitCount > 0 && !grounded && ceilingHitCount == 0 && velocity.y < 0)
+            // Make sure we're not colliding with ground or ceiling
+            if (!onWall && wallHitCount > 0 && !grounded && !ceilingCollision && velocity.y < 0)
             {
                 onWall = true;
                 wallDirection = (int)playerInput.x;
@@ -315,21 +323,23 @@ namespace Loppy
                 onWallChanged?.Invoke(true, Mathf.Abs(velocity.x));
             }
             // On wall
-            /*
             else if (onWall && wallHitCount > 0 && !grounded)
             {
+                // Give the player a constant velocity so that they stick to sloped walls
+                //velocity.x = playerPhysicsStats.groundingForce * -wallDirection;
+
                 // Handle slopes
                 if (wallNormal != Vector2.zero) // Make sure wall normal exists
                 {
                     if (!Mathf.Approximately(Math.Abs(wallNormal.x), 1f))
                     {
                         // Change x velocity to match wall slope
-                        float wallSlope = -wallNormal.x / wallNormal.y;
-                        velocity.x = velocity.y * wallSlope;
+                        float inverseWallSlope = -wallNormal.y / wallNormal.x;
+                        velocity.x = velocity.y * inverseWallSlope;
+                        //if (velocity.y != 0) velocity.x += playerPhysicsStats.groundingForce * -wallDirection;
                     }
                 }
             }
-            */
             // Leave wall
             else if (onWall && (wallHitCount == 0 || grounded))
             {
@@ -349,7 +359,8 @@ namespace Loppy
         private Vector2 getRaycastNormal(Vector2 castDirection)
         {
             Physics2D.queriesHitTriggers = false;
-            var hit = Physics2D.Raycast(rigidbody.position, castDirection, playerPhysicsStats.raycastDistance * 2, ~playerPhysicsStats.playerLayer);
+            //var hit = Physics2D.Raycast(activeCollider.bounds.center, castDirection, playerPhysicsStats.raycastDistance * 2, ~playerPhysicsStats.playerLayer);
+            var hit = Physics2D.CapsuleCast(activeCollider.bounds.center, activeCollider.size, activeCollider.direction, 0, castDirection, playerPhysicsStats.raycastDistance * 2, ~playerPhysicsStats.playerLayer);
             Physics2D.queriesHitTriggers = detectTriggers;
 
             if (!hit.collider) return Vector2.zero;
@@ -462,8 +473,11 @@ namespace Loppy
                 case PlayerState.RUN:
                     runState();
                     break;
-                case PlayerState.JUMP:
-                    jumpState();
+                case PlayerState.AIRBORNE:
+                    airborneState();
+                    break;
+                case PlayerState.WALL:
+                    wallState();
                     break;
                 default: break;
             }
@@ -471,47 +485,40 @@ namespace Loppy
 
         private void idleState()
         {
+            sprite.color = Color.blue;
+
             // Switch states
-            if (!grounded)
-            {
-                playerState = PlayerState.JUMP;
-                return;
-            }
-            if (playerInput.x != 0)
-            {
-                playerState = PlayerState.RUN;
-                return;
-            }
+            if      (!grounded)          playerState = PlayerState.AIRBORNE;
+            else if (playerInput.x != 0) playerState = PlayerState.RUN;
         }
 
         private void runState()
         {
+            sprite.color = Color.red;
+
             // Switch states
-            if (!grounded)
-            {
-                playerState = PlayerState.JUMP;
-                return;
-            }
-            if (velocity.x == 0)
-            {
-                playerState = PlayerState.IDLE;
-                return;
-            }
+            if      (!grounded)       playerState = PlayerState.AIRBORNE;
+            else if (velocity.x == 0) playerState = PlayerState.IDLE;
         }
 
-        private void jumpState()
+        private void airborneState()
         {
+            sprite.color = Color.yellow;
+
             // Switch states
-            if (grounded && velocity.x == 0)
-            {
-                playerState = PlayerState.IDLE;
-                return;
-            }
-            if (grounded)
-            {
-                playerState = PlayerState.RUN;
-                return;
-            }
+            if      (grounded && velocity.x == 0) playerState = PlayerState.IDLE;
+            else if (grounded)                    playerState = PlayerState.RUN;
+            else if (onWall)                      playerState = PlayerState.WALL;
+        }
+
+        private void wallState()
+        {
+            sprite.color = Color.cyan;
+
+            // Switch states
+            if (!onWall && !grounded)        playerState = PlayerState.AIRBORNE;
+            else if (grounded && velocity.x == 0) playerState = PlayerState.IDLE;
+            else if (grounded)                    playerState = PlayerState.RUN;
         }
 
         #endregion

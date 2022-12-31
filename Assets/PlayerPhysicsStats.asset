@@ -22,7 +22,7 @@ MonoBehaviour:
   acceleration: 120
   groundDeceleration: 60
   airDeceleration: 30
-  groundingForce: -3
+  groundingForce: -2
   jumpStrength: 20
   maxFallSpeed: 40
   fallAcceleration: 80
@@ -32,7 +32,7 @@ MonoBehaviour:
   wallClimbSpeed: 5
   wallFallAcceleration: 16
   maxWallFallSpeed: 8
-  wallJumpStrength: {x: 16, y: 20}
+  wallJumpStrength: {x: 3, y: 20}
   wallJumpInputLossFrames: 18
   wallJumpCoyoteFrames: 5
   raycastDistance: 0.05

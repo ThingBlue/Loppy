@@ -243,10 +243,10 @@ namespace Loppy
             groundHitCount = Physics2D.CapsuleCastNonAlloc(activeCollider.bounds.center, activeCollider.size, activeCollider.direction, 0, Vector2.down, groundHits, playerPhysicsStats.raycastDistance, ~playerPhysicsStats.playerLayer);
             ceilingHitCount = Physics2D.CapsuleCastNonAlloc(activeCollider.bounds.center, activeCollider.size, activeCollider.direction, 0, Vector2.up, ceilingHits, playerPhysicsStats.raycastDistance, ~playerPhysicsStats.playerLayer);
 
-            //groundNormal = getGroundNormal();
+            groundNormal = getGroundNormal();
 
             // Enter ground
-            if (!grounded && groundHitCount > 0)
+            if (!grounded && groundHitCount > 0 && Math.Abs(groundNormal.y) > Math.Abs(groundNormal.x))
             // && Math.Abs(groundNormal.x) <= Math.Abs(groundNormal.y)
             {
                 grounded = true;
@@ -255,28 +255,8 @@ namespace Loppy
                 // Invoke groundedChanged event action
                 groundedChanged?.Invoke(true, Mathf.Abs(velocity.y));
             }
-            // On ground
-            else if (grounded && groundHitCount > 0)
-            {
-                // Give the player a constant downwards velocity so that they stick to the ground on slopes
-                velocity.y = playerPhysicsStats.groundingForce;
-
-                // Handle slopes
-                groundNormal = getGroundNormal();
-
-                if (groundNormal != Vector2.zero)
-                {
-                    if (!Mathf.Approximately(groundNormal.y, 1f))
-                    {
-                        // Change y velocity to match ground slope
-                        float groundSlope = -groundNormal.x / groundNormal.y;
-                        velocity.y = velocity.x * groundSlope;
-                        if (velocity.x != 0) velocity.y += playerPhysicsStats.groundingForce;
-                    }
-                }
-            }
             // Leave ground
-            else if (grounded && groundHitCount == 0)
+            else if (grounded && (groundHitCount == 0 || Math.Abs(groundNormal.y) < Math.Abs(groundNormal.x)))
             {
                 grounded = false;
 
@@ -285,6 +265,24 @@ namespace Loppy
 
                 // Invoke groundedChanged event action
                 groundedChanged?.Invoke(false, 0);
+            }
+            // On ground
+            else if (grounded && groundHitCount > 0)
+            {
+                // Give the player a constant downwards velocity so that they stick to the ground on slopes
+                velocity.y = playerPhysicsStats.groundingForce;
+
+                // Handle slopes
+                if (groundNormal != Vector2.zero) // Make sure ground normal exists
+                {
+                    if (!Mathf.Approximately(Math.Abs(groundNormal.y), 1f))
+                    {
+                        // Change y velocity to match ground slope
+                        float groundSlope = -groundNormal.x / groundNormal.y;
+                        velocity.y = velocity.x * groundSlope;
+                        if (velocity.x != 0) velocity.y += playerPhysicsStats.groundingForce;
+                    }
+                }
             }
 
             // Ceiling collision detected
@@ -323,13 +321,13 @@ namespace Loppy
                 // Handle slopes
                 wallNormal = getWallNormal();
 
-                if (wallNormal != Vector2.zero)
+                if (wallNormal != Vector2.zero) // Make sure wall normal exists
                 {
-                    if (!Mathf.Approximately(wallNormal.x, 1f))
+                    if (!Mathf.Approximately(Math.Abs(wallNormal.x), 1f))
                     {
                         // Change x velocity to match wall slope
-                        float wallSlope = -wallNormal.y / wallNormal.x;
-                        velocity.x = velocity.y * wallSlope;
+                        float wallSlope = -groundNormal.y / groundNormal.x;
+                        velocity.x = velocity.y * wallSlope * wallDirection;
                         if (velocity.y != 0) velocity.x += playerPhysicsStats.groundingForce * wallDirection;
                     }
                 }

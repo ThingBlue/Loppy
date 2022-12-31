@@ -18,6 +18,9 @@ namespace Loppy
         [Tooltip("The top horizontal movement speed")]
         public float maxRunSpeed = 10;
 
+        [Tooltip("A burst of speed given to the player upon left or right key down")]
+        public float burstAcceleration = 8;
+
         [Tooltip("The player's capacity to gain horizontal speed")]
         public float acceleration = 120;
 
@@ -58,6 +61,9 @@ namespace Loppy
 
         [Tooltip("Clamps the maximum fall speed")]
         public float maxWallFallSpeed = 15;
+
+        [Tooltip("Fast fall speed on wall")]
+        public float fastWallFallSpeed = 20;
 
         [Tooltip("The immediate velocity horizontal velocity applied when wall jumping")]
         public Vector2 wallJumpStrength = new(10, 25);

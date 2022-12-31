@@ -50,6 +50,7 @@ namespace Loppy
 
         private Vector2 playerInput;
         private Vector2 lastPlayerInput;
+        private Vector2 playerInputDown; // Only true on the first frame of key down
         private bool jumpKey = false;
         private bool jumpKeyUp = true;
 
@@ -157,6 +158,9 @@ namespace Loppy
             move();
 
             handleStateMachine();
+
+            // Reset input
+            playerInputDown = Vector2.zero;
         }
 
         #region Input
@@ -169,11 +173,15 @@ namespace Loppy
             if (InputManager.instance.getKey("left")) playerInput.x -= 1;
             if (InputManager.instance.getKey("right")) playerInput.x += 1;
             if (playerInput.x != 0) lastPlayerInput.x = playerInput.x; // Set last horizontal input
+            if (InputManager.instance.getKeyDown("left")) playerInputDown.x -= 1;
+            if (InputManager.instance.getKeyDown("right")) playerInputDown.x += 1;
 
             // Vertical input
             if (InputManager.instance.getKey("up")) playerInput.y += 1;
             if (InputManager.instance.getKey("down")) playerInput.y -= 1;
             if (playerInput.y != 0) lastPlayerInput.y = playerInput.y; // Set last horizontal input
+            if (InputManager.instance.getKeyDown("up")) playerInputDown.y += 1;
+            if (InputManager.instance.getKeyDown("down")) playerInputDown.y -= 1;
 
             // Jump
             jumpKey = InputManager.instance.getKey("jump");
@@ -198,10 +206,11 @@ namespace Loppy
                 // Climb wall
                 if (playerInput.y > 0) velocity.y = playerPhysicsStats.wallClimbSpeed;
                 // Fast fall on wall
-                else if (playerInput.y < 0) velocity.y = -playerPhysicsStats.maxWallFallSpeed;
+                else if (playerInput.y < 0) velocity.y = -playerPhysicsStats.fastWallFallSpeed;
                 // Decelerate rapidly when grabbing ledge
                 else if (onLedge) velocity.y = Mathf.MoveTowards(velocity.y, 0, playerPhysicsStats.ledgeGrabDeceleration * Time.fixedDeltaTime);
                 // Slow fall on wall
+                else if (velocity.y < -playerPhysicsStats.maxWallFallSpeed) velocity.y = -playerPhysicsStats.maxWallFallSpeed;
                 else velocity.y = Mathf.MoveTowards(Mathf.Min(velocity.y, 0), -playerPhysicsStats.maxWallFallSpeed, playerPhysicsStats.wallFallAcceleration * Time.fixedDeltaTime);
                 //else velocity.y = 0;
             }
@@ -223,13 +232,18 @@ namespace Loppy
 
             currentWallJumpMoveMultiplier = Mathf.MoveTowards(currentWallJumpMoveMultiplier, 1f, 1f / playerPhysicsStats.wallJumpInputLossFrames);
 
+            // Give player a burst of speed upon key down
+            if (playerInputDown.x > 0) velocity.x = playerPhysicsStats.burstAcceleration;
+            if (playerInputDown.x < 0) velocity.x = -playerPhysicsStats.burstAcceleration;
+
             // Deceleration
             if (playerInput.x == 0)
             {
                 var deceleration = onGround ? playerPhysicsStats.groundDeceleration : playerPhysicsStats.airDeceleration;
 
                 // Decelerate towards 0
-                velocity.x = Mathf.MoveTowards(velocity.x, 0, deceleration * Time.fixedDeltaTime);
+                //velocity.x = Mathf.MoveTowards(velocity.x, 0, deceleration * Time.fixedDeltaTime);
+                velocity.x = 0;
             }
             // Regular Horizontal Movement
             else

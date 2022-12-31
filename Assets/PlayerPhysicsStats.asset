@@ -19,25 +19,27 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 65536
   maxRunSpeed: 10
+  burstAcceleration: 120
   acceleration: 120
   groundDeceleration: 60
   airDeceleration: 30
   groundingForce: -2
   jumpStrength: 20
   maxFallSpeed: 40
-  fallAcceleration: 80
-  jumpEndEarlyGravityModifier: 3
+  fallAcceleration: 64
+  jumpEndEarlyGravityModifier: 5
   coyoteFrames: 5
   jumpBufferFrames: 7
-  wallClimbSpeed: 5
+  wallClimbSpeed: 8
   wallFallAcceleration: 16
-  maxWallFallSpeed: 8
-  wallJumpStrength: {x: 4, y: 20}
+  maxWallFallSpeed: 6
+  fastWallFallSpeed: 12
+  wallJumpStrength: {x: 5, y: 20}
   wallJumpInputLossFrames: 18
   wallJumpCoyoteFrames: 5
   ledgeGrabDeceleration: 4
   ledgeGrabPoint: {x: 0.4, y: 0.6}
-  standUpOffset: {x: 0.4, y: 0.05}
+  standUpOffset: {x: 0.4, y: 0.01}
   ledgeRaycastSpacing: 0.3
   ledgeRaycastDistance: 0.5
   ledgeClimbDuration: 0.2

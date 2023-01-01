@@ -239,8 +239,8 @@ namespace Loppy
             currentWallJumpMoveMultiplier = Mathf.MoveTowards(currentWallJumpMoveMultiplier, 1f, 1f / playerPhysicsStats.wallJumpInputLossFrames);
 
             // Give player a burst of speed upon key down
-            if (playerInputDown.x > 0) velocity.x = playerPhysicsStats.burstAcceleration;
-            if (playerInputDown.x < 0) velocity.x = -playerPhysicsStats.burstAcceleration;
+            if (playerInputDown.x > 0) velocity.x = playerPhysicsStats.burstVelocity;
+            if (playerInputDown.x < 0) velocity.x = -playerPhysicsStats.burstVelocity;
 
             // Deceleration
             if (playerInput.x == 0)

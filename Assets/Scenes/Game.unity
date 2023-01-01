@@ -375,6 +375,8 @@ MonoBehaviour:
   yLookAheadEnabled: 1
   lookAheadDistance: {x: 1, y: 4}
   lookAheadSmoothTime: 0.5
+  verticalPanDistance: 4
+  verticalPanSmoothTime: 0.2
 --- !u!1 &540258591
 GameObject:
   m_ObjectHideFlags: 0

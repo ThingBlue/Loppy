@@ -18,14 +18,14 @@ namespace Loppy
         [Tooltip("The top horizontal movement speed")]
         public float maxRunSpeed = 10;
 
-        [Tooltip("A burst of speed given to the player upon left or right key down")]
-        public float burstAcceleration = 8;
+        [Tooltip("A burst of velocity given to the player upon left or right key down")]
+        public float burstVelocity = 0;
 
         [Tooltip("The player's capacity to gain horizontal speed")]
-        public float acceleration = 120;
+        public float acceleration = 100;
 
         [Tooltip("The pace at which the player comes to a stop")]
-        public float groundDeceleration = 60;
+        public float groundDeceleration = 50;
 
         [Tooltip("Deceleration in air only after stopping input mid-air")]
         public float airDeceleration = 30;

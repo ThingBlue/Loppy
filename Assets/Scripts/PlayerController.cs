@@ -26,9 +26,9 @@ namespace Loppy
         IDLE,
         RUN,
         AIRBORNE,
-        WALL,
+        ON_WALL,
         ON_LEDGE,
-        CLIMBING_LEDGE
+        CLIMB_LEDGE
     }
 
     [RequireComponent(typeof(Rigidbody2D), typeof(Collider2D))]
@@ -60,7 +60,7 @@ namespace Loppy
         private int airJumpsRemaining;
 
         private bool jumpToConsume;
-        private bool bufferedJumpUsable;
+        private bool jumpBufferUsable;
         private bool endedJumpEarly;
         private bool coyoteUsable;
         private bool wallJumpCoyoteUsable;
@@ -499,7 +499,7 @@ namespace Loppy
 
             // Return control to player
             hasControl = true;
-            velocity = Vector2.zero;
+            velocity.x = 0;
 
             // Invoke ledgeClimbChanged event action at the end
             ledgeClimbChanged?.Invoke(false);
@@ -511,14 +511,17 @@ namespace Loppy
 
         private void handleJump()
         {
-            bool hasBufferedJump = bufferedJumpUsable && jumpBufferFramesCounter < playerPhysicsStats.jumpBufferFrames * (GameManager.instance.fps / 60f);
+            // Check if player has control
+            if (!hasControl) return;
+
+            bool canUseJumpBuffer = jumpBufferUsable && jumpBufferFramesCounter < playerPhysicsStats.jumpBufferFrames * (GameManager.instance.fps / 60f);
             bool canUseCoyote = coyoteUsable && coyoteFramesCounter < playerPhysicsStats.coyoteFrames * (GameManager.instance.fps / 60f);
             bool canUseWallJumpCoyote = wallJumpCoyoteUsable && wallJumpCoyoteFramesCounter < playerPhysicsStats.wallJumpCoyoteFrames * (GameManager.instance.fps / 60f);
 
             if (!endedJumpEarly && !onGround && !onWall && !jumpKey && velocity.y > 0) endedJumpEarly = true; // Early end detection
 
             // Check for jump input
-            if (!jumpToConsume && !hasBufferedJump) return;
+            if (!jumpToConsume && !canUseJumpBuffer) return;
 
             if (onWall || canUseWallJumpCoyote) wallJump();
             else if (onGround || canUseCoyote) normalJump();
@@ -531,7 +534,7 @@ namespace Loppy
         {
             // Reset jump flags
             endedJumpEarly = false;
-            bufferedJumpUsable = false;
+            jumpBufferUsable = false;
             coyoteUsable = false;
 
             // Apply jump velocity
@@ -545,7 +548,7 @@ namespace Loppy
         {
             // Reset jump flags
             endedJumpEarly = false;
-            bufferedJumpUsable = false;
+            jumpBufferUsable = false;
             wallJumpCoyoteUsable = false;
 
             // Apply jump velocity
@@ -576,7 +579,7 @@ namespace Loppy
         private void resetJump()
         {
             // Reset jump flags
-            bufferedJumpUsable = true;
+            jumpBufferUsable = true;
             coyoteUsable = true;
             wallJumpCoyoteUsable = true;
             endedJumpEarly = false;
@@ -615,14 +618,14 @@ namespace Loppy
                 case PlayerState.AIRBORNE:
                     airborneState();
                     break;
-                case PlayerState.WALL:
-                    wallState();
+                case PlayerState.ON_WALL:
+                    onWallState();
                     break;
                 case PlayerState.ON_LEDGE:
                     onLedgeState();
                     break;
-                case PlayerState.CLIMBING_LEDGE:
-                    climbingLedgeState();
+                case PlayerState.CLIMB_LEDGE:
+                    climbLedgeState();
                     break;
                 default: break;
             }
@@ -653,15 +656,15 @@ namespace Loppy
             // Switch states
             if      (onGround && velocity.x == 0) playerState = PlayerState.IDLE;
             else if (onGround)                    playerState = PlayerState.RUN;
-            else if (onWall)                      playerState = PlayerState.WALL;
+            else if (onWall)                      playerState = PlayerState.ON_WALL;
         }
 
-        private void wallState()
+        private void onWallState()
         {
             sprite.color = Color.cyan;
 
             // Switch states
-            if      (climbingLedge)               playerState = PlayerState.CLIMBING_LEDGE;
+            if      (climbingLedge)               playerState = PlayerState.CLIMB_LEDGE;
             else if (onLedge)                     playerState = PlayerState.ON_LEDGE;
             else if (!onWall && !onGround)        playerState = PlayerState.AIRBORNE;
             else if (onGround && velocity.x == 0) playerState = PlayerState.IDLE;
@@ -673,13 +676,13 @@ namespace Loppy
             sprite.color = Color.gray;
 
             // Switch states
-            if      (climbingLedge)        playerState = PlayerState.CLIMBING_LEDGE;
+            if      (climbingLedge)        playerState = PlayerState.CLIMB_LEDGE;
             else if (!onLedge && onGround) playerState = PlayerState.IDLE;
-            else if (!onLedge && onWall)   playerState = PlayerState.WALL;
+            else if (!onLedge && onWall)   playerState = PlayerState.ON_WALL;
             else if (!onLedge)             playerState = PlayerState.AIRBORNE;
         }
 
-        private void climbingLedgeState()
+        private void climbLedgeState()
         {
             sprite.color = Color.black;
 

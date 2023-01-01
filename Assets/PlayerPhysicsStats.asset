@@ -38,10 +38,10 @@ MonoBehaviour:
   wallJumpInputLossFrames: 18
   wallJumpCoyoteFrames: 5
   ledgeGrabDeceleration: 4
-  ledgeGrabPoint: {x: 0.4, y: 0.6}
+  ledgeGrabPoint: {x: 0.4, y: 1}
   standUpOffset: {x: 0.4, y: 0.01}
   ledgeRaycastSpacing: 0.3
-  ledgeRaycastDistance: 1
+  ledgeRaycastDistance: 2
   ledgeClimbDuration: 0.2
   raycastDistance: 0.05
   maxWalkAngle: 30

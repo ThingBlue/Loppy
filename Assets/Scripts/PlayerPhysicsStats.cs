@@ -79,16 +79,26 @@ namespace Loppy
         public float ledgeGrabDeceleration = 4f;
 
         [Tooltip("Relative point from the player's position where the ledge corner will be when hanging")]
-        public Vector2 ledgeGrabPoint = new(0.3f, 0.75f);
+        public Vector2 ledgeGrabPoint = new(0.4f, 0.6f);
 
         [Tooltip("Relative point from the ledge corner where the new player position will be after climbing up (Tip: have Y be slightly > 0)")]
         public Vector2 standUpOffset = new(0.2f, 0.02f);
 
+
+
+
+
+        
         [Tooltip("Vertical offset above and below your grab point to detect a nearby ledge"), Min(0.05f)]
         public float ledgeRaycastSpacing = 0.3f;
+        
+
+
+
+
 
         [Tooltip("The raycast distance for ledge detection"), Min(0.05f)]
-        public float ledgeRaycastDistance = 0.1f;
+        public float ledgeRaycastDistance = 1f;
 
         [Tooltip("How long movement will be locked out. Animation clip length")]
         public float ledgeClimbDuration = 0.5f;

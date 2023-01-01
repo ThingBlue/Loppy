@@ -26,7 +26,9 @@ namespace Loppy
         IDLE,
         RUN,
         AIRBORNE,
-        WALL
+        WALL,
+        ON_LEDGE,
+        CLIMBING_LEDGE
     }
 
     [RequireComponent(typeof(Rigidbody2D), typeof(Collider2D))]
@@ -351,8 +353,12 @@ namespace Loppy
             float wallAngle = Mathf.Min(Vector2.Angle(wallNormal, Vector2.left), Vector2.Angle(wallNormal, Vector2.right));
 
             // Enter wall
-            // Make sure we're not colliding with ground or ceiling
-            if (!onWall && wallHitCount > 0 && wallAngle <= playerPhysicsStats.maxClimbAngle && !onGround && !ceilingCollision && velocity.y < 0)
+            // Conditions to enter wall:
+            //    Player is actively inputting direction of the wall
+            //    Wall is of climbable angle
+            //    Not colliding with ground or ceiling
+            //    Not currently moving upwards
+            if (!onWall && wallHitCount > 0 && playerInput.x != 0 && wallAngle <= playerPhysicsStats.maxClimbAngle && !onGround && !ceilingCollision && velocity.y < 0)
             {
                 onWall = true;
                 wallDirection = (int)Mathf.Sign(lastPlayerInput.x);
@@ -366,6 +372,8 @@ namespace Loppy
             else if (onWall && (wallHitCount == 0 || wallAngle > playerPhysicsStats.maxClimbAngle || onGround))
             {
                 onWall = false;
+                onLedge = false;
+                climbingLedge = false;
 
                 // Start wall jump coyote frames counter
                 wallJumpCoyoteFramesCounter = 0;
@@ -392,15 +400,18 @@ namespace Loppy
                 }
 
                 // Handle ledges
-                onLedge = getLedgeCorner(out ledgeCornerPosition);
+                Vector2 newLedgeCornerPosition = Vector2.zero;
+                onLedge = getLedgeCorner(out newLedgeCornerPosition);
                 if (onLedge)
                 {
+                    // Set new ledge corner position
+                    ledgeCornerPosition = newLedgeCornerPosition;
+
                     // Nudge towards better grabbing position
-                    if ( /*Input.y != 0 &&*/ playerInput.x == 0 && hasControl)
+                    if (hasControl)
                     {
-                        Vector2 pos = rigidbody.position;
                         Vector2 targetPos = ledgeCornerPosition - Vector2.Scale(playerPhysicsStats.ledgeGrabPoint, new(wallDirection, 1f));
-                        rigidbody.position = Vector2.MoveTowards(pos, targetPos, playerPhysicsStats.ledgeGrabDeceleration * Time.fixedDeltaTime);
+                        rigidbody.position = Vector2.MoveTowards(rigidbody.position, targetPos, playerPhysicsStats.ledgeGrabDeceleration * Time.fixedDeltaTime);
                     }
 
                     // Detect ledge climb input
@@ -412,6 +423,11 @@ namespace Loppy
                         StartCoroutine(climbLedge());
                     }
                 }
+            }
+            // Not on wall
+            else if (!onWall)
+            {
+                onLedge = false;
             }
 
             #endregion
@@ -431,18 +447,29 @@ namespace Loppy
         private bool getLedgeCorner(out Vector2 cornerPos)
         {
             cornerPos = Vector2.zero;
-            var grabHeight = rigidbody.position + playerPhysicsStats.ledgeGrabPoint.y * Vector2.up;
+            if (!onWall) return false;
 
-            var hit1 = Physics2D.Raycast(grabHeight + playerPhysicsStats.ledgeRaycastSpacing * Vector2.down, wallDirection * Vector2.right, playerPhysicsStats.ledgeRaycastDistance, ~playerPhysicsStats.playerLayer);
-            if (!hit1.collider) return false; // Should hit below the ledge. Mainly used to determine xPos accurately
+            /*
+            Vector2 grabHeight = new Vector2(activeCollider.bounds.center.x, activeCollider.bounds.center.y) + playerPhysicsStats.ledgeGrabPoint.y * Vector2.up;
+            //Vector2 grabHeight = rigidbody.position + playerPhysicsStats.ledgeGrabPoint.y * Vector2.up;
 
-            var hit2 = Physics2D.Raycast(grabHeight + playerPhysicsStats.ledgeRaycastSpacing * Vector2.up, wallDirection * Vector2.right, playerPhysicsStats.ledgeRaycastDistance, ~playerPhysicsStats.playerLayer);
-            if (hit2.collider) return false; // We only are within ledge-grab range when the first hits and second doesn't
+            RaycastHit2D grabHeightHit = Physics2D.Raycast(grabHeight, wallDirection * Vector2.right, (wallDirection * activeCollider.size.x / 2) + playerPhysicsStats.ledgeRaycastDistance, ~playerPhysicsStats.playerLayer);
+            if (grabHeightHit.collider) return false;
+            */
 
-            var hit3 = Physics2D.Raycast(grabHeight + new Vector2(wallDirection * 0.5f, playerPhysicsStats.ledgeRaycastSpacing), Vector2.down, playerPhysicsStats.ledgeRaycastDistance, ~playerPhysicsStats.playerLayer);
-            if (!hit3.collider) return false; // Gets our yPos of the corner
+            // Can grab ledge if a raycast from the top does not hit any walls
+            RaycastHit2D topHit = Physics2D.Raycast(activeCollider.bounds.center + new Vector3(0, activeCollider.size.y / 2), wallDirection * Vector2.right, (wallDirection * activeCollider.size.x / 2) + playerPhysicsStats.ledgeRaycastDistance, ~playerPhysicsStats.playerLayer);
+            if (topHit.collider) return false;
 
-            cornerPos = new(hit1.point.x, hit3.point.y);
+            // Get x position of corner
+            RaycastHit2D wallHit = Physics2D.CapsuleCast(activeCollider.bounds.center, activeCollider.size, activeCollider.direction, 0, wallDirection * Vector2.right, playerPhysicsStats.ledgeRaycastDistance, ~playerPhysicsStats.playerLayer);
+            if (!wallHit.collider) return false;
+            // Get y position of corner
+            RaycastHit2D cornerHit = Physics2D.Raycast(activeCollider.bounds.center + new Vector3(wallDirection * playerPhysicsStats.ledgeGrabPoint.x * 2, activeCollider.size.y / 2), Vector2.down, activeCollider.size.y, ~playerPhysicsStats.playerLayer);
+            if (!cornerHit.collider) return false;
+
+            cornerPos = new(wallHit.point.x, cornerHit.point.y);
+            Debug.Log("LEDGE");
             return true;
         }
 
@@ -594,6 +621,12 @@ namespace Loppy
                 case PlayerState.WALL:
                     wallState();
                     break;
+                case PlayerState.ON_LEDGE:
+                    onLedgeState();
+                    break;
+                case PlayerState.CLIMBING_LEDGE:
+                    climbingLedgeState();
+                    break;
                 default: break;
             }
         }
@@ -631,9 +664,30 @@ namespace Loppy
             sprite.color = Color.cyan;
 
             // Switch states
-            if (!onWall && !onGround)        playerState = PlayerState.AIRBORNE;
+            if      (climbingLedge)               playerState = PlayerState.CLIMBING_LEDGE;
+            else if (onLedge)                     playerState = PlayerState.ON_LEDGE;
+            else if (!onWall && !onGround)        playerState = PlayerState.AIRBORNE;
             else if (onGround && velocity.x == 0) playerState = PlayerState.IDLE;
             else if (onGround)                    playerState = PlayerState.RUN;
+        }
+
+        private void onLedgeState()
+        {
+            sprite.color = Color.gray;
+
+            // Switch states
+            if      (climbingLedge)        playerState = PlayerState.CLIMBING_LEDGE;
+            else if (!onLedge && onGround) playerState = PlayerState.IDLE;
+            else if (!onLedge && onWall)   playerState = PlayerState.WALL;
+            else if (!onLedge)             playerState = PlayerState.AIRBORNE;
+        }
+
+        private void climbingLedgeState()
+        {
+            sprite.color = Color.black;
+
+            // Switch states
+            if (!climbingLedge) playerState = PlayerState.IDLE;
         }
 
         #endregion

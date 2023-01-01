@@ -6,15 +6,8 @@ public class GameManager : MonoBehaviour
 {
     public List<GameObject> blocks;
 
-    // Start is called before the first frame update
-    void Start()
+    private void Awake()
     {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
+        Time.fixedDeltaTime = (1f / 60f);
     }
 }

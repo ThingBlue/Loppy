@@ -346,7 +346,7 @@ namespace Loppy
             #endregion
 
             #region Horizontal collisions
-               
+
             // Raycast to check for horizontal collisions
             wallHitCount = Physics2D.CapsuleCastNonAlloc(activeCollider.bounds.center, activeCollider.size, activeCollider.direction, 0, new(lastPlayerInput.x, 0), wallHits, playerPhysicsStats.raycastDistance, ~playerPhysicsStats.playerLayer);
             wallNormal = getRaycastNormal(new(lastPlayerInput.x, 0));
@@ -449,14 +449,6 @@ namespace Loppy
             cornerPos = Vector2.zero;
             if (!onWall) return false;
 
-            /*
-            Vector2 grabHeight = new Vector2(activeCollider.bounds.center.x, activeCollider.bounds.center.y) + playerPhysicsStats.ledgeGrabPoint.y * Vector2.up;
-            //Vector2 grabHeight = rigidbody.position + playerPhysicsStats.ledgeGrabPoint.y * Vector2.up;
-
-            RaycastHit2D grabHeightHit = Physics2D.Raycast(grabHeight, wallDirection * Vector2.right, (wallDirection * activeCollider.size.x / 2) + playerPhysicsStats.ledgeRaycastDistance, ~playerPhysicsStats.playerLayer);
-            if (grabHeightHit.collider) return false;
-            */
-
             // Can grab ledge if a raycast from the top does not hit any walls
             RaycastHit2D topHit = Physics2D.Raycast(activeCollider.bounds.center + new Vector3(0, activeCollider.size.y / 2), wallDirection * Vector2.right, (wallDirection * activeCollider.size.x / 2) + playerPhysicsStats.ledgeRaycastDistance, ~playerPhysicsStats.playerLayer);
             if (topHit.collider) return false;
@@ -469,7 +461,6 @@ namespace Loppy
             if (!cornerHit.collider) return false;
 
             cornerPos = new(wallHit.point.x, cornerHit.point.y);
-            Debug.Log("LEDGE");
             return true;
         }
 

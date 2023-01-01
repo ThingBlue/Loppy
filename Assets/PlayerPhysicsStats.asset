@@ -19,9 +19,9 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 65536
   maxRunSpeed: 10
-  burstAcceleration: 120
-  acceleration: 120
-  groundDeceleration: 60
+  burstAcceleration: 2
+  acceleration: 100
+  groundDeceleration: 50
   airDeceleration: 30
   groundingForce: -2
   jumpStrength: 20

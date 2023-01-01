@@ -368,11 +368,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerTransform: {fileID: 2118610471}
+  playerController: {fileID: 2118610475}
   offset: {x: 0, y: 2, z: 0}
-  smoothTime: 0.2
-  lookAheadEnabled: 0
-  lookAheadDistance: 4
-  lookAheadSmoothTime: 0.2
+  smoothTime: 0.1
+  xLookAheadEnabled: 1
+  yLookAheadEnabled: 1
+  lookAheadDistance: {x: 1, y: 4}
+  lookAheadSmoothTime: 0.5
 --- !u!1 &540258591
 GameObject:
   m_ObjectHideFlags: 0
@@ -2437,3 +2439,9 @@ MonoBehaviour:
   standingCollider: {fileID: 2118610473}
   playerPhysicsStats: {fileID: 11400000, guid: 183c791e7c8d4f546ad06f273935b08f, type: 2}
   maxAirJumps: 1
+  velocity: {x: 0, y: 0}
+  onGround: 0
+  onWall: 0
+  onLedge: 0
+  playerState: 0
+  facingDirection: 1

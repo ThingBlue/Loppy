@@ -71,7 +71,7 @@ namespace Loppy
 
         #region Physics variables
 
-        private Vector2 velocity;
+        public Vector2 velocity;
         private Vector2 externalVelocity;
         private float currentWallJumpMoveMultiplier = 1f;
 
@@ -79,15 +79,15 @@ namespace Loppy
 
         #region Collision variables
 
-        private bool onGround;
+        public bool onGround;
         private Vector2 groundNormal;
         private Vector2 ceilingNormal;
 
-        private bool onWall;
+        public bool onWall;
         private int wallDirection;
         private Vector2 wallNormal;
 
-        private bool onLedge;
+        public bool onLedge;
         private bool climbingLedge;
         private Vector2 ledgeCornerPosition;
 
@@ -97,7 +97,8 @@ namespace Loppy
 
         #region State machine
 
-        PlayerState playerState;
+        public PlayerState playerState;
+        public int facingDirection = 1;
 
         #endregion
 
@@ -172,16 +173,18 @@ namespace Loppy
             // Horizontal input
             if (InputManager.instance.getKey("left")) playerInput.x -= 1;
             if (InputManager.instance.getKey("right")) playerInput.x += 1;
-            if (playerInput.x != 0) lastPlayerInput.x = playerInput.x; // Set last horizontal input
             if (InputManager.instance.getKeyDown("left")) playerInputDown.x -= 1;
             if (InputManager.instance.getKeyDown("right")) playerInputDown.x += 1;
+            // Set last horizontal input
+            if (playerInput.x != 0) lastPlayerInput.x = playerInput.x;
 
             // Vertical input
             if (InputManager.instance.getKey("up")) playerInput.y += 1;
             if (InputManager.instance.getKey("down")) playerInput.y -= 1;
-            if (playerInput.y != 0) lastPlayerInput.y = playerInput.y; // Set last horizontal input
             if (InputManager.instance.getKeyDown("up")) playerInputDown.y += 1;
             if (InputManager.instance.getKeyDown("down")) playerInputDown.y -= 1;
+            // Set last vertical input
+            if (playerInput.y != 0) lastPlayerInput.y = playerInput.y;
 
             // Jump
             jumpKey = InputManager.instance.getKey("jump");
@@ -190,6 +193,9 @@ namespace Loppy
                 jumpToConsume = true;
                 jumpBufferFramesCounter = 0;
             }
+
+            // Set player's facing direction to last horizontal input
+            facingDirection = lastPlayerInput.x >= 0 ? 1 : -1;
         }
 
         #endregion
@@ -248,6 +254,9 @@ namespace Loppy
             // Regular Horizontal Movement
             else
             {
+                // Reset x velocity when on wall
+                if (onWall) velocity.x = 0;
+
                 // Accelerate towards max speed
                 velocity.x = Mathf.MoveTowards(velocity.x, playerInput.x * playerPhysicsStats.maxRunSpeed, currentWallJumpMoveMultiplier * playerPhysicsStats.acceleration * Time.fixedDeltaTime);
             }

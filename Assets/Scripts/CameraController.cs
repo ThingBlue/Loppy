@@ -8,15 +8,19 @@ namespace Loppy
     public class CameraController : MonoBehaviour
     {
         public Transform playerTransform;
+        public PlayerController playerController;
         public Vector3 offset = new(0, 2); // Camera position offset from player
 
         public float smoothTime = 0.2f; // Time to reach overall position target
 
         // Look ahead variables
-        public bool lookAheadEnabled = false;
+        public bool xLookAheadEnabled = true;
+        public bool yLookAheadEnabled = true;
+
+        int lastPlayerInput = 0;
 
         private Vector3 lookAheadOffset;
-        public float lookAheadDistance = 4f;
+        public Vector2 lookAheadDistance;
         public float lookAheadSmoothTime = 0.2f; // Time to reach look ahead target
 
         // Reference variables for use with Unity's SmoothDamp function
@@ -26,26 +30,22 @@ namespace Loppy
         private void LateUpdate() // Late update to prevent stuttering
         {
             #region Look ahead
+            if (playerController != null)
+            {
+                // Calculate look ahead offset
+                Vector3 lookAheadPosition = new();
 
-            // Calculate look ahead offset
-            Vector2 input = Vector2.zero;
-            if (InputManager.instance.getKey("left")) { input.x -= 1; }
-            if (InputManager.instance.getKey("right")) { input.x += 1; }
-            if (InputManager.instance.getKey("up")) { input.y += 1; }
-            if (InputManager.instance.getKey("down")) { input.y -= 1; }
+                // x look ahead
+                lookAheadPosition.x = playerController.facingDirection * lookAheadDistance.x;
+                // y look ahead, only when player is falling
+                lookAheadPosition.y = !playerController.onGround && playerController.velocity.y < 0 ? -lookAheadDistance.y : 0;
 
-            /*
-            // Only look up and down if no horizontal input
-            if (input.x != 0) input.y = 0;
-            input.x = 0;
-            */
-
-            // Smoothly move lookAheadOffset towards lookAheadPos in time of lookAheadSmoothTime
-            Vector3 lookAheadPos = input * lookAheadDistance;
-            lookAheadOffset = Vector3.SmoothDamp(lookAheadOffset, lookAheadPos, ref lookAheadVelocity, lookAheadSmoothTime);
+                lookAheadOffset = Vector3.SmoothDamp(lookAheadOffset, lookAheadPosition, ref lookAheadVelocity, lookAheadSmoothTime);
+            }
 
             // Disable look ahead if enabled flag is set to false
-            if (lookAheadEnabled == false) lookAheadOffset = Vector3.zero;
+            if (!xLookAheadEnabled) lookAheadOffset.x = 0;
+            if (!yLookAheadEnabled) lookAheadOffset.y = 0;
 
             #endregion
 

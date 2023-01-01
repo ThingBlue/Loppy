@@ -97,6 +97,12 @@ namespace Loppy
         [Tooltip("The raycast distance for collision detection"), Range(0f, 1.0f)]
         public float raycastDistance = 0.05f;
 
+        [Tooltip("Maximum angle of walkable ground"), Range(0f, 1.0f)]
+        public float maxWalkAngle = 30;
+
+        [Tooltip("Maximum angle of climbable wall"), Range(0f, 1.0f)]
+        public float maxClimbAngle = 30;
+
         [Header("EXTERNAL")]
         [Tooltip("The rate at which external velocity decays. Should be close to Fall Acceleration")]
         public int externalVelocityDecay = 100; // This may become deprecated in a future version

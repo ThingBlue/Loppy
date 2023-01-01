@@ -289,18 +289,21 @@ namespace Loppy
             groundNormal = getRaycastNormal(Vector2.down);
             ceilingNormal = getRaycastNormal(Vector2.up);
 
-            // Enter ground
-            if (!onGround && groundHitCount > 0 && Math.Abs(groundNormal.y) > Math.Abs(groundNormal.x))
-            // && Math.Abs(groundNormal.x) <= Math.Abs(groundNormal.y)
-            {
-                onGround = true;
-                resetJump();
+            float groundAngle = Vector2.Angle(groundNormal, Vector2.up);
 
-                // Invoke onGroundChanged event action
-                onGroundChanged?.Invoke(true, Mathf.Abs(velocity.y));
+            // Enter ground
+            if (!onGround && groundHitCount > 0 && groundAngle <= playerPhysicsStats.maxWalkAngle)
+            //if (!onGround && groundHitCount > 0 && Math.Abs(groundNormal.y) > Math.Abs(groundNormal.x))
+            {
+            onGround = true;
+            resetJump();
+
+            // Invoke onGroundChanged event action
+            onGroundChanged?.Invoke(true, Mathf.Abs(velocity.y));
             }
             // Leave ground
-            else if (onGround && (groundHitCount == 0 || Math.Abs(groundNormal.y) < Math.Abs(groundNormal.x)))
+            else if (onGround && (groundHitCount == 0 || groundAngle > playerPhysicsStats.maxWalkAngle))
+            //else if (onGround && (groundHitCount == 0 || Math.Abs(groundNormal.y) < Math.Abs(groundNormal.x)))
             {
                 onGround = false;
 
@@ -311,7 +314,7 @@ namespace Loppy
                 onGroundChanged?.Invoke(false, 0);
             }
             // On ground
-            else if (onGround && groundHitCount > 0)
+            else if (onGround && groundHitCount > 0 && groundAngle <= playerPhysicsStats.maxWalkAngle)
             {
                 // Give the player a constant downwards velocity so that they stick to the ground on slopes
                 velocity.y = playerPhysicsStats.groundingForce;
@@ -347,10 +350,11 @@ namespace Loppy
             // Raycast to check for horizontal collisions
             wallHitCount = Physics2D.CapsuleCastNonAlloc(activeCollider.bounds.center, activeCollider.size, activeCollider.direction, 0, new(lastPlayerInput.x, 0), wallHits, playerPhysicsStats.raycastDistance, ~playerPhysicsStats.playerLayer);
             wallNormal = getRaycastNormal(new(lastPlayerInput.x, 0));
+            float wallAngle = Mathf.Min(Vector2.Angle(wallNormal, Vector2.left), Vector2.Angle(wallNormal, Vector2.right));
 
             // Enter wall
             // Make sure we're not colliding with ground or ceiling
-            if (!onWall && wallHitCount > 0 && !onGround && !ceilingCollision && velocity.y < 0)
+            if (!onWall && wallHitCount > 0 && wallAngle <= playerPhysicsStats.maxClimbAngle && !onGround && !ceilingCollision && velocity.y < 0)
             {
                 onWall = true;
                 wallDirection = (int)lastPlayerInput.x;
@@ -361,7 +365,7 @@ namespace Loppy
                 onWallChanged?.Invoke(true, Mathf.Abs(velocity.x));
             }
             // Leave wall
-            else if (onWall && (wallHitCount == 0 || onGround))
+            else if (onWall && (wallHitCount == 0 || wallAngle > playerPhysicsStats.maxClimbAngle || onGround))
             {
                 onWall = false;
 
@@ -372,7 +376,7 @@ namespace Loppy
                 onWallChanged?.Invoke(false, 0);
             }
             // On wall
-            else if (onWall && wallHitCount > 0 && !onGround)
+            else if (onWall && wallHitCount > 0 && wallAngle <= playerPhysicsStats.maxClimbAngle && !onGround)
             {
                 // Give the player a constant velocity so that they stick to sloped walls
                 //velocity.x = playerPhysicsStats.groundingForce * -wallDirection;

@@ -41,7 +41,9 @@ MonoBehaviour:
   ledgeGrabPoint: {x: 0.4, y: 0.6}
   standUpOffset: {x: 0.4, y: 0.01}
   ledgeRaycastSpacing: 0.3
-  ledgeRaycastDistance: 0.5
+  ledgeRaycastDistance: 1
   ledgeClimbDuration: 0.2
   raycastDistance: 0.05
+  maxWalkAngle: 30
+  maxClimbAngle: 30
   externalVelocityDecay: 100

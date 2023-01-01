@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4d6ab563c52d14340b4dff3d8cd24933, type: 3}
-  m_Name: PlayerPhysicsStats
+  m_Name: NotFloaty
   m_EditorClassIdentifier: 
   playerLayer:
     serializedVersion: 2
@@ -24,9 +24,9 @@ MonoBehaviour:
   groundDeceleration: 50
   airDeceleration: 30
   groundingForce: -2
-  jumpStrength: 16
+  jumpStrength: 220
   maxFallSpeed: 40
-  fallAcceleration: 40
+  fallAcceleration: 64
   jumpEndEarlyGravityModifier: 5
   coyoteFrames: 5
   jumpBufferFrames: 7

@@ -293,17 +293,15 @@ namespace Loppy
 
             // Enter ground
             if (!onGround && groundHitCount > 0 && groundAngle <= playerPhysicsStats.maxWalkAngle)
-            //if (!onGround && groundHitCount > 0 && Math.Abs(groundNormal.y) > Math.Abs(groundNormal.x))
             {
-            onGround = true;
-            resetJump();
+                onGround = true;
+                resetJump();
 
-            // Invoke onGroundChanged event action
-            onGroundChanged?.Invoke(true, Mathf.Abs(velocity.y));
+                // Invoke onGroundChanged event action
+                onGroundChanged?.Invoke(true, Mathf.Abs(velocity.y));
             }
             // Leave ground
             else if (onGround && (groundHitCount == 0 || groundAngle > playerPhysicsStats.maxWalkAngle))
-            //else if (onGround && (groundHitCount == 0 || Math.Abs(groundNormal.y) < Math.Abs(groundNormal.x)))
             {
                 onGround = false;
 
@@ -317,7 +315,7 @@ namespace Loppy
             else if (onGround && groundHitCount > 0 && groundAngle <= playerPhysicsStats.maxWalkAngle)
             {
                 // Give the player a constant downwards velocity so that they stick to the ground on slopes
-                velocity.y = playerPhysicsStats.groundingForce;
+                //velocity.y = playerPhysicsStats.groundingForce;
 
                 // Handle slopes
                 if (groundNormal != Vector2.zero) // Make sure ground normal exists
@@ -357,7 +355,7 @@ namespace Loppy
             if (!onWall && wallHitCount > 0 && wallAngle <= playerPhysicsStats.maxClimbAngle && !onGround && !ceilingCollision && velocity.y < 0)
             {
                 onWall = true;
-                wallDirection = (int)lastPlayerInput.x;
+                wallDirection = (int)Mathf.Sign(lastPlayerInput.x);
                 velocity = Vector2.zero;
                 resetJump();
 
@@ -490,18 +488,17 @@ namespace Loppy
         private void handleJump()
         {
             bool hasBufferedJump = bufferedJumpUsable && jumpBufferFramesCounter < playerPhysicsStats.jumpBufferFrames;
-            bool canUseCoyote = coyoteUsable && !onGround && coyoteFramesCounter < playerPhysicsStats.coyoteFrames;
-            bool canUseWallJumpCoyote = wallJumpCoyoteUsable && !onGround && wallJumpCoyoteFramesCounter < playerPhysicsStats.wallJumpCoyoteFrames;
-            bool canAirJump = airJumpsRemaining > 0;
+            bool canUseCoyote = coyoteUsable && coyoteFramesCounter < playerPhysicsStats.coyoteFrames;
+            bool canUseWallJumpCoyote = wallJumpCoyoteUsable && wallJumpCoyoteFramesCounter < playerPhysicsStats.wallJumpCoyoteFrames;
 
-            if (!endedJumpEarly && !onGround && !jumpKey && rigidbody.velocity.y > 0) endedJumpEarly = true; // Early end detection
+            if (!endedJumpEarly && !onGround && !onWall && !jumpKey && velocity.y > 0) endedJumpEarly = true; // Early end detection
 
             // Check for jump input
             if (!jumpToConsume && !hasBufferedJump) return;
 
             if (onWall || canUseWallJumpCoyote) wallJump();
             else if (onGround || canUseCoyote) normalJump();
-            else if (canAirJump) airJump();
+            else if (airJumpsRemaining > 0) airJump();
 
             jumpToConsume = false; // Always consume the flag
         }

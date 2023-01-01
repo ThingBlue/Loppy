@@ -21,8 +21,8 @@ MonoBehaviour:
   maxRunSpeed: 10
   burstVelocity: 0
   acceleration: 100
-  groundDeceleration: 50
-  airDeceleration: 30
+  groundDeceleration: 200
+  airDeceleration: 100
   groundingForce: -2
   jumpStrength: 16
   maxFallSpeed: 40
@@ -34,13 +34,12 @@ MonoBehaviour:
   wallFallAcceleration: 16
   maxWallFallSpeed: 6
   fastWallFallSpeed: 12
-  wallJumpStrength: {x: 5, y: 16}
-  wallJumpInputLossFrames: 18
+  wallJumpStrength: {x: 8, y: 18}
+  wallJumpInputLossFrames: 8
   wallJumpCoyoteFrames: 5
   ledgeGrabDeceleration: 4
   ledgeGrabPoint: {x: 0.4, y: 1}
   standUpOffset: {x: 0.4, y: 0.01}
-  ledgeRaycastSpacing: 0.3
   ledgeRaycastDistance: 2
   ledgeClimbDuration: 0.2
   raycastDistance: 0.05

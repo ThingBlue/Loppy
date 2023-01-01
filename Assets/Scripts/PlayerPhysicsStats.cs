@@ -68,8 +68,8 @@ namespace Loppy
         [Tooltip("The immediate velocity horizontal velocity applied when wall jumping")]
         public Vector2 wallJumpStrength = new(10, 25);
 
-        [Tooltip("The frames before full horizontal movement is returned after a wall jump"), Min(1)]
-        public int wallJumpInputLossFrames = 10;
+        [Tooltip("The frames before full horizontal movement is returned after a wall jump")]
+        public float wallJumpInputLossFrames = 0.2f;
 
         [Tooltip("The amount of fixed frames where you can still wall jump after pressing to leave a wall")]
         public int wallJumpCoyoteFrames = 5;
@@ -83,19 +83,6 @@ namespace Loppy
 
         [Tooltip("Relative point from the ledge corner where the new player position will be after climbing up (Tip: have Y be slightly > 0)")]
         public Vector2 standUpOffset = new(0.2f, 0.02f);
-
-
-
-
-
-        
-        [Tooltip("Vertical offset above and below your grab point to detect a nearby ledge"), Min(0.05f)]
-        public float ledgeRaycastSpacing = 0.3f;
-        
-
-
-
-
 
         [Tooltip("The raycast distance for ledge detection"), Min(0.05f)]
         public float ledgeRaycastDistance = 1f;

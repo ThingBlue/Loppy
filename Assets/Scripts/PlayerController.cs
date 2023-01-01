@@ -75,7 +75,7 @@ namespace Loppy
 
         public Vector2 velocity;
         private Vector2 externalVelocity;
-        private float currentWallJumpMoveMultiplier = 1f;
+        private float wallJumpControlLossMultiplier = 1f;
 
         #endregion
 
@@ -238,29 +238,35 @@ namespace Loppy
 
             #region Horizontal physics
 
-            currentWallJumpMoveMultiplier = Mathf.MoveTowards(currentWallJumpMoveMultiplier, 1f, 1f / playerPhysicsStats.wallJumpInputLossFrames);
+            // Decrease wall jump input loss
+            wallJumpControlLossMultiplier = Mathf.MoveTowards(wallJumpControlLossMultiplier, 1f, 1f / (playerPhysicsStats.wallJumpInputLossFrames * (GameManager.instance.fps / 60f)));
 
             // Give player a burst of speed upon key down
             if (playerInputDown.x > 0) velocity.x = playerPhysicsStats.burstVelocity;
             if (playerInputDown.x < 0) velocity.x = -playerPhysicsStats.burstVelocity;
 
+            // Player input is in the opposite direction of current velocity
+            if (playerInput.x != 0 && velocity.x != 0 && Mathf.Sign(playerInput.x) != Mathf.Sign(velocity.x) && wallJumpControlLossMultiplier == 1)
+            {
+                // Instantly reset velocity
+                velocity.x = 0;
+            }
             // Deceleration
-            if (playerInput.x == 0)
+            else if (playerInput.x == 0 && wallJumpControlLossMultiplier == 1)
             {
                 var deceleration = onGround ? playerPhysicsStats.groundDeceleration : playerPhysicsStats.airDeceleration;
 
                 // Decelerate towards 0
-                //velocity.x = Mathf.MoveTowards(velocity.x, 0, deceleration * Time.fixedDeltaTime);
-                velocity.x = 0;
+                velocity.x = Mathf.MoveTowards(velocity.x, 0, deceleration * Time.fixedDeltaTime);
             }
             // Regular Horizontal Movement
             else
             {
+                // Accelerate towards max speed
+                velocity.x = Mathf.MoveTowards(velocity.x, playerInput.x * playerPhysicsStats.maxRunSpeed, wallJumpControlLossMultiplier * playerPhysicsStats.acceleration * Time.fixedDeltaTime);
+
                 // Reset x velocity when on wall
                 if (onWall) velocity.x = 0;
-
-                // Accelerate towards max speed
-                velocity.x = Mathf.MoveTowards(velocity.x, playerInput.x * playerPhysicsStats.maxRunSpeed, currentWallJumpMoveMultiplier * playerPhysicsStats.acceleration * Time.fixedDeltaTime);
             }
 
             #endregion
@@ -505,9 +511,9 @@ namespace Loppy
 
         private void handleJump()
         {
-            bool hasBufferedJump = bufferedJumpUsable && jumpBufferFramesCounter < playerPhysicsStats.jumpBufferFrames;
-            bool canUseCoyote = coyoteUsable && coyoteFramesCounter < playerPhysicsStats.coyoteFrames;
-            bool canUseWallJumpCoyote = wallJumpCoyoteUsable && wallJumpCoyoteFramesCounter < playerPhysicsStats.wallJumpCoyoteFrames;
+            bool hasBufferedJump = bufferedJumpUsable && jumpBufferFramesCounter < playerPhysicsStats.jumpBufferFrames * (GameManager.instance.fps / 60f);
+            bool canUseCoyote = coyoteUsable && coyoteFramesCounter < playerPhysicsStats.coyoteFrames * (GameManager.instance.fps / 60f);
+            bool canUseWallJumpCoyote = wallJumpCoyoteUsable && wallJumpCoyoteFramesCounter < playerPhysicsStats.wallJumpCoyoteFrames * (GameManager.instance.fps / 60f);
 
             if (!endedJumpEarly && !onGround && !onWall && !jumpKey && velocity.y > 0) endedJumpEarly = true; // Early end detection
 
@@ -544,7 +550,7 @@ namespace Loppy
 
             // Apply jump velocity
             velocity = Vector2.Scale(playerPhysicsStats.wallJumpStrength, new(-wallDirection, 1));
-            currentWallJumpMoveMultiplier = 0;
+            wallJumpControlLossMultiplier = 0;
 
             // Reset onWall status
             onWall = false;

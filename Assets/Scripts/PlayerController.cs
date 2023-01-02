@@ -28,7 +28,8 @@ namespace Loppy
         AIRBORNE,
         ON_WALL,
         ON_LEDGE,
-        CLIMB_LEDGE
+        CLIMB_LEDGE,
+        DASH
     }
 
     [RequireComponent(typeof(Rigidbody2D), typeof(Collider2D))]
@@ -728,6 +729,7 @@ namespace Loppy
 
         private void handleStateMachine()
         {
+            // Call corresponding state function
             switch (playerState)
             {
                 case PlayerState.NONE: break;
@@ -749,6 +751,9 @@ namespace Loppy
                 case PlayerState.CLIMB_LEDGE:
                     climbLedgeState();
                     break;
+                case PlayerState.DASH:
+                    dashState();
+                    break;
                 default: break;
             }
         }
@@ -758,7 +763,8 @@ namespace Loppy
             sprite.color = Color.blue;
 
             // Switch states
-            if      (!onGround)          playerState = PlayerState.AIRBORNE;
+            if      (dashing)            playerState = PlayerState.DASH;
+            else if (!onGround)          playerState = PlayerState.AIRBORNE;
             else if (playerInput.x != 0) playerState = PlayerState.RUN;
         }
 
@@ -767,7 +773,8 @@ namespace Loppy
             sprite.color = Color.red;
 
             // Switch states
-            if      (!onGround)       playerState = PlayerState.AIRBORNE;
+            if      (dashing)         playerState = PlayerState.DASH;
+            else if (!onGround)       playerState = PlayerState.AIRBORNE;
             else if (velocity.x == 0) playerState = PlayerState.IDLE;
         }
 
@@ -776,7 +783,8 @@ namespace Loppy
             sprite.color = Color.yellow;
 
             // Switch states
-            if      (onGround && velocity.x == 0) playerState = PlayerState.IDLE;
+            if      (dashing)                     playerState = PlayerState.DASH;
+            else if (onGround && velocity.x == 0) playerState = PlayerState.IDLE;
             else if (onGround)                    playerState = PlayerState.RUN;
             else if (onWall)                      playerState = PlayerState.ON_WALL;
         }
@@ -788,6 +796,7 @@ namespace Loppy
             // Switch states
             if      (climbingLedge)               playerState = PlayerState.CLIMB_LEDGE;
             else if (onLedge)                     playerState = PlayerState.ON_LEDGE;
+            else if (dashing)                     playerState = PlayerState.DASH;
             else if (!onWall && !onGround)        playerState = PlayerState.AIRBORNE;
             else if (onGround && velocity.x == 0) playerState = PlayerState.IDLE;
             else if (onGround)                    playerState = PlayerState.RUN;
@@ -799,6 +808,7 @@ namespace Loppy
 
             // Switch states
             if      (climbingLedge)        playerState = PlayerState.CLIMB_LEDGE;
+            else if (dashing)              playerState = PlayerState.DASH;
             else if (!onLedge && onGround) playerState = PlayerState.IDLE;
             else if (!onLedge && onWall)   playerState = PlayerState.ON_WALL;
             else if (!onLedge)             playerState = PlayerState.AIRBORNE;
@@ -810,6 +820,16 @@ namespace Loppy
 
             // Switch states
             if (!climbingLedge) playerState = PlayerState.IDLE;
+        }
+
+        private void dashState()
+        {
+            sprite.color = Color.green;
+
+            // Switch states
+            if (!dashing && onGround) playerState = PlayerState.RUN;
+            if (!dashing && onWall) playerState = PlayerState.ON_WALL;
+            if (!dashing) playerState = PlayerState.AIRBORNE;
         }
 
         #endregion

@@ -46,11 +46,11 @@ namespace Loppy
         [Tooltip("The gravity multiplier added when jump is released early")]
         public float jumpEndEarlyGravityModifier = 3;
 
-        [Tooltip("The fixed frames before coyote jump becomes unusable. Coyote jump allows jump to execute even after leaving a ledge")]
-        public int coyoteFrames = 7;
+        [Tooltip("The amount of time before coyote jump becomes unusable. Coyote jump allows jump to execute even after leaving a ledge")]
+        public float coyoteTime = 0.1f;
 
-        [Tooltip("The amount of fixed frames we buffer a jump. This allows jump input before actually hitting the ground")]
-        public int jumpBufferFrames = 7;
+        [Tooltip("The amount of time we buffer a jump. This allows jump input before actually hitting the ground")]
+        public float jumpBufferTime = 0.1f;
 
         [Header("WALLS")]
         [Tooltip("How fast you climb walls.")]
@@ -68,11 +68,11 @@ namespace Loppy
         [Tooltip("The immediate velocity horizontal velocity applied when wall jumping")]
         public Vector2 wallJumpStrength = new(10, 25);
 
-        [Tooltip("The frames before full horizontal movement is returned after a wall jump")]
-        public float wallJumpInputLossFrames = 0.2f;
+        [Tooltip("The amount of time before full horizontal movement is returned after a wall jump")]
+        public float wallJumpInputLossTime = 0.2f;
 
-        [Tooltip("The amount of fixed frames where you can still wall jump after pressing to leave a wall")]
-        public int wallJumpCoyoteFrames = 5;
+        [Tooltip("The amount of time where you can still wall jump after pressing to leave a wall")]
+        public float wallJumpCoyoteTime = 0.1f;
 
         [Header("LEDGES")]
         [Tooltip("The rate at which we slow our velocity to grab a ledge. Too low, we slide off. Too high, we won't match our GrabPoint")]
@@ -89,6 +89,16 @@ namespace Loppy
 
         [Tooltip("How long movement will be locked out. Animation clip length")]
         public float ledgeClimbDuration = 0.5f;
+
+        [Header("DASH")]
+        [Tooltip("The velocity of the dash")]
+        public float dashVelocity = 50;
+
+        [Tooltip("How many seconds the dash will last")]
+        public float dashTime = 0.2f;
+
+        [Tooltip("The horizontal speed retained when dash has completed")]
+        public float dashEndHorizontalMultplier = 0.25f;
 
         [Header("COLLISION")]
         [Tooltip("The raycast distance for collision detection"), Range(0f, 1.0f)]

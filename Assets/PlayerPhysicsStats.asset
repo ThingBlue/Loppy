@@ -28,20 +28,23 @@ MonoBehaviour:
   maxFallSpeed: 40
   fallAcceleration: 40
   jumpEndEarlyGravityModifier: 5
-  coyoteFrames: 5
-  jumpBufferFrames: 7
+  coyoteTime: 0.1
+  jumpBufferTime: 0.1
   wallClimbSpeed: 8
   wallFallAcceleration: 16
   maxWallFallSpeed: 6
   fastWallFallSpeed: 12
   wallJumpStrength: {x: 8, y: 18}
-  wallJumpInputLossFrames: 8
-  wallJumpCoyoteFrames: 5
+  wallJumpInputLossTime: 0.13333334
+  wallJumpCoyoteTime: 0.1
   ledgeGrabDeceleration: 8
   ledgeGrabPoint: {x: 0.4, y: 1}
   standUpOffset: {x: 0.4, y: 0}
   ledgeRaycastDistance: 2
   ledgeClimbDuration: 0.2
+  dashVelocity: 50
+  dashTime: 0.2
+  dashEndHorizontalMultplier: 0.25
   raycastDistance: 0.05
   maxWalkAngle: 30
   maxClimbAngle: 30

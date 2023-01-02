@@ -50,56 +50,66 @@ namespace Loppy
 
         private bool hasControl = true;
 
-        private Vector2 playerInput;
-        private Vector2 lastPlayerInput;
-        private Vector2 playerInputDown; // Only true on the first frame of key down
+        private Vector2 playerInput = Vector2.zero;
+        private Vector2 lastPlayerInput = Vector2.zero;
+        private Vector2 playerInputDown = Vector2.zero; // Only true on the first frame of key down
+
         private bool jumpKey = false;
-        private bool jumpKeyUp = true;
-
-        public int maxAirJumps = 1;
-        private int airJumpsRemaining;
-
-        private bool jumpToConsume;
-        private bool jumpBufferUsable;
-        private bool endedJumpEarly;
-        private bool coyoteUsable;
-        private bool wallJumpCoyoteUsable;
-
-        private int jumpBufferFramesCounter = 0;
-        private int coyoteFramesCounter = 0;
-        private int wallJumpCoyoteFramesCounter = 0;
+        private bool dashKey = false;
 
         #endregion
 
         #region Physics variables
 
-        public Vector2 velocity;
-        private Vector2 externalVelocity;
-        private float wallJumpControlLossMultiplier = 1f;
+        public Vector2 velocity = Vector2.zero;
+        private Vector2 externalVelocity = Vector2.zero;
+
+        // Jump
+        public int maxAirJumps = 1;
+        private int airJumpsRemaining = 0;
+
+        private bool jumpToConsume = false;
+        private bool jumpBufferUsable = false;
+        private bool endedJumpEarly = false;
+        private bool coyoteUsable = false;
+        private bool wallJumpCoyoteUsable = false;
+
+        private float jumpBufferTimer = 0;
+        private float coyoteTimer = 0;
+        private float wallJumpCoyoteTimer = 0;
+
+        private float wallJumpControlLossMultiplier = 1;
+        private float wallJumpControlLossTimer = 0;
+
+        // Dash
+        private bool dashing = false;
+        private bool dashToConsume = false;
+        private bool canDash = false;
+        private float dashTimer = 0;
 
         #endregion
 
         #region Collision variables
 
-        public bool onGround;
-        private Vector2 groundNormal;
-        private Vector2 ceilingNormal;
+        public bool onGround = false;
+        private Vector2 groundNormal = Vector2.zero;
+        private Vector2 ceilingNormal = Vector2.zero;
 
-        public bool onWall;
-        private int wallDirection;
-        private Vector2 wallNormal;
+        public bool onWall = false;
+        private int wallDirection = 0;
+        private Vector2 wallNormal = Vector2.zero;
 
-        public bool onLedge;
-        private bool climbingLedge;
-        private Vector2 ledgeCornerPosition;
+        public bool onLedge = false;
+        private bool climbingLedge = false;
+        private Vector2 ledgeCornerPosition = Vector2.zero;
 
-        private bool detectTriggers;
+        private bool detectTriggers = false;
 
         #endregion
 
         #region State machine
 
-        public PlayerState playerState;
+        public PlayerState playerState = PlayerState.NONE;
         public int facingDirection = 1;
 
         #endregion
@@ -112,8 +122,11 @@ namespace Loppy
         public event Action jumped;
         public event Action wallJumped;
         public event Action airJumped;
+        public event Action dashed;
 
         #endregion
+
+        #region External
 
         public void applyVelocity(Vector2 vel, PlayerForce forceType)
         {
@@ -128,6 +141,8 @@ namespace Loppy
         }
 
         public void toggleControl(bool control) { hasControl = control; }
+
+        #endregion
 
         private void Awake()
         {
@@ -147,16 +162,17 @@ namespace Loppy
 
         private void FixedUpdate()
         {
-            // Increment frame counters
-            jumpBufferFramesCounter++;
-            coyoteFramesCounter++;
-            wallJumpCoyoteFramesCounter++;
+            // Increment timers
+            jumpBufferTimer += Time.fixedDeltaTime;
+            coyoteTimer += Time.fixedDeltaTime;
+            wallJumpCoyoteTimer += Time.fixedDeltaTime;
+            wallJumpControlLossTimer += Time.fixedDeltaTime;
 
             handlePhysics();
-
             handleCollisions();
 
             handleJump();
+            //handleDash();
 
             move();
 
@@ -193,7 +209,15 @@ namespace Loppy
             if (InputManager.instance.getKeyDown("jump"))
             {
                 jumpToConsume = true;
-                jumpBufferFramesCounter = 0;
+                jumpBufferTimer = 0;
+            }
+
+            // Dash
+            dashKey = InputManager.instance.getKey("dash");
+            if (InputManager.instance.getKeyDown("dash"))
+            {
+                dashToConsume = true;
+                jumpBufferTimer = 0;
             }
 
             // Set player's facing direction to last horizontal input
@@ -239,7 +263,8 @@ namespace Loppy
             #region Horizontal physics
 
             // Decrease wall jump input loss
-            wallJumpControlLossMultiplier = Mathf.MoveTowards(wallJumpControlLossMultiplier, 1f, 1f / (playerPhysicsStats.wallJumpInputLossFrames * (GameManager.instance.fps / 60f)));
+            //wallJumpControlLossMultiplier = Mathf.MoveTowards(wallJumpControlLossMultiplier, 1f, 1f / (playerPhysicsStats.wallJumpInputLossTime * (GameManager.instance.fps / 60f)));
+            wallJumpControlLossMultiplier = Mathf.Clamp(wallJumpControlLossTimer / playerPhysicsStats.wallJumpInputLossTime, 0f, 1f);
 
             // Give player a burst of speed upon key down
             if (playerInputDown.x > 0) velocity.x = playerPhysicsStats.burstVelocity;
@@ -313,8 +338,8 @@ namespace Loppy
             {
                 onGround = false;
 
-                // Start coyote frames counter
-                coyoteFramesCounter = 0;
+                // Start coyote timer
+                coyoteTimer = 0;
 
                 // Invoke onGroundChanged event action
                 onGroundChanged?.Invoke(false, 0);
@@ -330,6 +355,8 @@ namespace Loppy
                         // Change y velocity to match ground slope
                         float groundSlope = -groundNormal.x / groundNormal.y;
                         velocity.y = velocity.x * groundSlope;
+
+                        // Give the player a constant velocity so that they stick to sloped ground
                         if (velocity.x != 0) velocity.y += playerPhysicsStats.groundingForce;
                     }
                 }
@@ -378,8 +405,8 @@ namespace Loppy
                 onLedge = false;
                 climbingLedge = false;
 
-                // Start wall jump coyote frames counter
-                wallJumpCoyoteFramesCounter = 0;
+                // Start wall jump coyote timer
+                wallJumpCoyoteTimer = 0;
 
                 // Invoke onWallChanged event action
                 onWallChanged?.Invoke(false, 0);
@@ -387,9 +414,6 @@ namespace Loppy
             // On wall
             else if (onWall && wallHitCount > 0 && wallAngle <= playerPhysicsStats.maxClimbAngle && !onGround)
             {
-                // Give the player a constant velocity so that they stick to sloped walls
-                //velocity.x = playerPhysicsStats.groundingForce * -wallDirection;
-
                 // Handle slopes
                 if (wallNormal != Vector2.zero) // Make sure wall normal exists
                 {
@@ -398,6 +422,8 @@ namespace Loppy
                         // Change x velocity to match wall slope
                         float inverseWallSlope = -wallNormal.y / wallNormal.x;
                         velocity.x = velocity.y * inverseWallSlope;
+
+                        // Give the player a constant velocity so that they stick to sloped walls
                         //if (velocity.y != 0) velocity.x += playerPhysicsStats.groundingForce * -wallDirection;
                     }
                 }
@@ -511,16 +537,16 @@ namespace Loppy
 
         #endregion
 
-        #region Jumping
+        #region Jump
 
         private void handleJump()
         {
             // Check if player has control
             if (!hasControl) return;
 
-            bool canUseJumpBuffer = jumpBufferUsable && jumpBufferFramesCounter < playerPhysicsStats.jumpBufferFrames * (GameManager.instance.fps / 60f);
-            bool canUseCoyote = coyoteUsable && coyoteFramesCounter < playerPhysicsStats.coyoteFrames * (GameManager.instance.fps / 60f);
-            bool canUseWallJumpCoyote = wallJumpCoyoteUsable && wallJumpCoyoteFramesCounter < playerPhysicsStats.wallJumpCoyoteFrames * (GameManager.instance.fps / 60f);
+            bool canUseJumpBuffer = jumpBufferUsable && jumpBufferTimer < playerPhysicsStats.jumpBufferTime * (GameManager.instance.fps / 60f);
+            bool canUseCoyote = coyoteUsable && coyoteTimer < playerPhysicsStats.coyoteTime * (GameManager.instance.fps / 60f);
+            bool canUseWallJumpCoyote = wallJumpCoyoteUsable && wallJumpCoyoteTimer < playerPhysicsStats.wallJumpCoyoteTime * (GameManager.instance.fps / 60f);
 
             // Detect early jump end
             if (!endedJumpEarly && !onGround && !onWall && !jumpKey && velocity.y > 0) endedJumpEarly = true;
@@ -559,6 +585,7 @@ namespace Loppy
             // Apply jump velocity
             velocity = Vector2.Scale(playerPhysicsStats.wallJumpStrength, new(-wallDirection, 1));
             wallJumpControlLossMultiplier = 0;
+            wallJumpControlLossTimer = 0;
 
             // Reset onWall status
             onWall = false;
@@ -591,6 +618,22 @@ namespace Loppy
 
             // Reset number of air jumps
             airJumpsRemaining = maxAirJumps;
+        }
+
+        #endregion
+
+        #region Dash
+
+        private void handleDash()
+        {
+            if (dashToConsume)
+            {
+                dashing = true;
+                if (!onGround && !onWall) canDash = false;
+
+                // Start dash timer
+
+            }
         }
 
         #endregion

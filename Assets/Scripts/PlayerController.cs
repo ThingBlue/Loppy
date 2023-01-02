@@ -84,8 +84,16 @@ namespace Loppy
         private bool dashing = false;
         private bool dashToConsume = false;
         private bool canDash = false;
+        private bool dashBufferUsable = false;
+        private bool dashCoyoteUsable = false;
+
         private Vector2 dashVelocity = Vector2.zero;
+
         private float dashTimer = 0;
+        private float dashCooldownTimer = 0;
+        private float dashBufferTimer = 0;
+        private float dashCoyoteTimer = 0;
+
 
         #endregion
 
@@ -168,6 +176,9 @@ namespace Loppy
             wallJumpCoyoteTimer += Time.fixedDeltaTime;
             wallJumpControlLossTimer += Time.fixedDeltaTime;
             dashTimer += Time.fixedDeltaTime;
+            dashCooldownTimer += Time.fixedDeltaTime;
+            dashBufferTimer += Time.fixedDeltaTime;
+            dashCoyoteTimer += Time.fixedDeltaTime;
 
             handlePhysics();
             handleCollisions();
@@ -181,6 +192,8 @@ namespace Loppy
 
             // Reset input
             playerInputDown = Vector2.zero;
+
+            Debug.Log($"canDash: {canDash}, dashCoyoteUsable: {dashCoyoteUsable}, dashCoyoteTimer: {dashCoyoteTimer}");
         }
 
         #region Input
@@ -215,7 +228,11 @@ namespace Loppy
 
             // Dash
             //dashKey = InputManager.instance.getKey("dash");
-            if (InputManager.instance.getKeyDown("dash")) dashToConsume = true;
+            if (InputManager.instance.getKeyDown("dash"))
+            {
+                dashToConsume = true;
+                dashBufferTimer = 0;
+            }
 
             // Set player's facing direction to last horizontal input
             facingDirection = lastPlayerInput.x >= 0 ? 1 : -1;
@@ -342,6 +359,7 @@ namespace Loppy
 
                 // Start coyote timer
                 coyoteTimer = 0;
+                dashCoyoteTimer = 0;
 
                 // Invoke onGroundChanged event action
                 onGroundChanged?.Invoke(false, 0);
@@ -409,6 +427,7 @@ namespace Loppy
 
                 // Start wall jump coyote timer
                 wallJumpCoyoteTimer = 0;
+                dashCoyoteTimer = 0;
 
                 // Invoke onWallChanged event action
                 onWallChanged?.Invoke(false, 0);
@@ -546,9 +565,9 @@ namespace Loppy
             // Check if player has control
             if (!hasControl) return;
 
-            bool canUseJumpBuffer = jumpBufferUsable && jumpBufferTimer < playerPhysicsStats.jumpBufferTime * (GameManager.instance.fps / 60f);
-            bool canUseCoyote = coyoteUsable && coyoteTimer < playerPhysicsStats.coyoteTime * (GameManager.instance.fps / 60f);
-            bool canUseWallJumpCoyote = wallJumpCoyoteUsable && wallJumpCoyoteTimer < playerPhysicsStats.wallJumpCoyoteTime * (GameManager.instance.fps / 60f);
+            bool canUseJumpBuffer = jumpBufferUsable && jumpBufferTimer < playerPhysicsStats.jumpBufferTime;
+            bool canUseCoyote = coyoteUsable && coyoteTimer < playerPhysicsStats.coyoteTime;
+            bool canUseWallJumpCoyote = wallJumpCoyoteUsable && wallJumpCoyoteTimer < playerPhysicsStats.wallJumpCoyoteTime;
 
             // Detect early jump end
             if (!endedJumpEarly && !onGround && !onWall && !jumpKey && velocity.y > 0) endedJumpEarly = true;
@@ -623,6 +642,8 @@ namespace Loppy
 
             // Reset dash
             canDash = true;
+            dashBufferUsable = true;
+            dashCoyoteUsable = true;
         }
 
         #endregion
@@ -631,7 +652,15 @@ namespace Loppy
 
         private void handleDash()
         {
-            if (dashToConsume && canDash)
+            bool canUseDashBuffer = dashBufferUsable && dashBufferTimer < playerPhysicsStats.dashBufferTime;
+            bool canUseDashCoyote = dashCoyoteUsable && dashCoyoteTimer < playerPhysicsStats.dashCoyoteTime;
+
+            // Check for conditions to initiate dash:
+            //    Not currently dashing
+            //    Player dash input detected or buffered
+            //    Can dash or use dash coyote
+            //    Dash cooldown elapsed
+            if (!dashing && (dashToConsume || canUseDashBuffer) && (canDash || canUseDashCoyote) && dashCooldownTimer > playerPhysicsStats.dashCooldownTime)
             {
                 // Set dash velocity
                 if (onWall) dashVelocity = playerPhysicsStats.dashVelocity * new Vector2(-wallDirection, 0);
@@ -639,7 +668,12 @@ namespace Loppy
 
                 // Set dash flags
                 dashing = true;
-                if (!onGround && !onWall) canDash = false;
+                if (!onGround && !onWall && !canUseDashCoyote)
+                {
+                    canDash = false;
+                    dashBufferUsable = false;
+                    dashCoyoteUsable = false;
+                }
 
                 // Start dash timer
                 dashTimer = 0;
@@ -651,6 +685,7 @@ namespace Loppy
                 dashingChanged?.Invoke(true);
             }
 
+            // Handle the dash itself
             if (dashing)
             {
                 // Maintain dash velocity
@@ -661,6 +696,9 @@ namespace Loppy
                 {
                     // Reset dashing flag
                     dashing = false;
+
+                    // Start dash cooldown timer
+                    dashCooldownTimer = 0;
 
                     // Set player velocity at end of dash
                     velocity.x *= playerPhysicsStats.dashEndHorizontalMultiplier;

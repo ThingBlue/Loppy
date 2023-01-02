@@ -94,8 +94,17 @@ namespace Loppy
         [Tooltip("How many seconds the dash will last")]
         public float dashTime = 0.2f;
 
+        [Tooltip("How many seconds needs to pass between dashes")]
+        public float dashCooldownTime = 0.2f;
+
         [Tooltip("The horizontal speed retained when dash has completed")]
         public float dashEndHorizontalMultiplier = 0.25f;
+
+        [Tooltip("The amount of time before coyote dash becomes unusable")]
+        public float dashCoyoteTime = 0.1f;
+
+        [Tooltip("The amount of time a dash is buffered")]
+        public float dashBufferTime = 0.1f;
 
         [Header("COLLISION")]
         [Tooltip("The raycast distance for collision detection"), Range(0f, 1.0f)]

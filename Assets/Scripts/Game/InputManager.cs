@@ -22,22 +22,6 @@ namespace Loppy
         {
             // Initialize key map
             keyMap = new Dictionary<string, List<KeyCode>>();
-
-            // SET DEFAULT KEYS FOR NOW
-            addKeyToMap("left", KeyCode.A);
-            addKeyToMap("left", KeyCode.LeftArrow);
-            addKeyToMap("right", KeyCode.D);
-            addKeyToMap("right", KeyCode.RightArrow);
-            addKeyToMap("up", KeyCode.W);
-            addKeyToMap("up", KeyCode.UpArrow);
-            addKeyToMap("down", KeyCode.S);
-            addKeyToMap("down", KeyCode.DownArrow);
-            addKeyToMap("jump", KeyCode.Space);
-            addKeyToMap("dash", KeyCode.LeftShift);
-            addKeyToMap("glide", KeyCode.LeftControl);
-
-            // TO DO:
-            // Read key mapping from config file
         }
 
         // Getters for specfic key states

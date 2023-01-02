@@ -22,26 +22,26 @@ namespace Loppy
         public float acceleration = 100;
 
         [Tooltip("The pace at which the player comes to a stop")]
-        public float groundDeceleration = 50;
+        public float groundDeceleration = 200;
 
         [Tooltip("Deceleration in air only after stopping input mid-air")]
-        public float airDeceleration = 30;
+        public float airDeceleration = 100;
 
         [Tooltip("A constant downward force applied while grounded. Helps on slopes"), Range(0f, -10f)]
-        public float groundingForce = -3.0f;
+        public float groundingForce = -2;
 
         [Header("JUMP")]
         [Tooltip("The immediate velocity applied when jumping")]
-        public float jumpStrength = 25;
+        public float jumpStrength = 18;
 
         [Tooltip("The maximum vertical movement speed")]
         public float maxFallSpeed = 40;
 
         [Tooltip("The player's capacity to gain fall speed. a.k.a. In Air Gravity")]
-        public float fallAcceleration = 100;
+        public float fallAcceleration = 50;
 
         [Tooltip("The gravity multiplier added when jump is released early")]
-        public float jumpEndEarlyGravityModifier = 3;
+        public float jumpEndEarlyGravityModifier = 5;
 
         [Tooltip("The amount of time before coyote jump becomes unusable. Coyote jump allows jump to execute even after leaving a ledge")]
         public float coyoteTime = 0.1f;
@@ -51,45 +51,45 @@ namespace Loppy
 
         [Header("WALLS")]
         [Tooltip("How fast you climb walls.")]
-        public float wallClimbSpeed = 5;
+        public float wallClimbSpeed = 8;
 
         [Tooltip("The player's capacity to gain wall sliding speed. 0 = stick to wall")]
-        public float wallFallAcceleration = 8;
+        public float wallFallAcceleration = 16;
 
         [Tooltip("Clamps the maximum fall speed")]
-        public float maxWallFallSpeed = 15;
+        public float maxWallFallSpeed = 6;
 
         [Tooltip("Fast fall speed on wall")]
-        public float fastWallFallSpeed = 20;
+        public float fastWallFallSpeed = 12;
 
         [Tooltip("The immediate velocity applied when wall jumping")]
-        public Vector2 wallJumpStrength = new(10, 25);
+        public Vector2 wallJumpStrength = new(7, 20);
 
         [Tooltip("The amount of time before full horizontal movement is returned after a wall jump")]
-        public float wallJumpInputLossTime = 0.2f;
+        public float wallJumpInputLossTime = 0.15f;
 
         [Tooltip("The amount of time where you can still wall jump after pressing to leave a wall")]
         public float wallJumpCoyoteTime = 0.1f;
 
         [Header("LEDGES")]
         [Tooltip("The rate at which we slow our velocity to grab a ledge. Too low, we slide off. Too high, we won't match our GrabPoint")]
-        public float ledgeGrabDeceleration = 4f;
+        public float ledgeGrabDeceleration = 8;
 
         [Tooltip("Relative point from the player's position where the ledge corner will be when hanging")]
-        public Vector2 ledgeGrabPoint = new(0.4f, 0.6f);
+        public Vector2 ledgeGrabPoint = new(0.4f, 1f);
 
         [Tooltip("Relative point from the ledge corner where the new player position will be after climbing up (Tip: have Y be slightly > 0)")]
-        public Vector2 standUpOffset = new(0.2f, 0.02f);
+        public Vector2 standUpOffset = new(0.4f, 0f);
 
         [Tooltip("The raycast distance for ledge detection"), Min(0.05f)]
-        public float ledgeRaycastDistance = 1f;
+        public float ledgeRaycastDistance = 2;
 
         [Tooltip("How long movement will be locked out. Animation clip length")]
-        public float ledgeClimbDuration = 0.5f;
+        public float ledgeClimbDuration = 0.2f;
 
         [Header("DASH")]
         [Tooltip("The velocity of the dash")]
-        public float dashVelocity = 50;
+        public float dashVelocity = 25;
 
         [Tooltip("How many seconds the dash will last")]
         public float dashTime = 0.2f;
@@ -110,7 +110,7 @@ namespace Loppy
         public Vector2 dashJumpStrength = new(30, 18);
 
         [Tooltip("The amount of time before full horizontal movement is returned after a dash jump")]
-        public float dashJumpInputLossTime = 0.2f;
+        public float dashJumpInputLossTime = 0.3f;
 
         [Header("GLIDE")]
         [Tooltip("Maximum fall speed during glide")]

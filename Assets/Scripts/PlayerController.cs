@@ -262,6 +262,12 @@ namespace Loppy
             {
 
             }
+            // Climbing ledge
+            else if (climbingLedge)
+            {
+                // Reset y velocity
+                velocity.y = 0;
+            }
             // Wall
             else if (onWall)
             {
@@ -542,8 +548,6 @@ namespace Loppy
 
             // Reset ledge and wall flags
             climbingLedge = true;
-            onLedge = false;
-            onWall = false;
             ledgeClimbTimer = 0;
 
             // Get startup and resultant positions

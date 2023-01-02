@@ -4192,7 +4192,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1924130188}
   m_Layer: 8
-  m_Name: CameraFocusPoint
+  m_Name: CameraFocalPoint
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5157,6 +5157,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   sprite: {fileID: 1629058778}
+  cameraFocalPoint: {fileID: 1924130188}
   rigidbody: {fileID: 2118610474}
   standingCollider: {fileID: 2118610473}
   playerPhysicsStats: {fileID: 11400000, guid: 183c791e7c8d4f546ad06f273935b08f, type: 2}

@@ -39,6 +39,7 @@ namespace Loppy
         #region Inspector members
 
         public SpriteRenderer sprite;
+        public Transform cameraFocalPoint;
 
         public Rigidbody2D rigidbody;
         public CapsuleCollider2D standingCollider;
@@ -115,6 +116,7 @@ namespace Loppy
         public bool onLedge = false;
         private bool climbingLedge = false;
         private Vector2 ledgeCornerPosition = Vector2.zero;
+        private float ledgeClimbTimer = 0;
 
         private bool detectTriggers = false;
 
@@ -185,6 +187,7 @@ namespace Loppy
             dashCooldownTimer += Time.fixedDeltaTime;
             dashBufferTimer += Time.fixedDeltaTime;
             dashCoyoteTimer += Time.fixedDeltaTime;
+            ledgeClimbTimer += Time.fixedDeltaTime;
 
             handlePhysics();
             handleCollisions();
@@ -538,17 +541,28 @@ namespace Loppy
             climbingLedge = true;
             onLedge = false;
             onWall = false;
+            ledgeClimbTimer = 0;
+
+            // Get startup and resultant positions
+            Vector2 startupPosition = ledgeCornerPosition - Vector2.Scale(playerPhysicsStats.ledgeGrabPoint, new(wallDirection, 1f));
+            Vector2 resultantPosition = ledgeCornerPosition + Vector2.Scale(playerPhysicsStats.standUpOffset, new(wallDirection, 1f));
 
             // Set startup position
-            transform.position = ledgeCornerPosition - Vector2.Scale(playerPhysicsStats.ledgeGrabPoint, new(wallDirection, 1f));
+            transform.position = startupPosition;
+            cameraFocalPoint.position = transform.position;
 
             // Wait for ledge climb animation to finish
-            float animationEndTime = Time.time + playerPhysicsStats.ledgeClimbDuration;
-            while (Time.time < animationEndTime) yield return new WaitForFixedUpdate();
+            while (ledgeClimbTimer < playerPhysicsStats.ledgeClimbDuration)
+            {
+                // Gradually move camera towards resultant position
+                cameraFocalPoint.position = startupPosition + ((resultantPosition - startupPosition) * Mathf.Clamp(ledgeClimbTimer / playerPhysicsStats.ledgeClimbDuration, 0f, 1f));
+                yield return new WaitForFixedUpdate();
+            }
 
             // Set final position
-            transform.position = ledgeCornerPosition + Vector2.Scale(playerPhysicsStats.standUpOffset, new(wallDirection, 1f));
-            
+            transform.position = resultantPosition;
+            cameraFocalPoint.position = transform.position;
+
             // Reset ledge and wall flags
             climbingLedge = false;
             onLedge = false;

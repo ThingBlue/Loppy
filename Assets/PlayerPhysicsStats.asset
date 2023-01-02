@@ -23,9 +23,9 @@ MonoBehaviour:
   groundDeceleration: 200
   airDeceleration: 100
   groundingForce: -2
-  jumpStrength: 16
+  jumpStrength: 18
   maxFallSpeed: 40
-  fallAcceleration: 40
+  fallAcceleration: 50
   jumpEndEarlyGravityModifier: 5
   coyoteTime: 0.1
   jumpBufferTime: 0.1
@@ -33,7 +33,7 @@ MonoBehaviour:
   wallFallAcceleration: 16
   maxWallFallSpeed: 6
   fastWallFallSpeed: 12
-  wallJumpStrength: {x: 8, y: 18}
+  wallJumpStrength: {x: 8, y: 20}
   wallJumpInputLossTime: 0.13333334
   wallJumpCoyoteTime: 0.1
   ledgeGrabDeceleration: 8

@@ -55,7 +55,6 @@ namespace Loppy
         private Vector2 playerInputDown = Vector2.zero; // Only true on the first frame of key down
 
         private bool jumpKey = false;
-        private bool dashKey = false;
 
         #endregion
 
@@ -85,6 +84,7 @@ namespace Loppy
         private bool dashing = false;
         private bool dashToConsume = false;
         private bool canDash = false;
+        private Vector2 dashVelocity = Vector2.zero;
         private float dashTimer = 0;
 
         #endregion
@@ -122,7 +122,7 @@ namespace Loppy
         public event Action jumped;
         public event Action wallJumped;
         public event Action airJumped;
-        public event Action dashed;
+        public event Action<bool> dashingChanged;
 
         #endregion
 
@@ -167,12 +167,13 @@ namespace Loppy
             coyoteTimer += Time.fixedDeltaTime;
             wallJumpCoyoteTimer += Time.fixedDeltaTime;
             wallJumpControlLossTimer += Time.fixedDeltaTime;
+            dashTimer += Time.fixedDeltaTime;
 
             handlePhysics();
             handleCollisions();
 
             handleJump();
-            //handleDash();
+            handleDash();
 
             move();
 
@@ -213,12 +214,8 @@ namespace Loppy
             }
 
             // Dash
-            dashKey = InputManager.instance.getKey("dash");
-            if (InputManager.instance.getKeyDown("dash"))
-            {
-                dashToConsume = true;
-                jumpBufferTimer = 0;
-            }
+            //dashKey = InputManager.instance.getKey("dash");
+            if (InputManager.instance.getKeyDown("dash")) dashToConsume = true;
 
             // Set player's facing direction to last horizontal input
             facingDirection = lastPlayerInput.x >= 0 ? 1 : -1;
@@ -232,8 +229,13 @@ namespace Loppy
         {
             #region Vertical physics
 
+            // Dashing
+            if (dashing)
+            {
+
+            }
             // Wall
-            if (onWall)
+            else if (onWall)
             {
                 // Climb wall
                 if (playerInput.y > 0 && !onLedge) velocity.y = playerPhysicsStats.wallClimbSpeed;
@@ -263,15 +265,15 @@ namespace Loppy
             #region Horizontal physics
 
             // Decrease wall jump input loss
-            //wallJumpControlLossMultiplier = Mathf.MoveTowards(wallJumpControlLossMultiplier, 1f, 1f / (playerPhysicsStats.wallJumpInputLossTime * (GameManager.instance.fps / 60f)));
             wallJumpControlLossMultiplier = Mathf.Clamp(wallJumpControlLossTimer / playerPhysicsStats.wallJumpInputLossTime, 0f, 1f);
 
-            // Give player a burst of speed upon key down
-            if (playerInputDown.x > 0) velocity.x = playerPhysicsStats.burstVelocity;
-            if (playerInputDown.x < 0) velocity.x = -playerPhysicsStats.burstVelocity;
+            // Dashing
+            if (dashing)
+            {
 
+            }
             // Player input is in the opposite direction of current velocity
-            if (playerInput.x != 0 && velocity.x != 0 && Mathf.Sign(playerInput.x) != Mathf.Sign(velocity.x) && wallJumpControlLossMultiplier == 1)
+            else if (playerInput.x != 0 && velocity.x != 0 && Mathf.Sign(playerInput.x) != Mathf.Sign(velocity.x) && wallJumpControlLossMultiplier == 1)
             {
                 // Instantly reset velocity
                 velocity.x = 0;
@@ -618,6 +620,9 @@ namespace Loppy
 
             // Reset number of air jumps
             airJumpsRemaining = maxAirJumps;
+
+            // Reset dash
+            canDash = true;
         }
 
         #endregion
@@ -626,14 +631,48 @@ namespace Loppy
 
         private void handleDash()
         {
-            if (dashToConsume)
+            if (dashToConsume && canDash)
             {
+                // Set dash velocity
+                if (onWall) dashVelocity = playerPhysicsStats.dashVelocity * new Vector2(-wallDirection, 0);
+                else dashVelocity = playerPhysicsStats.dashVelocity * new Vector2(lastPlayerInput.x, 0);
+
+                // Set dash flags
                 dashing = true;
                 if (!onGround && !onWall) canDash = false;
 
                 // Start dash timer
+                dashTimer = 0;
 
+                // Remove external velocity
+                externalVelocity = Vector2.zero;
+
+                // Invoke dashing changed event action
+                dashingChanged?.Invoke(true);
             }
+
+            if (dashing)
+            {
+                // Maintain dash velocity
+                velocity = dashVelocity;
+
+                // Check if dash time has been reached
+                if (dashTimer >= playerPhysicsStats.dashTime)
+                {
+                    // Reset dashing flag
+                    dashing = false;
+
+                    // Set player velocity at end of dash
+                    velocity.x *= playerPhysicsStats.dashEndHorizontalMultiplier;
+                    velocity.y = Mathf.Min(0, velocity.y);
+
+                    // Invoke dashing changed event action
+                    dashingChanged?.Invoke(false);
+                }
+            }
+
+            // Reset dash to consume flag regardless
+            dashToConsume = false;
         }
 
         #endregion

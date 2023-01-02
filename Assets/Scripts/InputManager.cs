@@ -33,6 +33,8 @@ namespace Loppy
             addKeyToMap("down", KeyCode.S);
             addKeyToMap("down", KeyCode.DownArrow);
             addKeyToMap("jump", KeyCode.Space);
+            addKeyToMap("dash", KeyCode.LeftShift);
+            addKeyToMap("dash", KeyCode.LeftControl);
 
             // TO DO:
             // Read key mapping from config file

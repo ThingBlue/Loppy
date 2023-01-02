@@ -18,9 +18,6 @@ namespace Loppy
         [Tooltip("The top horizontal movement speed")]
         public float maxRunSpeed = 10;
 
-        [Tooltip("A burst of velocity given to the player upon left or right key down")]
-        public float burstVelocity = 0;
-
         [Tooltip("The player's capacity to gain horizontal speed")]
         public float acceleration = 100;
 
@@ -98,7 +95,7 @@ namespace Loppy
         public float dashTime = 0.2f;
 
         [Tooltip("The horizontal speed retained when dash has completed")]
-        public float dashEndHorizontalMultplier = 0.25f;
+        public float dashEndHorizontalMultiplier = 0.25f;
 
         [Header("COLLISION")]
         [Tooltip("The raycast distance for collision detection"), Range(0f, 1.0f)]

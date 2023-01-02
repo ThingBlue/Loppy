@@ -19,7 +19,6 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 65536
   maxRunSpeed: 10
-  burstVelocity: 0
   acceleration: 100
   groundDeceleration: 200
   airDeceleration: 100
@@ -42,9 +41,9 @@ MonoBehaviour:
   standUpOffset: {x: 0.4, y: 0}
   ledgeRaycastDistance: 2
   ledgeClimbDuration: 0.2
-  dashVelocity: 50
+  dashVelocity: 25
   dashTime: 0.2
-  dashEndHorizontalMultplier: 0.25
+  dashEndHorizontalMultiplier: 0.25
   raycastDistance: 0.05
   maxWalkAngle: 30
   maxClimbAngle: 30

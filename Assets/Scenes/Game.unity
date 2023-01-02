@@ -486,7 +486,7 @@ MonoBehaviour:
   yLookAheadEnabled: 1
   lookAheadDistance: {x: 1, y: 4}
   lookAheadSmoothTime: 0.5
-  verticalPanDistance: 4
+  verticalPanDistance: 8
   verticalPanSmoothTime: 0.2
 --- !u!1 &244133577
 GameObject:
@@ -4890,8 +4890,8 @@ MonoBehaviour:
   rigidbody: {fileID: 2118610474}
   standingCollider: {fileID: 2118610473}
   playerPhysicsStats: {fileID: 11400000, guid: 183c791e7c8d4f546ad06f273935b08f, type: 2}
-  maxAirJumps: 1
   velocity: {x: 0, y: 0}
+  maxAirJumps: 1
   onGround: 0
   onWall: 0
   onLedge: 0

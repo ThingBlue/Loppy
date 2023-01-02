@@ -106,6 +106,13 @@ namespace Loppy
         [Tooltip("The amount of time a dash is buffered")]
         public float dashBufferTime = 0.1f;
 
+        [Header("GLIDE")]
+        [Tooltip("Maximum fall speed during glide")]
+        public float glideFallSpeed = 4;
+
+        [Tooltip("Gliding gravity")]
+        public float glideFallAcceleration = 20;
+
         [Header("COLLISION")]
         [Tooltip("The raycast distance for collision detection"), Range(0f, 1.0f)]
         public float raycastDistance = 0.05f;

@@ -29,7 +29,8 @@ namespace Loppy
         ON_WALL,
         ON_LEDGE,
         CLIMB_LEDGE,
-        DASH
+        DASH,
+        GLIDE
     }
 
     [RequireComponent(typeof(Rigidbody2D), typeof(Collider2D))]
@@ -56,6 +57,7 @@ namespace Loppy
         private Vector2 playerInputDown = Vector2.zero; // Only true on the first frame of key down
 
         private bool jumpKey = false;
+        private bool glideKey = false;
 
         #endregion
 
@@ -95,6 +97,9 @@ namespace Loppy
         private float dashBufferTimer = 0;
         private float dashCoyoteTimer = 0;
 
+        // Glide
+        private bool gliding = false;
+
         #endregion
 
         #region Collision variables
@@ -124,13 +129,14 @@ namespace Loppy
 
         #region Event actions
 
-        public event Action<bool, float> onGroundChanged;
+        public event Action<bool, float> onGroundChanged; // Velocity upon hitting ground
         public event Action<bool, float> onWallChanged;
         public event Action<bool> ledgeClimbChanged;
         public event Action jumped;
         public event Action wallJumped;
         public event Action airJumped;
         public event Action<bool> dashingChanged;
+        public event Action<bool> glidingChanged;
 
         #endregion
 
@@ -185,6 +191,7 @@ namespace Loppy
 
             handleJump();
             handleDash();
+            handleGlide();
 
             move();
 
@@ -225,12 +232,14 @@ namespace Loppy
             }
 
             // Dash
-            //dashKey = InputManager.instance.getKey("dash");
             if (InputManager.instance.getKeyDown("dash"))
             {
                 dashToConsume = true;
                 dashBufferTimer = 0;
             }
+
+            // Glide
+            glideKey = InputManager.instance.getKey("glide");
 
             // Set player's facing direction to last horizontal input
             facingDirection = lastPlayerInput.x >= 0 ? 1 : -1;
@@ -262,6 +271,15 @@ namespace Loppy
                 else if (velocity.y < -playerPhysicsStats.maxWallFallSpeed) velocity.y = -playerPhysicsStats.maxWallFallSpeed;
                 else velocity.y = Mathf.MoveTowards(Mathf.Min(velocity.y, 0), -playerPhysicsStats.maxWallFallSpeed, playerPhysicsStats.wallFallAcceleration * Time.fixedDeltaTime);
                 //else velocity.y = 0;
+            }
+            // Gliding (And downwards velocity)
+            else if (gliding && velocity.y < 0)
+            {
+                // Cap fall speed
+                velocity.y = Mathf.Max(velocity.y, -playerPhysicsStats.glideFallSpeed);
+
+                // Accelerate towards glideFallSpeed using playerPhysicsStats.glideFallAcceleration
+                velocity.y = Mathf.MoveTowards(velocity.y, -playerPhysicsStats.glideFallSpeed, playerPhysicsStats.glideFallAcceleration * Time.fixedDeltaTime);
             }
             // Airborne
             else if (!onGround)
@@ -713,6 +731,33 @@ namespace Loppy
 
         #endregion
 
+        #region Glide
+
+        private void handleGlide()
+        {
+            // Check for conditions to initate glide
+            if (!gliding && glideKey && !onGround && !onWall && !dashing)
+            {
+                // Set gliding flag
+                gliding = true;
+
+                // Invoke glidingChanged event action
+                glidingChanged?.Invoke(true);
+            }
+
+            // Check for conditions to stop glide
+            if (gliding && (!glideKey || onGround || onWall || dashing))
+            {
+                // Reset gliding flag
+                gliding = false;
+
+                // Invoke glidingChanged event action
+                glidingChanged?.Invoke(false);
+            }
+        }
+
+        #endregion
+
         private void move()
         {
             // Check if player has control
@@ -754,6 +799,9 @@ namespace Loppy
                 case PlayerState.DASH:
                     dashState();
                     break;
+                case PlayerState.GLIDE:
+                    glideState();
+                    break;
                 default: break;
             }
         }
@@ -784,6 +832,7 @@ namespace Loppy
 
             // Switch states
             if      (dashing)                     playerState = PlayerState.DASH;
+            else if (gliding)                     playerState = PlayerState.GLIDE;
             else if (onGround && velocity.x == 0) playerState = PlayerState.IDLE;
             else if (onGround)                    playerState = PlayerState.RUN;
             else if (onWall)                      playerState = PlayerState.ON_WALL;
@@ -827,9 +876,20 @@ namespace Loppy
             sprite.color = Color.green;
 
             // Switch states
-            if (!dashing && onGround) playerState = PlayerState.RUN;
-            if (!dashing && onWall) playerState = PlayerState.ON_WALL;
-            if (!dashing) playerState = PlayerState.AIRBORNE;
+            if      (!dashing && onGround) playerState = PlayerState.RUN;
+            else if (!dashing && onWall)   playerState = PlayerState.ON_WALL;
+            else if (!dashing)             playerState = PlayerState.AIRBORNE;
+        }
+
+        private void glideState()
+        {
+            sprite.color = Color.magenta;
+
+            // Switch states
+            if      (dashing)  playerState = PlayerState.DASH;
+            else if (onGround) playerState = PlayerState.IDLE;
+            else if (onWall)   playerState = PlayerState.ON_WALL;
+            else if (!gliding) playerState = PlayerState.AIRBORNE;
         }
 
         #endregion

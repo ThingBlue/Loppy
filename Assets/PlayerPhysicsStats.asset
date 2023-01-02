@@ -43,7 +43,12 @@ MonoBehaviour:
   ledgeClimbDuration: 0.2
   dashVelocity: 25
   dashTime: 0.2
+  dashCooldownTime: 0.2
   dashEndHorizontalMultiplier: 0.25
+  dashCoyoteTime: 0.1
+  dashBufferTime: 0.1
+  glideFallSpeed: 4
+  glideFallAcceleration: 20
   raycastDistance: 0.05
   maxWalkAngle: 30
   maxClimbAngle: 30

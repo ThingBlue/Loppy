@@ -62,7 +62,7 @@ namespace Loppy
         [Tooltip("Fast fall speed on wall")]
         public float fastWallFallSpeed = 20;
 
-        [Tooltip("The immediate velocity horizontal velocity applied when wall jumping")]
+        [Tooltip("The immediate velocity applied when wall jumping")]
         public Vector2 wallJumpStrength = new(10, 25);
 
         [Tooltip("The amount of time before full horizontal movement is returned after a wall jump")]
@@ -105,6 +105,12 @@ namespace Loppy
 
         [Tooltip("The amount of time a dash is buffered")]
         public float dashBufferTime = 0.1f;
+
+        [Tooltip("The immediate velocity applied when wall jumping")]
+        public Vector2 dashJumpStrength = new(30, 18);
+
+        [Tooltip("The amount of time before full horizontal movement is returned after a dash jump")]
+        public float dashJumpInputLossTime = 0.2f;
 
         [Header("GLIDE")]
         [Tooltip("Maximum fall speed during glide")]

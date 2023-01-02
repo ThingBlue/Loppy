@@ -47,6 +47,8 @@ MonoBehaviour:
   dashEndHorizontalMultiplier: 0.25
   dashCoyoteTime: 0.1
   dashBufferTime: 0.1
+  dashJumpStrength: {x: 30, y: 18}
+  dashJumpInputLossTime: 0.3
   glideFallSpeed: 4
   glideFallAcceleration: 20
   raycastDistance: 0.05

@@ -2,12 +2,7 @@
 
 using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using Unity.VisualScripting;
-using UnityEditor;
 using UnityEngine;
-using UnityEngine.Windows;
 
 namespace Loppy
 {
@@ -68,21 +63,21 @@ namespace Loppy
         private Vector2 externalVelocity = Vector2.zero;
 
         // Jump
-        public int maxAirJumps = 1;
-        private int airJumpsRemaining = 0;
-
         private bool jumpToConsume = false;
-        private bool jumpBufferUsable = false;
         private bool endedJumpEarly = false;
-        private bool coyoteUsable = false;
-        private bool wallJumpCoyoteUsable = false;
 
+        private bool jumpBufferUsable = false;
+        private bool coyoteUsable = false;
         private float jumpBufferTimer = 0;
         private float coyoteTimer = 0;
-        private float wallJumpCoyoteTimer = 0;
 
+        private bool wallJumpCoyoteUsable = false;
+        private float wallJumpCoyoteTimer = 0;
         private float wallJumpControlLossMultiplier = 1;
         private float wallJumpControlLossTimer = 0;
+
+        public int maxAirJumps = 1;
+        private int airJumpsRemaining = 0;
 
         // Dash
         private bool dashing = false;
@@ -97,6 +92,10 @@ namespace Loppy
         private float dashCooldownTimer = 0;
         private float dashBufferTimer = 0;
         private float dashCoyoteTimer = 0;
+
+        // Dash jump
+        private float dashJumpControlLossMultiplier = 0;
+        private float dashJumpControlLossTimer = 0;
 
         // Glide
         private bool gliding = false;
@@ -137,6 +136,7 @@ namespace Loppy
         public event Action jumped;
         public event Action wallJumped;
         public event Action airJumped;
+        public event Action dashJumped;
         public event Action<bool> dashingChanged;
         public event Action<bool> glidingChanged;
 
@@ -187,6 +187,7 @@ namespace Loppy
             dashCooldownTimer += Time.fixedDeltaTime;
             dashBufferTimer += Time.fixedDeltaTime;
             dashCoyoteTimer += Time.fixedDeltaTime;
+            dashJumpControlLossTimer += Time.fixedDeltaTime;
             ledgeClimbTimer += Time.fixedDeltaTime;
 
             handlePhysics();
@@ -300,8 +301,9 @@ namespace Loppy
 
             #region Horizontal physics
 
-            // Decrease wall jump input loss
+            // Increase control loss multipliers
             wallJumpControlLossMultiplier = Mathf.Clamp(wallJumpControlLossTimer / playerPhysicsStats.wallJumpInputLossTime, 0f, 1f);
+            dashJumpControlLossMultiplier = Mathf.Clamp(dashJumpControlLossTimer / playerPhysicsStats.dashJumpInputLossTime, 0f, 1f);
 
             // Dashing
             if (dashing)
@@ -309,13 +311,13 @@ namespace Loppy
 
             }
             // Player input is in the opposite direction of current velocity
-            else if (playerInput.x != 0 && velocity.x != 0 && Mathf.Sign(playerInput.x) != Mathf.Sign(velocity.x) && wallJumpControlLossMultiplier == 1)
+            else if (playerInput.x != 0 && velocity.x != 0 && Mathf.Sign(playerInput.x) != Mathf.Sign(velocity.x) && wallJumpControlLossMultiplier == 1 && dashJumpControlLossMultiplier == 1)
             {
                 // Instantly reset velocity
                 velocity.x = 0;
             }
             // Deceleration
-            else if (playerInput.x == 0 && wallJumpControlLossMultiplier == 1)
+            else if (playerInput.x == 0 && wallJumpControlLossMultiplier == 1 && dashJumpControlLossMultiplier == 1)
             {
                 var deceleration = onGround ? playerPhysicsStats.groundDeceleration : playerPhysicsStats.airDeceleration;
 
@@ -326,7 +328,8 @@ namespace Loppy
             else
             {
                 // Accelerate towards max speed
-                velocity.x = Mathf.MoveTowards(velocity.x, playerInput.x * playerPhysicsStats.maxRunSpeed, wallJumpControlLossMultiplier * playerPhysicsStats.acceleration * Time.fixedDeltaTime);
+                // Take into account control loss multipliers
+                velocity.x = Mathf.MoveTowards(velocity.x, playerInput.x * playerPhysicsStats.maxRunSpeed, wallJumpControlLossMultiplier * dashJumpControlLossMultiplier * playerPhysicsStats.acceleration * Time.fixedDeltaTime);
 
                 // Reset x velocity when on wall
                 if (onWall) velocity.x = 0;
@@ -605,7 +608,8 @@ namespace Loppy
             // Check for jump input
             if (!jumpToConsume && !canUseJumpBuffer) return;
 
-            if ((onWall || canUseWallJumpCoyote) && !climbingLedge) wallJump();
+            if (dashing && (onGround || airJumpsRemaining > 0)) dashJump();
+            else if ((onWall || canUseWallJumpCoyote) && !climbingLedge) wallJump();
             else if (onGround || canUseCoyote) normalJump();
             else if (airJumpsRemaining > 0) airJump();
 
@@ -633,7 +637,7 @@ namespace Loppy
             jumpBufferUsable = false;
             wallJumpCoyoteUsable = false;
 
-            // Apply jump velocity
+            // Apply wall jump velocity
             velocity = Vector2.Scale(playerPhysicsStats.wallJumpStrength, new(-wallDirection, 1));
             wallJumpControlLossMultiplier = 0;
             wallJumpControlLossTimer = 0;
@@ -651,12 +655,36 @@ namespace Loppy
             endedJumpEarly = false;
             airJumpsRemaining--;
 
-            // Apply jump velocity
+            // Apply air jump velocity
             velocity.y = playerPhysicsStats.jumpStrength;
             externalVelocity.y = 0; // Air jump cancels out vertical external forces
 
             // Invoke air jumped event action
             airJumped?.Invoke();
+        }
+
+        private void dashJump()
+        {
+            // Reset jump flags
+            endedJumpEarly = false;
+            jumpBufferUsable = false;
+            coyoteUsable = false;
+            if (!onGround && !onWall) airJumpsRemaining--;
+
+            // Apply dash jump velocity
+            velocity = Vector2.Scale(playerPhysicsStats.dashJumpStrength, new(Mathf.Sign(velocity.x), 1));
+            dashJumpControlLossMultiplier = 0;
+            dashJumpControlLossTimer = 0;
+
+            // Reset dashing status
+            dashing = false;
+            dashCooldownTimer = 0;
+
+            // Invoke dashing changed event action
+            dashingChanged?.Invoke(false);
+
+            // Invoke air jumped event action
+            dashJumped?.Invoke();
         }
 
         private void resetJump()

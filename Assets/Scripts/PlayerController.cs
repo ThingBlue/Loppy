@@ -486,8 +486,11 @@ namespace Loppy
             // Set final position
             transform.position = ledgeCornerPosition + Vector2.Scale(playerPhysicsStats.standUpOffset, new(wallDirection, 1f));
             
-            // Reset climbing ledge flag
+            // Reset ledge and wall flags
             climbingLedge = false;
+            onLedge = false;
+            onWall = false;
+            wallJumpCoyoteUsable = false;
 
             // Return control to player
             hasControl = true;
@@ -502,8 +505,6 @@ namespace Loppy
             Physics2D.queriesHitTriggers = false;
             var hit = Physics2D.OverlapCapsule(position + activeCollider.offset, activeCollider.size - new Vector2(0.1f, 0.1f), activeCollider.direction, 0, ~playerPhysicsStats.playerLayer);
             Physics2D.queriesHitTriggers = detectTriggers;
-
-            Debug.Log(!hit);
 
             return !hit;
         }
@@ -527,7 +528,7 @@ namespace Loppy
             // Check for jump input
             if (!jumpToConsume && !canUseJumpBuffer) return;
 
-            if (onWall || canUseWallJumpCoyote) wallJump();
+            if ((onWall || canUseWallJumpCoyote) && !climbingLedge) wallJump();
             else if (onGround || canUseCoyote) normalJump();
             else if (airJumpsRemaining > 0) airJump();
 
@@ -584,8 +585,8 @@ namespace Loppy
         {
             // Reset jump flags
             jumpBufferUsable = true;
-            coyoteUsable = true;
-            wallJumpCoyoteUsable = true;
+            if (onGround) coyoteUsable = true;
+            if (onWall && !onGround) wallJumpCoyoteUsable = true;
             endedJumpEarly = false;
 
             // Reset number of air jumps

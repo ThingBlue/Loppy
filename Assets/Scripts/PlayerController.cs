@@ -398,7 +398,7 @@ namespace Loppy
                 }
             }
 
-            // Ceiling collision detected
+            // Enter ceiling
             if (ceilingHitCount > 0 && Math.Abs(ceilingNormal.y) > Math.Abs(ceilingNormal.x))
             {
                 // Prevent sticking to ceiling if we did an air jump after receiving external velocity w/ PlayerForce.Decay
@@ -482,7 +482,7 @@ namespace Loppy
 
                     // Detect ledge climb input and check to see if final position is clear
                     Vector2 resultantPosition = ledgeCornerPosition + Vector2.Scale(playerPhysicsStats.standUpOffset, new(wallDirection, 1f));
-                    if (playerInput.y > 0 && checkPositionClear(resultantPosition)) StartCoroutine(climbLedge());
+                    if (!climbingLedge && playerInput.y > 0 && checkPositionClear(resultantPosition)) StartCoroutine(climbLedge());
                 }
             }
             // Not on wall
@@ -684,10 +684,13 @@ namespace Loppy
 
                 // Set dash flags
                 dashing = true;
-                if (!onGround && !onWall && !canUseDashCoyote)
+                if (!onGround && !onWall)
                 {
-                    canDash = false;
-                    dashBufferUsable = false;
+                    if (!canUseDashCoyote)
+                    {
+                        canDash = false;
+                        dashBufferUsable = false;
+                    }
                     dashCoyoteUsable = false;
                 }
 

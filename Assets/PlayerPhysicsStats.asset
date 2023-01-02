@@ -37,7 +37,7 @@ MonoBehaviour:
   wallJumpStrength: {x: 8, y: 18}
   wallJumpInputLossFrames: 8
   wallJumpCoyoteFrames: 5
-  ledgeGrabDeceleration: 4
+  ledgeGrabDeceleration: 8
   ledgeGrabPoint: {x: 0.4, y: 1}
   standUpOffset: {x: 0.4, y: 0}
   ledgeRaycastDistance: 2

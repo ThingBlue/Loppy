@@ -212,7 +212,7 @@ namespace Loppy
             if (onWall)
             {
                 // Climb wall
-                if (playerInput.y > 0) velocity.y = playerPhysicsStats.wallClimbSpeed;
+                if (playerInput.y > 0 && !onLedge) velocity.y = playerPhysicsStats.wallClimbSpeed;
                 // Fast fall on wall
                 else if (playerInput.y < 0) velocity.y = -playerPhysicsStats.fastWallFallSpeed;
                 // Decelerate rapidly when grabbing ledge
@@ -322,9 +322,6 @@ namespace Loppy
             // On ground
             else if (onGround && groundHitCount > 0 && groundAngle <= playerPhysicsStats.maxWalkAngle)
             {
-                // Give the player a constant downwards velocity so that they stick to the ground on slopes
-                //velocity.y = playerPhysicsStats.groundingForce;
-
                 // Handle slopes
                 if (groundNormal != Vector2.zero) // Make sure ground normal exists
                 {
@@ -416,18 +413,13 @@ namespace Loppy
                     // Nudge towards better grabbing position
                     if (hasControl)
                     {
-                        Vector2 targetPos = ledgeCornerPosition - Vector2.Scale(playerPhysicsStats.ledgeGrabPoint, new(wallDirection, 1f));
-                        rigidbody.position = Vector2.MoveTowards(rigidbody.position, targetPos, playerPhysicsStats.ledgeGrabDeceleration * Time.fixedDeltaTime);
+                        Vector2 targetPosition = ledgeCornerPosition - Vector2.Scale(playerPhysicsStats.ledgeGrabPoint, new(wallDirection, 1f));
+                        rigidbody.position = Vector2.MoveTowards(rigidbody.position, targetPosition, playerPhysicsStats.ledgeGrabDeceleration * Time.fixedDeltaTime);
                     }
 
-                    // Detect ledge climb input
-                    if (playerInput.y > 0)
-                    {
-                        Vector2 finalPos = ledgeCornerPosition + Vector2.Scale(playerPhysicsStats.standUpOffset, new(wallDirection, 1f));
-                        //if (!canClimbLedge(finalPos)) return; // TODO: Split this into 2 different ledge climb animations - standing & crawling
-
-                        StartCoroutine(climbLedge());
-                    }
+                    // Detect ledge climb input and check to see if final position is clear
+                    Vector2 resultantPosition = ledgeCornerPosition + Vector2.Scale(playerPhysicsStats.standUpOffset, new(wallDirection, 1f));
+                    if (playerInput.y > 0 && checkPositionClear(resultantPosition)) StartCoroutine(climbLedge());
                 }
             }
             // Not on wall
@@ -479,9 +471,10 @@ namespace Loppy
             hasControl = false;
             rigidbody.velocity = Vector2.zero;
 
-            // Reset ledge flags
+            // Reset ledge and wall flags
             climbingLedge = true;
             onLedge = false;
+            onWall = false;
 
             // Set startup position
             transform.position = ledgeCornerPosition - Vector2.Scale(playerPhysicsStats.ledgeGrabPoint, new(wallDirection, 1f));
@@ -493,9 +486,8 @@ namespace Loppy
             // Set final position
             transform.position = ledgeCornerPosition + Vector2.Scale(playerPhysicsStats.standUpOffset, new(wallDirection, 1f));
             
-            // Reset flags
+            // Reset climbing ledge flag
             climbingLedge = false;
-            onWall = false;
 
             // Return control to player
             hasControl = true;
@@ -503,6 +495,17 @@ namespace Loppy
 
             // Invoke ledgeClimbChanged event action at the end
             ledgeClimbChanged?.Invoke(false);
+        }
+
+        private bool checkPositionClear(Vector2 position)
+        {
+            Physics2D.queriesHitTriggers = false;
+            var hit = Physics2D.OverlapCapsule(position + activeCollider.offset, activeCollider.size - new Vector2(0.1f, 0.1f), activeCollider.direction, 0, ~playerPhysicsStats.playerLayer);
+            Physics2D.queriesHitTriggers = detectTriggers;
+
+            Debug.Log(!hit);
+
+            return !hit;
         }
 
         #endregion
@@ -518,7 +521,8 @@ namespace Loppy
             bool canUseCoyote = coyoteUsable && coyoteFramesCounter < playerPhysicsStats.coyoteFrames * (GameManager.instance.fps / 60f);
             bool canUseWallJumpCoyote = wallJumpCoyoteUsable && wallJumpCoyoteFramesCounter < playerPhysicsStats.wallJumpCoyoteFrames * (GameManager.instance.fps / 60f);
 
-            if (!endedJumpEarly && !onGround && !onWall && !jumpKey && velocity.y > 0) endedJumpEarly = true; // Early end detection
+            // Detect early jump end
+            if (!endedJumpEarly && !onGround && !onWall && !jumpKey && velocity.y > 0) endedJumpEarly = true;
 
             // Check for jump input
             if (!jumpToConsume && !canUseJumpBuffer) return;

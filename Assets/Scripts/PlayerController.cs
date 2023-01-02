@@ -94,7 +94,6 @@ namespace Loppy
         private float dashBufferTimer = 0;
         private float dashCoyoteTimer = 0;
 
-
         #endregion
 
         #region Collision variables
@@ -192,8 +191,6 @@ namespace Loppy
 
             // Reset input
             playerInputDown = Vector2.zero;
-
-            Debug.Log($"canDash: {canDash}, dashCoyoteUsable: {dashCoyoteUsable}, dashCoyoteTimer: {dashCoyoteTimer}");
         }
 
         #region Input
@@ -642,7 +639,7 @@ namespace Loppy
 
             // Reset dash
             canDash = true;
-            dashBufferUsable = true;
+            if (onGround) dashBufferUsable = true; // Don't allow dash buffer on wall
             dashCoyoteUsable = true;
         }
 

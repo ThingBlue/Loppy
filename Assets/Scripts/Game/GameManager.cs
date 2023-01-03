@@ -43,17 +43,28 @@ namespace Loppy
         private void Update()
         {
             // Pause
-            if (gameState == GameState.GAME && InputManager.instance.getKeyDown("pause"))
+            if (gameState == GameState.GAME && InputManager.instance.getKeyDown("pause")) togglePause(true);
+            // Unpause
+            else if (gameState == GameState.PAUSED && InputManager.instance.getKeyDown("pause")) togglePause(false);
+        }
+
+        public void togglePause(bool pause)
+        {
+            // Pause
+            if (pause)
             {
                 gameState = GameState.PAUSED;
                 Time.timeScale = 0;
             }
             // Unpause
-            else if (gameState == GameState.PAUSED && InputManager.instance.getKeyDown("pause"))
+            else if (!pause)
             {
                 gameState = GameState.GAME;
                 Time.timeScale = 1;
             }
+
+            // Trigger togglePause callback in UIManager
+            UIManager.instance.togglePause(pause);
         }
 
         #region Apply settings

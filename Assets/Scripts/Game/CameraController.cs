@@ -7,32 +7,67 @@ namespace Loppy
 {
     public class CameraController : MonoBehaviour
     {
+        [Header("CAMERA FOLLOW")]
         public Transform playerTransform;
         public PlayerController playerController;
-
         public Vector3 offset = new(0, 2); // Camera position offset from player
         public float smoothTime = 0.2f; // Time to reach overall position target
 
-        // Look ahead variables
+        [Header("LOOK AHEAD")]
         public bool xLookAheadEnabled = true;
         public bool yLookAheadEnabled = true;
-
-        private Vector3 lookAheadOffset;
         public Vector2 lookAheadDistance;
         public float lookAheadSmoothTime = 0.2f; // Time to reach look ahead target
+        private Vector3 lookAheadOffset;
 
-        // Vertical pan variables
-        private Vector3 verticalPanOffset;
-        public float verticalPanDistance = 4;
+        [Header("VERTICAL PAN")]
+        public float verticalPanDistance = 8;
         public float verticalPanSmoothTime = 0.2f; // Time to reach vertical pan target
+        public float verticalPanKeyHoldTime = 0.5f; // Time that up or down key must be held to initiate vertical pan
+        private Vector3 verticalPanOffset;
+        private int currentVerticalPanDirection = 0;
+        private float verticalPanKeyTimer = 0;
 
         // Reference variables for use with Unity's SmoothDamp function
         private Vector3 velocity;
         private Vector3 lookAheadVelocity;
         private Vector3 verticalPanVelocity;
 
+        private void FixedUpdate()
+        {
+            // Increment vertical pan key timer
+            verticalPanKeyTimer += Time.fixedDeltaTime;
+
+            // Check for conditions to reset vertical pan key timer
+            // Check if player is not idle
+            if (!playerController.onGround || InputManager.instance.getKey("left") || InputManager.instance.getKey("right"))
+            {
+                verticalPanKeyTimer = 0;
+                currentVerticalPanDirection = 0;
+            }
+            // Check if no key held
+            if (!InputManager.instance.getKey("up") && !InputManager.instance.getKey("down"))
+            {
+                verticalPanKeyTimer = 0;
+                currentVerticalPanDirection = 0;
+            }
+            // Check for up key down
+            if (InputManager.instance.getKey("up") && currentVerticalPanDirection != 1)
+            {
+                verticalPanKeyTimer = 0;
+                currentVerticalPanDirection = 1;
+            }
+            // Check if down key down
+            if (InputManager.instance.getKey("down") && currentVerticalPanDirection != -1)
+            {
+                verticalPanKeyTimer = 0;
+                currentVerticalPanDirection = -1;
+            }
+        }
+
         private void LateUpdate() // Late update to prevent stuttering
         {
+
             #region Look ahead
 
             if (playerController != null)
@@ -56,13 +91,11 @@ namespace Loppy
 
             #region Vertical pan
 
-            // We want to pan the camera up or down to allow the player to see more of the level
-            // Only do this if the player holds up or down while standing still
-            if (playerController.onGround && !InputManager.instance.getKey("left") && !InputManager.instance.getKey("right"))
+            // Pan the camera up or down to allow the player to see more of the level
+            if (verticalPanKeyTimer > verticalPanKeyHoldTime)
             {
                 Vector3 verticalPanPosition = new();
-                if (InputManager.instance.getKey("up")) verticalPanPosition.y += verticalPanDistance;
-                if (InputManager.instance.getKey("down")) verticalPanPosition.y -= verticalPanDistance;
+                verticalPanPosition.y = currentVerticalPanDirection * verticalPanDistance;
                 verticalPanOffset = Vector3.SmoothDamp(verticalPanOffset, verticalPanPosition, ref verticalPanVelocity, verticalPanSmoothTime);
             }
             // Smoothly reset verticalPanOffset

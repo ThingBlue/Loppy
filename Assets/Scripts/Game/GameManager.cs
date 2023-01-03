@@ -39,8 +39,10 @@ namespace Loppy
 
         private void Update()
         {
-
+            
         }
+
+        #region Apply settings
 
         public void applyGraphicsSettings()
         {
@@ -64,5 +66,44 @@ namespace Loppy
             foreach (KeyCode keyBind in gameSettings.dashKeyBinds) InputManager.instance.addKeyToMap("dash", keyBind);
             foreach (KeyCode keyBind in gameSettings.glideKeyBinds) InputManager.instance.addKeyToMap("glide", keyBind);
         }
+
+        #endregion
+
+        #region Apply defaults
+
+        public void applyGraphicsDefaults()
+        {
+            gameSettings.resolution = new(1920, 1080);
+            gameSettings.refreshRate = 60;
+            gameSettings.fullScreenMode = FullScreenMode.FullScreenWindow;
+            gameSettings.targetFps = 60;
+            gameSettings.brightness = 100;
+
+            applyGraphicsSettings();
+        }
+
+        public void applyAudioDefaults()
+        {
+            gameSettings.masterVolume = 50;
+            gameSettings.musicVolume = 50;
+            gameSettings.soundVolume = 50;
+
+            applyAudioSettings();
+        }
+
+        public void applyControlsDefaults()
+        {
+            gameSettings.upKeyBinds = new List<KeyCode> { KeyCode.W, KeyCode.UpArrow };
+            gameSettings.downKeyBinds = new List<KeyCode> { KeyCode.S, KeyCode.DownArrow };
+            gameSettings.leftKeyBinds = new List<KeyCode> { KeyCode.A, KeyCode.LeftArrow };
+            gameSettings.rightKeyBinds = new List<KeyCode> { KeyCode.D, KeyCode.RightArrow };
+            gameSettings.jumpKeyBinds = new List<KeyCode> { KeyCode.Space };
+            gameSettings.dashKeyBinds = new List<KeyCode> { KeyCode.LeftShift };
+            gameSettings.glideKeyBinds = new List<KeyCode> { KeyCode.LeftControl };
+
+            applyControlsSettings();
+        }
+
+        #endregion
     }
 }

@@ -488,6 +488,7 @@ MonoBehaviour:
   lookAheadSmoothTime: 0.5
   verticalPanDistance: 8
   verticalPanSmoothTime: 0.2
+  verticalPanKeyHoldTime: 0.5
 --- !u!1 &244133577
 GameObject:
   m_ObjectHideFlags: 0

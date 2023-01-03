@@ -27,6 +27,9 @@ namespace Loppy
             // Singleton
             if (instance == null) instance = this;
             else Destroy(this);
+
+            // TEMP TEMP TEMP TEMP TEMP TEMP TEMP TEMP TEMP TEMP
+            gameState = GameState.GAME;
         }
 
         private void Start()
@@ -39,7 +42,18 @@ namespace Loppy
 
         private void Update()
         {
-            
+            // Pause
+            if (gameState == GameState.GAME && InputManager.instance.getKeyDown("pause"))
+            {
+                gameState = GameState.PAUSED;
+                Time.timeScale = 0;
+            }
+            // Unpause
+            else if (gameState == GameState.PAUSED && InputManager.instance.getKeyDown("pause"))
+            {
+                gameState = GameState.GAME;
+                Time.timeScale = 1;
+            }
         }
 
         #region Apply settings
@@ -58,6 +72,7 @@ namespace Loppy
 
         public void applyControlsSettings()
         {
+            // Game controls
             foreach (KeyCode keyBind in gameSettings.upKeyBinds) InputManager.instance.addKeyToMap("up", keyBind);
             foreach (KeyCode keyBind in gameSettings.downKeyBinds) InputManager.instance.addKeyToMap("down", keyBind);
             foreach (KeyCode keyBind in gameSettings.leftKeyBinds) InputManager.instance.addKeyToMap("left", keyBind);
@@ -65,6 +80,9 @@ namespace Loppy
             foreach (KeyCode keyBind in gameSettings.jumpKeyBinds) InputManager.instance.addKeyToMap("jump", keyBind);
             foreach (KeyCode keyBind in gameSettings.dashKeyBinds) InputManager.instance.addKeyToMap("dash", keyBind);
             foreach (KeyCode keyBind in gameSettings.glideKeyBinds) InputManager.instance.addKeyToMap("glide", keyBind);
+
+            // Menu controls
+            foreach (KeyCode keyBind in gameSettings.pauseKeyBinds) InputManager.instance.addKeyToMap("pause", keyBind);
         }
 
         #endregion

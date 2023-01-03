@@ -209,7 +209,11 @@ namespace Loppy
 
         private void handleInput()
         {
+            // Reset inputs at start of frame
             playerInput = Vector2.zero;
+
+            // Check if game is paused
+            if (GameManager.gameState == GameState.PAUSED) return;
 
             // Horizontal input
             if (InputManager.instance.getKey("left")) playerInput.x -= 1;

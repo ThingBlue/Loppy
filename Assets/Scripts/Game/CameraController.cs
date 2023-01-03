@@ -7,6 +7,8 @@ namespace Loppy
 {
     public class CameraController : MonoBehaviour
     {
+        #region Variables
+
         [Header("CAMERA FOLLOW")]
         public Transform playerTransform;
         public PlayerController playerController;
@@ -32,6 +34,8 @@ namespace Loppy
         private Vector3 velocity;
         private Vector3 lookAheadVelocity;
         private Vector3 verticalPanVelocity;
+
+        #endregion
 
         private void FixedUpdate()
         {

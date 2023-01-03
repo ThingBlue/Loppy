@@ -27,5 +27,7 @@ namespace Loppy
         public List<KeyCode> jumpKeyBinds = new List<KeyCode> { KeyCode.Space };
         public List<KeyCode> dashKeyBinds = new List<KeyCode> { KeyCode.LeftShift };
         public List<KeyCode> glideKeyBinds = new List<KeyCode> { KeyCode.LeftControl };
+
+        public List<KeyCode> pauseKeyBinds = new List<KeyCode> { KeyCode.Escape };
     }
 }

@@ -15,7 +15,7 @@ MonoBehaviour:
   resolution: {x: 1920, y: 1080}
   refreshRate: 60
   fullScreenMode: 1
-  targetFps: 60
+  targetFrameRate: 60
   brightness: 100
   masterVolume: 50
   musicVolume: 50
@@ -27,3 +27,5 @@ MonoBehaviour:
   jumpKeyBinds: 20000000
   dashKeyBinds: 30010000
   glideKeyBinds: 32010000
+  grappleKeyBinds: 65000000
+  pauseKeyBinds: 1b000000

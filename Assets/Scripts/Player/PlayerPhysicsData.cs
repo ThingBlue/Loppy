@@ -11,6 +11,12 @@ namespace Loppy
         [Tooltip("Layer containing player")]
         public LayerMask playerLayer;
 
+        [Tooltip("Layer containing enemies")]
+        public LayerMask enemyLayer;
+
+        [Tooltip("Layer containing terrain")]
+        public LayerMask terrainLayer;
+
         [Header("MOVEMENT")]
         [Tooltip("Maximum horizontal velocity")]
         public float maxRunSpeed = 10;
@@ -63,7 +69,7 @@ namespace Loppy
         public Vector2 wallJumpStrength = new(7, 20);
 
         [Tooltip("Amount of time before full horizontal movement is returned after a wall jump")]
-        public float wallJumpInputLossTime = 0.15f;
+        public float wallJumpControlLossTime = 0.15f;
 
         [Tooltip("Amount of time where wall jump is still usable after leaving a wall")]
         public float wallJumpCoyoteTime = 0.1f;
@@ -107,7 +113,7 @@ namespace Loppy
         public Vector2 dashJumpStrength = new(30, 18);
 
         [Tooltip("Amount of time before full horizontal movement is returned after a dash jump")]
-        public float dashJumpInputLossTime = 0.3f;
+        public float dashJumpControlLossTime = 0.3f;
 
         [Header("GLIDE")]
         [Tooltip("Maximum fall speed during glide")]
@@ -115,6 +121,28 @@ namespace Loppy
 
         [Tooltip("Rate of downwards velocity gain during glide")]
         public float glideFallAcceleration = 20;
+
+        [Header("GRAPPLE")]
+        [Tooltip("Magnitude of velocity applied when grappling")]
+        public float grappleVelocity = 10;
+
+        [Tooltip("Amount of time a grapple freeze lasts")]
+        public float grappleFreezeTime = 4;
+
+        [Tooltip("Amount of time a grapple is buffered")]
+        public float grappleBufferTime = 0.1f;
+
+        [Tooltip("Rate of velocity loss during grapple freeze")]
+        public float grappleFreezeDeceleration = 100;
+
+        [Tooltip("Factor of timescale reduction per frame")]
+        public float timeScaleLerpFactor = 0.5f;
+
+        [Tooltip("Amount of time between each time scale lerp")]
+        public float timeScaleLerpTime = (1f / 60f);
+
+        [Tooltip("Amount of time before full horizontal movement is returned after a grapple")]
+        public float grappleControlLossTime = 0.2f;
 
         [Header("COLLISION")]
         [Tooltip("The raycast distance for collision detection"), Range(0f, 1.0f)]

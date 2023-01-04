@@ -20,5 +20,9 @@ namespace Loppy
 
         // Glide
         public bool glideUnlocked = false;
+
+        // Grapple
+        public bool grappleUnlocked = true;
+        public float grappleDistance = 10;
     }
 }

@@ -22,6 +22,8 @@ namespace Loppy
         public static GameState gameState = GameState.NONE;
         public GameSettings gameSettings;
 
+        private float timeScaleBeforePause = 0;
+
         private void Awake()
         {
             // Singleton
@@ -54,13 +56,14 @@ namespace Loppy
             if (pause)
             {
                 gameState = GameState.PAUSED;
+                timeScaleBeforePause = Time.timeScale;
                 Time.timeScale = 0;
             }
             // Unpause
             else if (!pause)
             {
                 gameState = GameState.GAME;
-                Time.timeScale = 1;
+                Time.timeScale = timeScaleBeforePause;
             }
 
             // Trigger togglePause callback in UIManager
@@ -91,7 +94,7 @@ namespace Loppy
             foreach (KeyCode keyBind in gameSettings.jumpKeyBinds) InputManager.instance.addKeyToMap("jump", keyBind);
             foreach (KeyCode keyBind in gameSettings.dashKeyBinds) InputManager.instance.addKeyToMap("dash", keyBind);
             foreach (KeyCode keyBind in gameSettings.glideKeyBinds) InputManager.instance.addKeyToMap("glide", keyBind);
-            foreach (KeyCode keyBind in gameSettings.glideKeyBinds) InputManager.instance.addKeyToMap("grapple", keyBind);
+            foreach (KeyCode keyBind in gameSettings.grappleKeyBinds) InputManager.instance.addKeyToMap("grapple", keyBind);
 
             // Menu controls
             foreach (KeyCode keyBind in gameSettings.pauseKeyBinds) InputManager.instance.addKeyToMap("pause", keyBind);
@@ -123,6 +126,7 @@ namespace Loppy
 
         public void applyControlsDefaults()
         {
+            // Game controls
             gameSettings.upKeyBinds = new List<KeyCode> { KeyCode.W, KeyCode.UpArrow };
             gameSettings.downKeyBinds = new List<KeyCode> { KeyCode.S, KeyCode.DownArrow };
             gameSettings.leftKeyBinds = new List<KeyCode> { KeyCode.A, KeyCode.LeftArrow };
@@ -130,6 +134,10 @@ namespace Loppy
             gameSettings.jumpKeyBinds = new List<KeyCode> { KeyCode.Space };
             gameSettings.dashKeyBinds = new List<KeyCode> { KeyCode.LeftShift };
             gameSettings.glideKeyBinds = new List<KeyCode> { KeyCode.LeftControl };
+            gameSettings.grappleKeyBinds = new List<KeyCode> { KeyCode.E };
+
+            // Menu controls
+            gameSettings.pauseKeyBinds = new List<KeyCode> { KeyCode.Escape };
 
             applyControlsSettings();
         }

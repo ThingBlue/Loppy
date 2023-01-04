@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 
 namespace Loppy
@@ -24,7 +25,8 @@ namespace Loppy
             keyMap = new Dictionary<string, List<KeyCode>>();
         }
 
-        // Getters for specfic key states
+        #region Getters
+
         public bool getKey(string key)
         {
             if (!keyMap.ContainsKey(key)) return false;
@@ -59,14 +61,25 @@ namespace Loppy
         }
 
         // Getter for key map
-        public List<KeyCode> GetKeysInMap(string key)
+        public List<KeyCode> getKeysInMap(string key)
         {
             if (!keyMap.ContainsKey(key)) return new List<KeyCode>();
 
             return keyMap[key];
         }
 
-        // Setters for key map
+        // Getter for mouse position in world space
+        public Vector3 getMousePositionInWorld()
+        {
+            Vector3 mousePosition = Input.mousePosition;
+            mousePosition.z = 0;
+            return Camera.main.ScreenToWorldPoint(mousePosition);
+        }
+
+        #endregion
+
+        #region Setters
+
         public void clearKeyListInMap(string key)
         {
             if (!keyMap.ContainsKey(key)) return;
@@ -91,5 +104,7 @@ namespace Loppy
             if (!keyMap.ContainsKey(key)) keyMap.Add(key, value);
             else keyMap[key] = value;
         }
+
+        #endregion
     }
 }

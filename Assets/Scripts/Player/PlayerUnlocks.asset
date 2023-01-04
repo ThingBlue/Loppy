@@ -18,3 +18,5 @@ MonoBehaviour:
   directionalDashUnlocked: 1
   airDashes: 1
   glideUnlocked: 1
+  grappleUnlocked: 1
+  grappleDistance: 5

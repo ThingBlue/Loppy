@@ -72,7 +72,7 @@ namespace Loppy
         public void applyGraphicsSettings()
         {
             Screen.SetResolution(gameSettings.resolution.x, gameSettings.resolution.y, gameSettings.fullScreenMode, gameSettings.refreshRate);
-            Time.fixedDeltaTime = (1f / gameSettings.targetFps);
+            Time.fixedDeltaTime = (1f / gameSettings.targetFrameRate);
             Screen.brightness = gameSettings.brightness;
         }
 
@@ -91,6 +91,7 @@ namespace Loppy
             foreach (KeyCode keyBind in gameSettings.jumpKeyBinds) InputManager.instance.addKeyToMap("jump", keyBind);
             foreach (KeyCode keyBind in gameSettings.dashKeyBinds) InputManager.instance.addKeyToMap("dash", keyBind);
             foreach (KeyCode keyBind in gameSettings.glideKeyBinds) InputManager.instance.addKeyToMap("glide", keyBind);
+            foreach (KeyCode keyBind in gameSettings.glideKeyBinds) InputManager.instance.addKeyToMap("grapple", keyBind);
 
             // Menu controls
             foreach (KeyCode keyBind in gameSettings.pauseKeyBinds) InputManager.instance.addKeyToMap("pause", keyBind);
@@ -105,7 +106,7 @@ namespace Loppy
             gameSettings.resolution = new(1920, 1080);
             gameSettings.refreshRate = 60;
             gameSettings.fullScreenMode = FullScreenMode.FullScreenWindow;
-            gameSettings.targetFps = 60;
+            gameSettings.targetFrameRate = 60;
             gameSettings.brightness = 100;
 
             applyGraphicsSettings();

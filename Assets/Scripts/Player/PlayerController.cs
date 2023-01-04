@@ -8,11 +8,8 @@ namespace Loppy
 {
     public enum PlayerForce
     {
-        // Added directly to the players movement speed, to be controlled by the standard deceleration
-        BURST = 0,
-
-        // An external velocity that decays over time, applied additively to the rigidbody's velocity
-        DECAY
+        BURST = 0, // Added directly to the players movement speed, to be controlled by the standard deceleration
+        DECAY // An external velocity that decays over time, applied additively to the rigidbody's velocity
     }
 
     public enum PlayerState
@@ -38,7 +35,8 @@ namespace Loppy
 
         public Rigidbody2D rigidbody;
         public CapsuleCollider2D standingCollider;
-        public PlayerPhysicsStats playerPhysicsStats;
+        public PlayerPhysicsData playerPhysicsData;
+        public PlayerUnlocks playerUnlocks;
 
         private CapsuleCollider2D activeCollider;
 
@@ -53,7 +51,11 @@ namespace Loppy
         private Vector2 playerInputDown = Vector2.zero; // Only true on the first frame of key down
 
         private bool jumpKey = false;
+        private bool jumpToConsume = false;
+        private bool dashToConsume = false;
         private bool glideKey = false;
+        private bool grappleKey = false;
+        private bool grappleToConsume = false;
 
         #endregion
 
@@ -63,7 +65,6 @@ namespace Loppy
         private Vector2 externalVelocity = Vector2.zero;
 
         // Jump
-        private bool jumpToConsume = false;
         private bool endedJumpEarly = false;
 
         private bool jumpBufferUsable = false;
@@ -76,12 +77,10 @@ namespace Loppy
         private float wallJumpControlLossMultiplier = 1;
         private float wallJumpControlLossTimer = 0;
 
-        public int maxAirJumps = 1;
         private int airJumpsRemaining = 0;
 
         // Dash
         private bool dashing = false;
-        private bool dashToConsume = false;
         private bool canDash = false;
         private bool dashBufferUsable = false;
         private bool dashCoyoteUsable = false;
@@ -99,6 +98,10 @@ namespace Loppy
 
         // Glide
         private bool gliding = false;
+
+        // Grapple
+        private bool grappling = false;
+        private float grappleFreezeTimer = 0;
 
         #endregion
 
@@ -189,13 +192,20 @@ namespace Loppy
             dashCoyoteTimer += Time.fixedDeltaTime;
             dashJumpControlLossTimer += Time.fixedDeltaTime;
             ledgeClimbTimer += Time.fixedDeltaTime;
+            grappleFreezeTimer += Time.fixedDeltaTime;
 
             handlePhysics();
             handleCollisions();
 
-            handleJump();
-            handleDash();
-            handleGlide();
+            // Check if player has control
+            if (hasControl)
+            {
+                // Handle movement machanics
+                handleJump();
+                handleDash();
+                handleGlide();
+                handleGrapple();
+            }
 
             move();
 
@@ -249,6 +259,13 @@ namespace Loppy
             // Glide
             glideKey = InputManager.instance.getKey("glide");
 
+            // Grapple
+            grappleKey = InputManager.instance.getKey("grapple");
+            if (InputManager.instance.getKeyDown("grapple"))
+            {
+                grappleToConsume = true;
+            }
+
             // Set player's facing direction to last horizontal input
             facingDirection = lastPlayerInput.x >= 0 ? 1 : -1;
         }
@@ -276,35 +293,35 @@ namespace Loppy
             else if (onWall)
             {
                 // Climb wall
-                if (playerInput.y > 0 && !onLedge) velocity.y = playerPhysicsStats.wallClimbSpeed;
+                if (playerInput.y > 0 && !onLedge) velocity.y = playerPhysicsData.wallClimbSpeed;
                 // Fast fall on wall
-                else if (playerInput.y < 0) velocity.y = -playerPhysicsStats.fastWallFallSpeed;
+                else if (playerInput.y < 0) velocity.y = -playerPhysicsData.fastWallFallSpeed;
                 // Decelerate rapidly when grabbing ledge
-                else if (onLedge) velocity.y = Mathf.MoveTowards(velocity.y, 0, playerPhysicsStats.ledgeGrabDeceleration * Time.fixedDeltaTime);
+                else if (onLedge) velocity.y = Mathf.MoveTowards(velocity.y, 0, playerPhysicsData.ledgeGrabDeceleration * Time.fixedDeltaTime);
                 // Slow fall on wall
-                else if (velocity.y < -playerPhysicsStats.maxWallFallSpeed) velocity.y = -playerPhysicsStats.maxWallFallSpeed;
-                else velocity.y = Mathf.MoveTowards(Mathf.Min(velocity.y, 0), -playerPhysicsStats.maxWallFallSpeed, playerPhysicsStats.wallFallAcceleration * Time.fixedDeltaTime);
+                else if (velocity.y < -playerPhysicsData.maxWallFallSpeed) velocity.y = -playerPhysicsData.maxWallFallSpeed;
+                else velocity.y = Mathf.MoveTowards(Mathf.Min(velocity.y, 0), -playerPhysicsData.maxWallFallSpeed, playerPhysicsData.wallFallAcceleration * Time.fixedDeltaTime);
                 //else velocity.y = 0;
             }
             // Gliding (And downwards velocity)
             else if (gliding && velocity.y < 0)
             {
                 // Cap fall speed
-                velocity.y = Mathf.Max(velocity.y, -playerPhysicsStats.glideFallSpeed);
+                velocity.y = Mathf.Max(velocity.y, -playerPhysicsData.glideFallSpeed);
 
                 // Accelerate towards glideFallSpeed using playerPhysicsStats.glideFallAcceleration
-                velocity.y = Mathf.MoveTowards(velocity.y, -playerPhysicsStats.glideFallSpeed, playerPhysicsStats.glideFallAcceleration * Time.fixedDeltaTime);
+                velocity.y = Mathf.MoveTowards(velocity.y, -playerPhysicsData.glideFallSpeed, playerPhysicsData.glideFallAcceleration * Time.fixedDeltaTime);
             }
             // Airborne
             else if (!onGround)
             {
-                float airborneAcceleration = playerPhysicsStats.fallAcceleration;
+                float airborneAcceleration = playerPhysicsData.fallAcceleration;
 
                 // Check if player ended jump early
-                if (endedJumpEarly && velocity.y > 0) airborneAcceleration *= playerPhysicsStats.jumpEndEarlyGravityModifier;
+                if (endedJumpEarly && velocity.y > 0) airborneAcceleration *= playerPhysicsData.jumpEndEarlyGravityModifier;
 
                 // Accelerate towards maxFallSpeed using airborneAcceleration
-                velocity.y = Mathf.MoveTowards(velocity.y, -playerPhysicsStats.maxFallSpeed, airborneAcceleration * Time.fixedDeltaTime);
+                velocity.y = Mathf.MoveTowards(velocity.y, -playerPhysicsData.maxFallSpeed, airborneAcceleration * Time.fixedDeltaTime);
             }
 
             #endregion
@@ -312,8 +329,8 @@ namespace Loppy
             #region Horizontal physics
 
             // Increase control loss multipliers
-            wallJumpControlLossMultiplier = Mathf.Clamp(wallJumpControlLossTimer / playerPhysicsStats.wallJumpInputLossTime, 0f, 1f);
-            dashJumpControlLossMultiplier = Mathf.Clamp(dashJumpControlLossTimer / playerPhysicsStats.dashJumpInputLossTime, 0f, 1f);
+            wallJumpControlLossMultiplier = Mathf.Clamp(wallJumpControlLossTimer / playerPhysicsData.wallJumpInputLossTime, 0f, 1f);
+            dashJumpControlLossMultiplier = Mathf.Clamp(dashJumpControlLossTimer / playerPhysicsData.dashJumpInputLossTime, 0f, 1f);
 
             // Dashing
             if (dashing)
@@ -329,7 +346,7 @@ namespace Loppy
             // Deceleration
             else if (playerInput.x == 0 && wallJumpControlLossMultiplier == 1 && dashJumpControlLossMultiplier == 1)
             {
-                var deceleration = onGround ? playerPhysicsStats.groundDeceleration : playerPhysicsStats.airDeceleration;
+                var deceleration = onGround ? playerPhysicsData.groundDeceleration : playerPhysicsData.airDeceleration;
 
                 // Decelerate towards 0
                 velocity.x = Mathf.MoveTowards(velocity.x, 0, deceleration * Time.fixedDeltaTime);
@@ -339,7 +356,7 @@ namespace Loppy
             {
                 // Accelerate towards max speed
                 // Take into account control loss multipliers
-                velocity.x = Mathf.MoveTowards(velocity.x, playerInput.x * playerPhysicsStats.maxRunSpeed, wallJumpControlLossMultiplier * dashJumpControlLossMultiplier * playerPhysicsStats.acceleration * Time.fixedDeltaTime);
+                velocity.x = Mathf.MoveTowards(velocity.x, playerInput.x * playerPhysicsData.maxRunSpeed, wallJumpControlLossMultiplier * dashJumpControlLossMultiplier * playerPhysicsData.acceleration * Time.fixedDeltaTime);
 
                 // Reset x velocity when on wall
                 if (onWall) velocity.x = 0;
@@ -367,8 +384,8 @@ namespace Loppy
             #region Vertical collisions
 
             // Raycast to check for vertical collisions
-            groundHitCount = Physics2D.CapsuleCastNonAlloc(activeCollider.bounds.center, activeCollider.size, activeCollider.direction, 0, Vector2.down, groundHits, playerPhysicsStats.raycastDistance, ~playerPhysicsStats.playerLayer);
-            ceilingHitCount = Physics2D.CapsuleCastNonAlloc(activeCollider.bounds.center, activeCollider.size, activeCollider.direction, 0, Vector2.up, ceilingHits, playerPhysicsStats.raycastDistance, ~playerPhysicsStats.playerLayer);
+            groundHitCount = Physics2D.CapsuleCastNonAlloc(activeCollider.bounds.center, activeCollider.size, activeCollider.direction, 0, Vector2.down, groundHits, playerPhysicsData.raycastDistance, ~playerPhysicsData.playerLayer);
+            ceilingHitCount = Physics2D.CapsuleCastNonAlloc(activeCollider.bounds.center, activeCollider.size, activeCollider.direction, 0, Vector2.up, ceilingHits, playerPhysicsData.raycastDistance, ~playerPhysicsData.playerLayer);
 
             groundNormal = getRaycastNormal(Vector2.down);
             ceilingNormal = getRaycastNormal(Vector2.up);
@@ -376,7 +393,7 @@ namespace Loppy
             float groundAngle = Vector2.Angle(groundNormal, Vector2.up);
 
             // Enter ground
-            if (!onGround && groundHitCount > 0 && groundAngle <= playerPhysicsStats.maxWalkAngle)
+            if (!onGround && groundHitCount > 0 && groundAngle <= playerPhysicsData.maxWalkAngle)
             {
                 onGround = true;
                 resetJump();
@@ -385,7 +402,7 @@ namespace Loppy
                 onGroundChanged?.Invoke(true, Mathf.Abs(velocity.y));
             }
             // Leave ground
-            else if (onGround && (groundHitCount == 0 || groundAngle > playerPhysicsStats.maxWalkAngle))
+            else if (onGround && (groundHitCount == 0 || groundAngle > playerPhysicsData.maxWalkAngle))
             {
                 onGround = false;
 
@@ -397,7 +414,7 @@ namespace Loppy
                 onGroundChanged?.Invoke(false, 0);
             }
             // On ground
-            else if (onGround && groundHitCount > 0 && groundAngle <= playerPhysicsStats.maxWalkAngle)
+            else if (onGround && groundHitCount > 0 && groundAngle <= playerPhysicsData.maxWalkAngle)
             {
                 // Handle slopes
                 if (groundNormal != Vector2.zero) // Make sure ground normal exists
@@ -409,7 +426,7 @@ namespace Loppy
                         velocity.y = velocity.x * groundSlope;
 
                         // Give the player a constant velocity so that they stick to sloped ground
-                        if (velocity.x != 0) velocity.y += playerPhysicsStats.groundingForce;
+                        if (velocity.x != 0) velocity.y += playerPhysicsData.groundingForce;
                     }
                 }
             }
@@ -430,7 +447,7 @@ namespace Loppy
             #region Horizontal collisions
 
             // Raycast to check for horizontal collisions
-            wallHitCount = Physics2D.CapsuleCastNonAlloc(activeCollider.bounds.center, activeCollider.size, activeCollider.direction, 0, new(lastPlayerInput.x, 0), wallHits, playerPhysicsStats.raycastDistance, ~playerPhysicsStats.playerLayer);
+            wallHitCount = Physics2D.CapsuleCastNonAlloc(activeCollider.bounds.center, activeCollider.size, activeCollider.direction, 0, new(lastPlayerInput.x, 0), wallHits, playerPhysicsData.raycastDistance, ~playerPhysicsData.playerLayer);
             wallNormal = getRaycastNormal(new(lastPlayerInput.x, 0));
             float wallAngle = Mathf.Min(Vector2.Angle(wallNormal, Vector2.left), Vector2.Angle(wallNormal, Vector2.right));
 
@@ -440,7 +457,7 @@ namespace Loppy
             //    Wall is of climbable angle
             //    Not colliding with ground or ceiling
             //    Not currently moving upwards
-            if (!onWall && wallHitCount > 0 && playerInput.x != 0 && wallAngle <= playerPhysicsStats.maxClimbAngle && !onGround && !ceilingCollision && velocity.y < 0)
+            if (!onWall && wallHitCount > 0 && playerInput.x != 0 && wallAngle <= playerPhysicsData.maxClimbAngle && !onGround && !ceilingCollision && velocity.y < 0)
             {
                 onWall = true;
                 wallDirection = (int)Mathf.Sign(lastPlayerInput.x);
@@ -451,7 +468,7 @@ namespace Loppy
                 onWallChanged?.Invoke(true, Mathf.Abs(velocity.x));
             }
             // Leave wall
-            else if (onWall && (wallHitCount == 0 || wallAngle > playerPhysicsStats.maxClimbAngle || onGround))
+            else if (onWall && (wallHitCount == 0 || wallAngle > playerPhysicsData.maxClimbAngle || onGround))
             {
                 onWall = false;
                 onLedge = false;
@@ -465,7 +482,7 @@ namespace Loppy
                 onWallChanged?.Invoke(false, 0);
             }
             // On wall
-            else if (onWall && wallHitCount > 0 && wallAngle <= playerPhysicsStats.maxClimbAngle && !onGround)
+            else if (onWall && wallHitCount > 0 && wallAngle <= playerPhysicsData.maxClimbAngle && !onGround)
             {
                 // Handle slopes
                 if (wallNormal != Vector2.zero) // Make sure wall normal exists
@@ -492,12 +509,12 @@ namespace Loppy
                     // Nudge towards better grabbing position
                     if (hasControl)
                     {
-                        Vector2 targetPosition = ledgeCornerPosition - Vector2.Scale(playerPhysicsStats.ledgeGrabPoint, new(wallDirection, 1f));
-                        rigidbody.position = Vector2.MoveTowards(rigidbody.position, targetPosition, playerPhysicsStats.ledgeGrabDeceleration * Time.fixedDeltaTime);
+                        Vector2 targetPosition = ledgeCornerPosition - Vector2.Scale(playerPhysicsData.ledgeGrabPoint, new(wallDirection, 1f));
+                        rigidbody.position = Vector2.MoveTowards(rigidbody.position, targetPosition, playerPhysicsData.ledgeGrabDeceleration * Time.fixedDeltaTime);
                     }
 
                     // Detect ledge climb input and check to see if final position is clear
-                    Vector2 resultantPosition = ledgeCornerPosition + Vector2.Scale(playerPhysicsStats.standUpOffset, new(wallDirection, 1f));
+                    Vector2 resultantPosition = ledgeCornerPosition + Vector2.Scale(playerPhysicsData.standUpOffset, new(wallDirection, 1f));
                     if (!climbingLedge && playerInput.y > 0 && checkPositionClear(resultantPosition)) StartCoroutine(climbLedge());
                 }
             }
@@ -513,7 +530,7 @@ namespace Loppy
         private Vector2 getRaycastNormal(Vector2 castDirection)
         {
             Physics2D.queriesHitTriggers = false;
-            var hit = Physics2D.CapsuleCast(activeCollider.bounds.center, activeCollider.size, activeCollider.direction, 0, castDirection, playerPhysicsStats.raycastDistance * 2, ~playerPhysicsStats.playerLayer);
+            var hit = Physics2D.CapsuleCast(activeCollider.bounds.center, activeCollider.size, activeCollider.direction, 0, castDirection, playerPhysicsData.raycastDistance * 2, ~playerPhysicsData.playerLayer);
             Physics2D.queriesHitTriggers = detectTriggers;
 
             if (!hit.collider) return Vector2.zero;
@@ -527,14 +544,14 @@ namespace Loppy
             if (!onWall) return false;
 
             // Can grab ledge if a raycast from the top does not hit any walls
-            RaycastHit2D topHit = Physics2D.Raycast(activeCollider.bounds.center + new Vector3(0, activeCollider.size.y / 2), wallDirection * Vector2.right, (wallDirection * activeCollider.size.x / 2) + playerPhysicsStats.ledgeRaycastDistance, ~playerPhysicsStats.playerLayer);
+            RaycastHit2D topHit = Physics2D.Raycast(activeCollider.bounds.center + new Vector3(0, activeCollider.size.y / 2), wallDirection * Vector2.right, (wallDirection * activeCollider.size.x / 2) + playerPhysicsData.ledgeRaycastDistance, ~playerPhysicsData.playerLayer);
             if (topHit.collider) return false;
 
             // Get x position of corner
-            RaycastHit2D wallHit = Physics2D.CapsuleCast(activeCollider.bounds.center, activeCollider.size, activeCollider.direction, 0, wallDirection * Vector2.right, playerPhysicsStats.ledgeRaycastDistance, ~playerPhysicsStats.playerLayer);
+            RaycastHit2D wallHit = Physics2D.CapsuleCast(activeCollider.bounds.center, activeCollider.size, activeCollider.direction, 0, wallDirection * Vector2.right, playerPhysicsData.ledgeRaycastDistance, ~playerPhysicsData.playerLayer);
             if (!wallHit.collider) return false;
             // Get y position of corner
-            RaycastHit2D cornerHit = Physics2D.Raycast(activeCollider.bounds.center + new Vector3(wallDirection * playerPhysicsStats.ledgeGrabPoint.x * 2, activeCollider.size.y / 2), Vector2.down, activeCollider.size.y, ~playerPhysicsStats.playerLayer);
+            RaycastHit2D cornerHit = Physics2D.Raycast(activeCollider.bounds.center + new Vector3(wallDirection * playerPhysicsData.ledgeGrabPoint.x * 2, activeCollider.size.y / 2), Vector2.down, activeCollider.size.y, ~playerPhysicsData.playerLayer);
             if (!cornerHit.collider) return false;
 
             cornerPos = new(wallHit.point.x, cornerHit.point.y);
@@ -555,18 +572,18 @@ namespace Loppy
             ledgeClimbTimer = 0;
 
             // Get startup and resultant positions
-            Vector2 startupPosition = ledgeCornerPosition - Vector2.Scale(playerPhysicsStats.ledgeGrabPoint, new(wallDirection, 1f));
-            Vector2 resultantPosition = ledgeCornerPosition + Vector2.Scale(playerPhysicsStats.standUpOffset, new(wallDirection, 1f));
+            Vector2 startupPosition = ledgeCornerPosition - Vector2.Scale(playerPhysicsData.ledgeGrabPoint, new(wallDirection, 1f));
+            Vector2 resultantPosition = ledgeCornerPosition + Vector2.Scale(playerPhysicsData.standUpOffset, new(wallDirection, 1f));
 
             // Set startup position
             transform.position = startupPosition;
             cameraFocalPoint.position = transform.position;
 
             // Wait for ledge climb animation to finish
-            while (ledgeClimbTimer < playerPhysicsStats.ledgeClimbDuration)
+            while (ledgeClimbTimer < playerPhysicsData.ledgeClimbDuration)
             {
                 // Gradually move camera towards resultant position
-                cameraFocalPoint.position = startupPosition + ((resultantPosition - startupPosition) * Mathf.Clamp(ledgeClimbTimer / playerPhysicsStats.ledgeClimbDuration, 0f, 1f));
+                cameraFocalPoint.position = startupPosition + ((resultantPosition - startupPosition) * Mathf.Clamp(ledgeClimbTimer / playerPhysicsData.ledgeClimbDuration, 0f, 1f));
                 yield return new WaitForFixedUpdate();
             }
 
@@ -591,7 +608,7 @@ namespace Loppy
         private bool checkPositionClear(Vector2 position)
         {
             Physics2D.queriesHitTriggers = false;
-            var hit = Physics2D.OverlapCapsule(position + activeCollider.offset, activeCollider.size - new Vector2(0.1f, 0.1f), activeCollider.direction, 0, ~playerPhysicsStats.playerLayer);
+            var hit = Physics2D.OverlapCapsule(position + activeCollider.offset, activeCollider.size - new Vector2(0.1f, 0.1f), activeCollider.direction, 0, ~playerPhysicsData.playerLayer);
             Physics2D.queriesHitTriggers = detectTriggers;
 
             return !hit;
@@ -603,12 +620,9 @@ namespace Loppy
 
         private void handleJump()
         {
-            // Check if player has control
-            if (!hasControl) return;
-
-            bool canUseJumpBuffer = jumpBufferUsable && jumpBufferTimer < playerPhysicsStats.jumpBufferTime;
-            bool canUseCoyote = coyoteUsable && coyoteTimer < playerPhysicsStats.coyoteTime;
-            bool canUseWallJumpCoyote = wallJumpCoyoteUsable && wallJumpCoyoteTimer < playerPhysicsStats.wallJumpCoyoteTime;
+            bool canUseJumpBuffer = jumpBufferUsable && jumpBufferTimer < playerPhysicsData.jumpBufferTime;
+            bool canUseCoyote = coyoteUsable && coyoteTimer < playerPhysicsData.coyoteTime;
+            bool canUseWallJumpCoyote = wallJumpCoyoteUsable && wallJumpCoyoteTimer < playerPhysicsData.wallJumpCoyoteTime;
 
             // Detect early jump end
             if (!endedJumpEarly && !onGround && !onWall && !jumpKey && velocity.y > 0) endedJumpEarly = true;
@@ -632,7 +646,7 @@ namespace Loppy
             coyoteUsable = false;
 
             // Apply jump velocity
-            velocity.y = playerPhysicsStats.jumpStrength;
+            velocity.y = playerPhysicsData.jumpStrength;
 
             // Invoke jumped event action
             jumped?.Invoke();
@@ -646,7 +660,7 @@ namespace Loppy
             wallJumpCoyoteUsable = false;
 
             // Apply wall jump velocity
-            velocity = Vector2.Scale(playerPhysicsStats.wallJumpStrength, new(-wallDirection, 1));
+            velocity = Vector2.Scale(playerPhysicsData.wallJumpStrength, new(-wallDirection, 1));
             wallJumpControlLossMultiplier = 0;
             wallJumpControlLossTimer = 0;
 
@@ -664,7 +678,7 @@ namespace Loppy
             airJumpsRemaining--;
 
             // Apply air jump velocity
-            velocity.y = playerPhysicsStats.jumpStrength;
+            velocity.y = playerPhysicsData.jumpStrength;
             externalVelocity.y = 0; // Air jump cancels out vertical external forces
 
             // Invoke air jumped event action
@@ -680,7 +694,7 @@ namespace Loppy
             if (!onGround && !onWall) airJumpsRemaining--;
 
             // Apply dash jump velocity
-            velocity = Vector2.Scale(playerPhysicsStats.dashJumpStrength, new(Mathf.Sign(velocity.x), 1));
+            velocity = Vector2.Scale(playerPhysicsData.dashJumpStrength, new(Mathf.Sign(velocity.x), 1));
             dashJumpControlLossMultiplier = 0;
             dashJumpControlLossTimer = 0;
 
@@ -704,7 +718,7 @@ namespace Loppy
             endedJumpEarly = false;
 
             // Reset number of air jumps
-            airJumpsRemaining = maxAirJumps;
+            airJumpsRemaining = playerUnlocks.airJumps;
 
             // Reset dash
             canDash = true;
@@ -718,19 +732,19 @@ namespace Loppy
 
         private void handleDash()
         {
-            bool canUseDashBuffer = dashBufferUsable && dashBufferTimer < playerPhysicsStats.dashBufferTime;
-            bool canUseDashCoyote = dashCoyoteUsable && dashCoyoteTimer < playerPhysicsStats.dashCoyoteTime;
+            bool canUseDashBuffer = dashBufferUsable && dashBufferTimer < playerPhysicsData.dashBufferTime;
+            bool canUseDashCoyote = dashCoyoteUsable && dashCoyoteTimer < playerPhysicsData.dashCoyoteTime;
 
             // Check for conditions to initiate dash:
             //    Not currently dashing
             //    Player dash input detected or buffered
             //    Can dash or use dash coyote
             //    Dash cooldown elapsed
-            if (!dashing && (dashToConsume || canUseDashBuffer) && (canDash || canUseDashCoyote) && dashCooldownTimer > playerPhysicsStats.dashCooldownTime)
+            if (!dashing && (dashToConsume || canUseDashBuffer) && (canDash || canUseDashCoyote) && dashCooldownTimer > playerPhysicsData.dashCooldownTime)
             {
                 // Set dash velocity
-                if (onWall) dashVelocity = playerPhysicsStats.dashVelocity * new Vector2(-wallDirection, 0);
-                else dashVelocity = playerPhysicsStats.dashVelocity * new Vector2(lastPlayerInput.x, 0);
+                if (onWall) dashVelocity = playerPhysicsData.dashVelocity * new Vector2(-wallDirection, 0);
+                else dashVelocity = playerPhysicsData.dashVelocity * new Vector2(lastPlayerInput.x, 0);
 
                 // Set dash flags
                 dashing = true;
@@ -761,7 +775,7 @@ namespace Loppy
                 velocity = dashVelocity;
 
                 // Check if dash time has been reached
-                if (dashTimer >= playerPhysicsStats.dashTime)
+                if (dashTimer >= playerPhysicsData.dashTime)
                 {
                     // Reset dashing flag
                     dashing = false;
@@ -770,7 +784,7 @@ namespace Loppy
                     dashCooldownTimer = 0;
 
                     // Set player velocity at end of dash
-                    velocity.x *= playerPhysicsStats.dashEndHorizontalMultiplier;
+                    velocity.x *= playerPhysicsData.dashEndHorizontalMultiplier;
                     velocity.y = Mathf.Min(0, velocity.y);
 
                     // Invoke dashing changed event action
@@ -811,6 +825,15 @@ namespace Loppy
 
         #endregion
 
+        #region Grapple
+
+        private void handleGrapple()
+        {
+
+        }
+
+        #endregion
+
         private void move()
         {
             // Check if player has control
@@ -820,7 +843,7 @@ namespace Loppy
             rigidbody.velocity = velocity + externalVelocity;
 
             // Decay external velocity
-            externalVelocity = Vector2.MoveTowards(externalVelocity, Vector2.zero, playerPhysicsStats.externalVelocityDecay * Time.fixedDeltaTime);
+            externalVelocity = Vector2.MoveTowards(externalVelocity, Vector2.zero, playerPhysicsData.externalVelocityDecay * Time.fixedDeltaTime);
         }
 
         #region State machine

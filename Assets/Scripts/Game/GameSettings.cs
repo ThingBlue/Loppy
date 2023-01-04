@@ -11,7 +11,7 @@ namespace Loppy
         public Vector2Int resolution = new(1920, 1080);
         public int refreshRate = 60;
         public FullScreenMode fullScreenMode = FullScreenMode.FullScreenWindow;
-        public float targetFps = 60;
+        public float targetFrameRate = 60;
         public float brightness = 100;
 
         [Header("AUDIO")]
@@ -27,6 +27,7 @@ namespace Loppy
         public List<KeyCode> jumpKeyBinds = new List<KeyCode> { KeyCode.Space };
         public List<KeyCode> dashKeyBinds = new List<KeyCode> { KeyCode.LeftShift };
         public List<KeyCode> glideKeyBinds = new List<KeyCode> { KeyCode.LeftControl };
+        public List<KeyCode> grappleKeyBinds = new List<KeyCode> { KeyCode.Mouse2 };
 
         public List<KeyCode> pauseKeyBinds = new List<KeyCode> { KeyCode.Escape };
     }

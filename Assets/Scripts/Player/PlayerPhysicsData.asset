@@ -1,0 +1,54 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4d6ab563c52d14340b4dff3d8cd24933, type: 3}
+  m_Name: PlayerPhysicsData
+  m_EditorClassIdentifier: 
+  playerLayer:
+    serializedVersion: 2
+    m_Bits: 320
+  maxRunSpeed: 10
+  acceleration: 100
+  groundDeceleration: 200
+  airDeceleration: 100
+  groundingForce: -2
+  jumpStrength: 18
+  maxFallSpeed: 40
+  fallAcceleration: 50
+  jumpEndEarlyGravityModifier: 5
+  jumpBufferTime: 0.1
+  coyoteTime: 0.1
+  wallClimbSpeed: 8
+  wallFallAcceleration: 16
+  maxWallFallSpeed: 6
+  fastWallFallSpeed: 12
+  wallJumpStrength: {x: 7, y: 20}
+  wallJumpInputLossTime: 0.15
+  wallJumpCoyoteTime: 0.1
+  ledgeGrabDeceleration: 8
+  ledgeGrabPoint: {x: 0.4, y: 1}
+  standUpOffset: {x: 0.4, y: 0}
+  ledgeRaycastDistance: 2
+  ledgeClimbDuration: 0.2
+  dashVelocity: 25
+  dashTime: 0.2
+  dashCooldownTime: 0.2
+  dashEndHorizontalMultiplier: 0.25
+  dashBufferTime: 0.1
+  dashCoyoteTime: 0.1
+  dashJumpStrength: {x: 30, y: 18}
+  dashJumpInputLossTime: 0.3
+  glideFallSpeed: 5
+  glideFallAcceleration: 20
+  raycastDistance: 0.05
+  maxWalkAngle: 30
+  maxClimbAngle: 30
+  externalVelocityDecay: 100

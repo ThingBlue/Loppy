@@ -144,6 +144,9 @@ namespace Loppy
         [Tooltip("Amount of time before full horizontal movement is returned after a grapple")]
         public float grappleControlLossTime = 0.5f;
 
+        [Tooltip("Distance that the grapple target position is moved back to prevent getting stuck")]
+        public float grappleTargetOffset = 0.4f;
+
         [Header("COLLISION")]
         [Tooltip("The raycast distance for collision detection"), Range(0f, 1.0f)]
         public float raycastDistance = 0.05f;

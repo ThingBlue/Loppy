@@ -879,9 +879,6 @@ namespace Loppy
                 // Target is an enemy, get current enemy position
                 if (grappleHitEnemy) grappleTargetPosition = grappleTargetCollider.ClosestPoint(activeCollider.bounds.center);
 
-                // Move towards target
-                velocity = (grappleTargetPosition - activeCollider.bounds.center).normalized * playerPhysicsData.grappleVelocity;
-
                 // Check if we have reached target position
                 if (activeCollider.OverlapPoint(grappleTargetPosition))
                 {
@@ -892,6 +889,11 @@ namespace Loppy
 
                     // Trigger event action
                     onGrapple?.Invoke(false);
+                }
+                // Move towards target
+                else
+                {
+                    velocity = (grappleTargetPosition - activeCollider.bounds.center).normalized * playerPhysicsData.grappleVelocity;
                 }
             }
 
@@ -923,9 +925,11 @@ namespace Loppy
 
                 // Search for grapple target
                 Physics2D.queriesHitTriggers = true;
+                Physics2D.queriesStartInColliders = true;
                 RaycastHit2D enemyHit = Physics2D.Raycast(activeCollider.bounds.center, grappleDirection, playerUnlocks.grappleDistance, playerPhysicsData.enemyLayer);
                 RaycastHit2D terrainHit = Physics2D.Raycast(activeCollider.bounds.center, grappleDirection, playerUnlocks.grappleDistance, playerPhysicsData.terrainLayer);
                 Physics2D.queriesHitTriggers = detectTriggers;
+                Physics2D.queriesStartInColliders = false;
                 // Enemy hit detected
                 if (enemyHit.collider)
                 {
@@ -940,7 +944,7 @@ namespace Loppy
                     grappleTargetPosition = terrainHit.point;
 
                     // Move grapple target position slightly closer to player
-                    grappleTargetPosition -= (grappleTargetPosition - activeCollider.bounds.center).normalized * 0.2f;
+                    grappleTargetPosition -= (grappleTargetPosition - activeCollider.bounds.center).normalized * playerPhysicsData.grappleTargetOffset;
                 }
                 // No hits
                 else
@@ -948,13 +952,16 @@ namespace Loppy
                     grappleTargetCollider = null;
                 }
 
-                // Decelerate
-                velocity = Vector2.MoveTowards(velocity, Vector2.zero, playerPhysicsData.grappleFreezeDeceleration * Time.unscaledDeltaTime);
-
-                // Slow time
+                // Check for "fixed update"
                 if (timeScaleLerpTimer > playerPhysicsData.timeScaleLerpTime)
                 {
+                    // Slow time
                     Time.timeScale = Mathf.Lerp(Time.timeScale, 0, playerPhysicsData.timeScaleLerpFactor);
+
+                    // Decelerate
+                    velocity = Vector2.MoveTowards(velocity, Vector2.zero, playerPhysicsData.grappleFreezeDeceleration * playerPhysicsData.timeScaleLerpTime);
+
+                    // Decrement timer
                     timeScaleLerpTimer -= playerPhysicsData.timeScaleLerpTime;
                 }
 
@@ -977,7 +984,11 @@ namespace Loppy
             // Check if grapple target found
             if (grappleTargetCollider != null)
             {
+                // Set grappling flag
                 grappling = true;
+
+                // Set startup velocity
+                velocity = grappleDirection * playerPhysicsData.grappleVelocity;
 
                 // Trigger event action
                 onGrapple?.Invoke(true);

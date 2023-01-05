@@ -3,6 +3,7 @@
 using System;
 using System.Collections;
 using UnityEngine;
+using UnityEngine.UIElements;
 using static UnityEngine.GraphicsBuffer;
 
 namespace Loppy
@@ -298,6 +299,11 @@ namespace Loppy
 
         private void handlePhysics()
         {
+            // Increase control loss multipliers
+            wallJumpControlLossMultiplier = Mathf.Clamp(wallJumpControlLossTimer / playerPhysicsData.wallJumpControlLossTime, 0f, 1f);
+            dashJumpControlLossMultiplier = Mathf.Clamp(dashJumpControlLossTimer / playerPhysicsData.dashJumpControlLossTime, 0f, 1f);
+            grappleControlLossMultiplier = Mathf.Clamp(grappleControlLossTimer / playerPhysicsData.grappleControlLossTime, 0f, 1f);
+
             #region Vertical physics
 
             // Dashing
@@ -343,17 +349,12 @@ namespace Loppy
                 if (endedJumpEarly && velocity.y > 0) airborneAcceleration *= playerPhysicsData.jumpEndEarlyGravityModifier;
 
                 // Accelerate towards maxFallSpeed using airborneAcceleration
-                velocity.y = Mathf.MoveTowards(velocity.y, -playerPhysicsData.maxFallSpeed, airborneAcceleration * Time.fixedDeltaTime);
+                velocity.y = Mathf.MoveTowards(velocity.y, -playerPhysicsData.maxFallSpeed, grappleControlLossMultiplier * airborneAcceleration * Time.fixedDeltaTime);
             }
 
             #endregion
 
             #region Horizontal physics
-
-            // Increase control loss multipliers
-            wallJumpControlLossMultiplier = Mathf.Clamp(wallJumpControlLossTimer / playerPhysicsData.wallJumpControlLossTime, 0f, 1f);
-            dashJumpControlLossMultiplier = Mathf.Clamp(dashJumpControlLossTimer / playerPhysicsData.dashJumpControlLossTime, 0f, 1f);
-            grappleControlLossMultiplier = Mathf.Clamp(grappleControlLossTimer / playerPhysicsData.grappleControlLossTime, 0f, 1f);
 
             // Dashing
             if (dashing)
@@ -361,13 +362,13 @@ namespace Loppy
 
             }
             // Player input is in the opposite direction of current velocity
-            else if (playerInput.x != 0 && velocity.x != 0 && Mathf.Sign(playerInput.x) != Mathf.Sign(velocity.x) && wallJumpControlLossMultiplier == 1 && dashJumpControlLossMultiplier == 1)
+            else if (playerInput.x != 0 && velocity.x != 0 && Mathf.Sign(playerInput.x) != Mathf.Sign(velocity.x) && wallJumpControlLossMultiplier == 1 && dashJumpControlLossMultiplier == 1 && grappleControlLossMultiplier == 1)
             {
                 // Instantly reset velocity
                 velocity.x = 0;
             }
             // Deceleration
-            else if (playerInput.x == 0 && wallJumpControlLossMultiplier == 1 && dashJumpControlLossMultiplier == 1)
+            else if (playerInput.x == 0 && wallJumpControlLossMultiplier == 1 && dashJumpControlLossMultiplier == 1 && grappleControlLossMultiplier == 1)
             {
                 var deceleration = onGround ? playerPhysicsData.groundDeceleration : playerPhysicsData.airDeceleration;
 
@@ -407,12 +408,14 @@ namespace Loppy
             #region Vertical collisions
 
             // Raycast to check for vertical collisions
-            groundHitCount = Physics2D.CapsuleCastNonAlloc(activeCollider.bounds.center, activeCollider.size, activeCollider.direction, 0, Vector2.down, groundHits, playerPhysicsData.raycastDistance, ~playerPhysicsData.playerLayer);
-            ceilingHitCount = Physics2D.CapsuleCastNonAlloc(activeCollider.bounds.center, activeCollider.size, activeCollider.direction, 0, Vector2.up, ceilingHits, playerPhysicsData.raycastDistance, ~playerPhysicsData.playerLayer);
+            Physics2D.queriesHitTriggers = false;
+            groundHitCount = Physics2D.CapsuleCastNonAlloc(activeCollider.bounds.center, activeCollider.size, activeCollider.direction, 0, Vector2.down, groundHits, playerPhysicsData.raycastDistance, playerPhysicsData.terrainLayer);
+            ceilingHitCount = Physics2D.CapsuleCastNonAlloc(activeCollider.bounds.center, activeCollider.size, activeCollider.direction, 0, Vector2.up, ceilingHits, playerPhysicsData.raycastDistance, playerPhysicsData.terrainLayer);
+            Physics2D.queriesHitTriggers = detectTriggers;
 
+            // Get normals
             groundNormal = getRaycastNormal(Vector2.down);
             ceilingNormal = getRaycastNormal(Vector2.up);
-
             float groundAngle = Vector2.Angle(groundNormal, Vector2.up);
 
             // Enter ground
@@ -470,7 +473,11 @@ namespace Loppy
             #region Horizontal collisions
 
             // Raycast to check for horizontal collisions
-            wallHitCount = Physics2D.CapsuleCastNonAlloc(activeCollider.bounds.center, activeCollider.size, activeCollider.direction, 0, new(lastPlayerInput.x, 0), wallHits, playerPhysicsData.raycastDistance, ~playerPhysicsData.playerLayer);
+            Physics2D.queriesHitTriggers = false;
+            wallHitCount = Physics2D.CapsuleCastNonAlloc(activeCollider.bounds.center, activeCollider.size, activeCollider.direction, 0, new(lastPlayerInput.x, 0), wallHits, playerPhysicsData.raycastDistance, playerPhysicsData.terrainLayer);
+            Physics2D.queriesHitTriggers = detectTriggers;
+
+            // Get normal
             wallNormal = getRaycastNormal(new(lastPlayerInput.x, 0));
             float wallAngle = Mathf.Min(Vector2.Angle(wallNormal, Vector2.left), Vector2.Angle(wallNormal, Vector2.right));
 
@@ -553,7 +560,7 @@ namespace Loppy
         private Vector2 getRaycastNormal(Vector2 castDirection)
         {
             Physics2D.queriesHitTriggers = false;
-            var hit = Physics2D.CapsuleCast(activeCollider.bounds.center, activeCollider.size, activeCollider.direction, 0, castDirection, playerPhysicsData.raycastDistance * 2, ~playerPhysicsData.playerLayer);
+            var hit = Physics2D.CapsuleCast(activeCollider.bounds.center, activeCollider.size, activeCollider.direction, 0, castDirection, playerPhysicsData.raycastDistance * 2, playerPhysicsData.terrainLayer);
             Physics2D.queriesHitTriggers = detectTriggers;
 
             if (!hit.collider) return Vector2.zero;
@@ -563,19 +570,26 @@ namespace Loppy
 
         private bool getLedgeCorner(out Vector2 cornerPos)
         {
+            // Reset corner position
             cornerPos = Vector2.zero;
+
+            // Check if player is on wall
             if (!onWall) return false;
 
-            // Can grab ledge if a raycast from the top does not hit any walls
-            RaycastHit2D topHit = Physics2D.Raycast(activeCollider.bounds.center + new Vector3(0, activeCollider.size.y / 2), wallDirection * Vector2.right, (wallDirection * activeCollider.size.x / 2) + playerPhysicsData.ledgeRaycastDistance, ~playerPhysicsData.playerLayer);
-            if (topHit.collider) return false;
+            Physics2D.queriesHitTriggers = false;
 
+            // Can grab ledge if a raycast from the top does not hit any walls
+            RaycastHit2D topHit = Physics2D.Raycast(activeCollider.bounds.center + new Vector3(0, activeCollider.size.y / 2), wallDirection * Vector2.right, (wallDirection * activeCollider.size.x / 2) + playerPhysicsData.ledgeRaycastDistance, playerPhysicsData.terrainLayer);
+            
             // Get x position of corner
-            RaycastHit2D wallHit = Physics2D.CapsuleCast(activeCollider.bounds.center, activeCollider.size, activeCollider.direction, 0, wallDirection * Vector2.right, playerPhysicsData.ledgeRaycastDistance, ~playerPhysicsData.playerLayer);
-            if (!wallHit.collider) return false;
+            RaycastHit2D wallHit = Physics2D.CapsuleCast(activeCollider.bounds.center, activeCollider.size, activeCollider.direction, 0, wallDirection * Vector2.right, playerPhysicsData.ledgeRaycastDistance, playerPhysicsData.terrainLayer);
             // Get y position of corner
-            RaycastHit2D cornerHit = Physics2D.Raycast(activeCollider.bounds.center + new Vector3(wallDirection * playerPhysicsData.ledgeGrabPoint.x * 2, activeCollider.size.y / 2), Vector2.down, activeCollider.size.y, ~playerPhysicsData.playerLayer);
-            if (!cornerHit.collider) return false;
+            RaycastHit2D cornerHit = Physics2D.Raycast(activeCollider.bounds.center + new Vector3(wallDirection * playerPhysicsData.ledgeGrabPoint.x * 2, activeCollider.size.y / 2), Vector2.down, activeCollider.size.y, playerPhysicsData.terrainLayer);
+            
+            Physics2D.queriesHitTriggers = detectTriggers;
+
+            // Check if no corner was found
+            if (topHit.collider || !wallHit.collider || !cornerHit.collider) return false;
 
             cornerPos = new(wallHit.point.x, cornerHit.point.y);
             return true;
@@ -631,7 +645,7 @@ namespace Loppy
         private bool checkPositionClear(Vector2 position)
         {
             Physics2D.queriesHitTriggers = false;
-            var hit = Physics2D.OverlapCapsule(position + activeCollider.offset, activeCollider.size - new Vector2(0.1f, 0.1f), activeCollider.direction, 0, ~playerPhysicsData.playerLayer);
+            var hit = Physics2D.OverlapCapsule(position + activeCollider.offset, activeCollider.size - new Vector2(0.1f, 0.1f), activeCollider.direction, 0, playerPhysicsData.terrainLayer);
             Physics2D.queriesHitTriggers = detectTriggers;
 
             return !hit;
@@ -863,7 +877,7 @@ namespace Loppy
             if (grappling)
             {
                 // Target is an enemy, get current enemy position
-                if (grappleHitEnemy) grappleTargetPosition = grappleTargetCollider.bounds.center;
+                if (grappleHitEnemy) grappleTargetPosition = grappleTargetCollider.ClosestPoint(activeCollider.bounds.center);
 
                 // Move towards target
                 velocity = (grappleTargetPosition - activeCollider.bounds.center).normalized * playerPhysicsData.grappleVelocity;
@@ -874,7 +888,7 @@ namespace Loppy
                     // Stop grappling
                     grappling = false;
                     grappleControlLossTimer = 0;
-                    grappleControlLossTimer = 0;
+                    grappleControlLossMultiplier = 0;
 
                     // Trigger event action
                     onGrapple?.Invoke(false);
@@ -908,31 +922,30 @@ namespace Loppy
                 Debug.DrawLine(activeCollider.bounds.center, activeCollider.bounds.center + yes, Color.green, Time.unscaledDeltaTime);
 
                 // Search for grapple target
-                // Search for enemies
-                RaycastHit2D hit = Physics2D.Raycast(activeCollider.bounds.center, grappleDirection, playerUnlocks.grappleDistance, playerPhysicsData.enemyLayer);
+                Physics2D.queriesHitTriggers = true;
+                RaycastHit2D enemyHit = Physics2D.Raycast(activeCollider.bounds.center, grappleDirection, playerUnlocks.grappleDistance, playerPhysicsData.enemyLayer);
+                RaycastHit2D terrainHit = Physics2D.Raycast(activeCollider.bounds.center, grappleDirection, playerUnlocks.grappleDistance, playerPhysicsData.terrainLayer);
+                Physics2D.queriesHitTriggers = detectTriggers;
                 // Enemy hit detected
-                if (hit.collider)
+                if (enemyHit.collider)
                 {
                     grappleHitEnemy = true;
-                    grappleTargetCollider = hit.collider;
+                    grappleTargetCollider = enemyHit.collider;
                 }
-                // No enemy hits
+                // Terrain hit detected
+                else if (terrainHit.collider)
+                {
+                    grappleHitEnemy = false;
+                    grappleTargetCollider = terrainHit.collider;
+                    grappleTargetPosition = terrainHit.point;
+
+                    // Move grapple target position slightly closer to player
+                    grappleTargetPosition -= (grappleTargetPosition - activeCollider.bounds.center).normalized * 0.2f;
+                }
+                // No hits
                 else
                 {
-                    // Search for terrain
-                    hit = Physics2D.Raycast(activeCollider.bounds.center, grappleDirection, playerUnlocks.grappleDistance, playerPhysicsData.terrainLayer);
-                    // Terrain hit detected
-                    if (hit.collider)
-                    {
-                        grappleHitEnemy = false;
-                        grappleTargetCollider = hit.collider;
-                        grappleTargetPosition = hit.point;
-                    }
-                    // No hits
-                    else
-                    {
-                        grappleTargetCollider = null;
-                    }
+                    grappleTargetCollider = null;
                 }
 
                 // Decelerate

@@ -26,9 +26,9 @@ MonoBehaviour:
   groundDeceleration: 200
   airDeceleration: 100
   groundingForce: -2
-  jumpStrength: 18
+  jumpStrength: 16
   maxFallSpeed: 40
-  fallAcceleration: 50
+  fallAcceleration: 36
   jumpEndEarlyGravityModifier: 5
   jumpBufferTime: 0.1
   coyoteTime: 0.1
@@ -55,7 +55,7 @@ MonoBehaviour:
   glideFallSpeed: 5
   glideFallAcceleration: 20
   grappleVelocity: 30
-  grappleFreezeTime: 1
+  grappleFreezeTime: 0.5
   grappleBufferTime: 0.1
   grappleFreezeDeceleration: 200
   timeScaleLerpFactor: 0.5

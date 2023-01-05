@@ -142,7 +142,7 @@ namespace Loppy
         public float timeScaleLerpTime = (1f / 60f);
 
         [Tooltip("Amount of time before full horizontal movement is returned after a grapple")]
-        public float grappleControlLossTime = 0.2f;
+        public float grappleControlLossTime = 0.5f;
 
         [Header("COLLISION")]
         [Tooltip("The raycast distance for collision detection"), Range(0f, 1.0f)]

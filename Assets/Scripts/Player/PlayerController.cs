@@ -2,6 +2,7 @@
 
 using System;
 using System.Collections;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UIElements;
 using static UnityEngine.GraphicsBuffer;
@@ -34,13 +35,14 @@ namespace Loppy
 
         public SpriteRenderer sprite;
         public Transform cameraFocalPoint;
+        public LineRenderer grappleLineRenderer;
 
         public Rigidbody2D rigidbody;
         public CapsuleCollider2D standingCollider;
+
         public PlayerPhysicsData playerPhysicsData;
         public PlayerUnlocks playerUnlocks;
-
-        private CapsuleCollider2D activeCollider;
+        public PlayerAnimationData playerAnimationData;
 
         #endregion
 
@@ -122,6 +124,8 @@ namespace Loppy
 
         #region Collision variables
 
+        private CapsuleCollider2D activeCollider;
+
         public bool onGround = false;
         private Vector2 groundNormal = Vector2.zero;
         private Vector2 ceilingNormal = Vector2.zero;
@@ -189,6 +193,11 @@ namespace Loppy
             Physics2D.queriesStartInColliders = false;
             activeCollider = standingCollider;
             playerState = PlayerState.IDLE;
+
+            // Initialize grapple line renderer
+            grappleLineRenderer.positionCount = 2;
+            grappleLineRenderer.startWidth = 0.2f;
+            grappleLineRenderer.endWidth = 0.2f;
         }
 
         private void Update()
@@ -913,15 +922,15 @@ namespace Loppy
             // Timer to keep track of time scale lerping
             float timeScaleLerpTimer = 0;
 
+            // Activate grapple line renderer
+            grappleLineRenderer.enabled = true;
+
             // Loop until freeze ends
             while (grappleKey && grappleFreezeTimer < playerPhysicsData.grappleFreezeTime)
             {
                 // Get grapple direction
                 grappleDirection = InputManager.instance.getMousePositionInWorld() - activeCollider.bounds.center;
                 grappleDirection = grappleDirection.normalized;
-
-                Vector3 yes = (grappleDirection * playerUnlocks.grappleDistance);
-                Debug.DrawLine(activeCollider.bounds.center, activeCollider.bounds.center + yes, Color.green, Time.unscaledDeltaTime);
 
                 // Search for grapple target
                 Physics2D.queriesHitTriggers = true;
@@ -952,6 +961,10 @@ namespace Loppy
                     grappleTargetCollider = null;
                 }
 
+                // Draw line
+                grappleLineRenderer.SetPosition(0, new Vector2(activeCollider.bounds.center.x, activeCollider.bounds.center.y) + (grappleDirection * playerAnimationData.grappleLineRendererOffset));
+                grappleLineRenderer.SetPosition(1, new Vector2(activeCollider.bounds.center.x, activeCollider.bounds.center.y) + (grappleDirection * playerUnlocks.grappleDistance));
+
                 // Check for "fixed update"
                 if (timeScaleLerpTimer > playerPhysicsData.timeScaleLerpTime)
                 {
@@ -977,6 +990,9 @@ namespace Loppy
 
             // Reset time slow
             Time.timeScale = 1;
+
+            // Deactivate grapple line renderer
+            grappleLineRenderer.enabled = false;
 
             // Trigger event action
             onGrappleFreeze?.Invoke(false);

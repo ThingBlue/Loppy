@@ -24,7 +24,7 @@ MonoBehaviour:
   maxRunSpeed: 10
   acceleration: 100
   groundDeceleration: 200
-  airDeceleration: 100
+  airDeceleration: 30
   groundingForce: -2
   jumpStrength: 16
   maxFallSpeed: 40
@@ -36,7 +36,7 @@ MonoBehaviour:
   wallFallAcceleration: 16
   maxWallFallSpeed: 6
   fastWallFallSpeed: 12
-  wallJumpStrength: {x: 7, y: 20}
+  wallJumpStrength: {x: 6, y: 16}
   wallJumpControlLossTime: 0.15
   wallJumpCoyoteTime: 0.1
   ledgeGrabDeceleration: 8
@@ -57,10 +57,11 @@ MonoBehaviour:
   grappleVelocity: 30
   grappleFreezeTime: 0.5
   grappleBufferTime: 0.1
-  grappleFreezeDeceleration: 200
-  timeScaleLerpFactor: 0.02
+  grappleFreezeDeceleration: 0
+  timeScaleLerpFactor: 0.15
   timeScaleLerpTime: 0.016666668
   grappleControlLossTime: 0.2
+  grappleTargetOffset: 0.4
   raycastDistance: 0.05
   maxWalkAngle: 30
   maxClimbAngle: 30

@@ -73,7 +73,9 @@ namespace Loppy
         {
             Vector3 mousePosition = Input.mousePosition;
             mousePosition.z = 0;
-            return Camera.main.ScreenToWorldPoint(mousePosition);
+            Vector3 mousePositionInWorld = Camera.main.ScreenToWorldPoint(mousePosition);
+            mousePositionInWorld.z = 0;
+            return mousePositionInWorld;
         }
 
         #endregion

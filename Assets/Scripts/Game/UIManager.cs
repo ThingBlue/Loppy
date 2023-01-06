@@ -42,6 +42,9 @@ namespace Loppy
         public Button applyChangesControlsButton;
         public Button applyDefaultsControlsButton;
 
+        // Debug menu
+        public GameObject debugMenuPanel;
+
         #endregion
 
         private void Awake()
@@ -64,6 +67,7 @@ namespace Loppy
         {
             pauseMenuPanel.SetActive(pause);
             if (!pause) settingsMenuPanel.SetActive(false);
+            if (!pause) debugMenuPanel.SetActive(false);
         }
 
         public void onContinueButtonPressed() { GameManager.instance.togglePause(false); }
@@ -85,6 +89,15 @@ namespace Loppy
         public void onExitToMenuButtonPressed()
         {
 
+        }
+
+        public void onDebugButtonPressed()
+        {
+            pauseMenuPanel.SetActive(false);
+            debugMenuPanel.SetActive(true);
+
+            // Set display values for graphics tab
+            DebugCanvasManager.instance.onDebugMenuOpened();
         }
 
         #endregion

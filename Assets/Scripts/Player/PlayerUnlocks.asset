@@ -19,4 +19,4 @@ MonoBehaviour:
   airDashes: 1
   glideUnlocked: 1
   grappleUnlocked: 1
-  grappleDistance: 5
+  grappleDistance: 10

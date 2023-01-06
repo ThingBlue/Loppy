@@ -432,6 +432,8 @@ namespace Loppy
             {
                 onGround = true;
                 resetJump();
+                resetDash();
+                resetGrapple();
 
                 // Invoke event action
                 onGrounded?.Invoke(true, Mathf.Abs(velocity.y));
@@ -496,12 +498,14 @@ namespace Loppy
             //    Wall is of climbable angle
             //    Not colliding with ground or ceiling
             //    Not currently moving upwards
-            if (!onWall && wallHitCount > 0 && playerInput.x != 0 && wallAngle <= playerPhysicsData.maxClimbAngle && !onGround && !ceilingCollision && velocity.y < 0)
+            if (playerUnlocks.wallClimbUnlocked && !onWall && wallHitCount > 0 && playerInput.x != 0 && wallAngle <= playerPhysicsData.maxClimbAngle && !onGround && !ceilingCollision && velocity.y < 0)
             {
                 onWall = true;
                 wallDirection = (int)Mathf.Sign(lastPlayerInput.x);
                 velocity = Vector2.zero;
                 resetJump();
+                resetDash();
+                resetGrapple();
 
                 // Invoke event action
                 onWallCling?.Invoke(true, Mathf.Abs(velocity.x));
@@ -763,15 +767,6 @@ namespace Loppy
 
             // Reset number of air jumps
             airJumpsRemaining = playerUnlocks.airJumps;
-
-            // Reset dash
-            canDash = true;
-            if (onGround) dashBufferUsable = true; // Don't allow dash buffer on wall
-            dashCoyoteUsable = true;
-
-            // Reset grapple
-            canGrapple = true;
-            grappleBufferUsable = true;
         }
 
         #endregion
@@ -788,7 +783,7 @@ namespace Loppy
             //    Player dash input detected or buffered
             //    Can dash or use dash coyote
             //    Dash cooldown elapsed
-            if (!dashing && (dashToConsume || canUseDashBuffer) && (canDash || canUseDashCoyote) && dashCooldownTimer > playerPhysicsData.dashCooldownTime)
+            if (playerUnlocks.dashUnlocked && !dashing && (dashToConsume || canUseDashBuffer) && (canDash || canUseDashCoyote) && dashCooldownTimer > playerPhysicsData.dashCooldownTime)
             {
                 // Set dash velocity
                 if (onWall) dashVelocity = playerPhysicsData.dashVelocity * new Vector2(-wallDirection, 0);
@@ -844,6 +839,14 @@ namespace Loppy
             dashToConsume = false;
         }
 
+        private void resetDash()
+        {
+            // Reset dash
+            canDash = true;
+            if (onGround) dashBufferUsable = true; // Don't allow dash buffer on wall
+            dashCoyoteUsable = true;
+        }
+
         #endregion
 
         #region Glide
@@ -851,7 +854,7 @@ namespace Loppy
         private void handleGlide()
         {
             // Check for conditions to initate glide
-            if (!gliding && glideKey && !onGround && !onWall && !dashing)
+            if (playerUnlocks.glideUnlocked && !gliding && glideKey && !onGround && !onWall && !dashing)
             {
                 // Set gliding flag
                 gliding = true;
@@ -880,7 +883,7 @@ namespace Loppy
             bool canUseGrappleBuffer = grappleBufferUsable && grappleBufferTimer < playerPhysicsData.grappleBufferTime;
 
             // Check for conditions to initiate grapple freeze
-            if (!grappling && !grappleFreezing && (grappleToConsume || canUseGrappleBuffer) && canGrapple) StartCoroutine(grappleFreeze());
+            if (playerUnlocks.grappleUnlocked && !grappling && !grappleFreezing && (grappleToConsume || canUseGrappleBuffer) && canGrapple) StartCoroutine(grappleFreeze());
 
             // Handle grapple
             if (grappling)
@@ -1011,6 +1014,12 @@ namespace Loppy
             }
         }
 
+        private void resetGrapple()
+        {
+            // Reset grapple
+            canGrapple = true;
+            grappleBufferUsable = true;
+        }
 
         #endregion
 

@@ -35,7 +35,9 @@ namespace Loppy
 
         public SpriteRenderer sprite;
         public Transform cameraFocalPoint;
-        public LineRenderer grappleLineRenderer;
+
+        public GameObject grappleRangeCircle;
+        public LineRenderer grappleArrowLineRenderer;
 
         public Rigidbody2D rigidbody;
         public CapsuleCollider2D standingCollider;
@@ -195,15 +197,16 @@ namespace Loppy
             playerState = PlayerState.IDLE;
 
             // Initialize grapple line renderer
-            grappleLineRenderer.positionCount = 2;
-            grappleLineRenderer.startWidth = 0.2f;
-            grappleLineRenderer.endWidth = 0.2f;
+            grappleArrowLineRenderer.positionCount = 2;
+            grappleArrowLineRenderer.startWidth = 0.2f;
+            grappleArrowLineRenderer.endWidth = 0.2f;
         }
 
         private void Start()
         {
-            // Disable grapple line renderer
-            grappleLineRenderer.enabled = false;
+            // Disable grapple indicators
+            grappleRangeCircle.SetActive(false);
+            grappleArrowLineRenderer.enabled = false;
         }
 
         private void Update()
@@ -931,8 +934,9 @@ namespace Loppy
             // Timer to keep track of time scale lerping
             float timeScaleLerpTimer = 0;
 
-            // Activate grapple line renderer
-            grappleLineRenderer.enabled = true;
+            // Activate grapple indicators
+            grappleRangeCircle.SetActive(true);
+            grappleArrowLineRenderer.enabled = true;
 
             // Loop until freeze ends
             while (grappleKey && grappleFreezeTimer < playerPhysicsData.grappleFreezeTime)
@@ -970,9 +974,10 @@ namespace Loppy
                     grappleTargetCollider = null;
                 }
 
-                // Draw line
-                grappleLineRenderer.SetPosition(0, new Vector2(activeCollider.bounds.center.x, activeCollider.bounds.center.y) + (grappleDirection * playerAnimationData.grappleLineRendererOffset));
-                grappleLineRenderer.SetPosition(1, new Vector2(activeCollider.bounds.center.x, activeCollider.bounds.center.y) + (grappleDirection * playerUnlocks.grappleDistance));
+                // Draw indicators
+                grappleRangeCircle.transform.localScale = new Vector2(playerUnlocks.grappleDistance * 2, playerUnlocks.grappleDistance * 2);
+                grappleArrowLineRenderer.SetPosition(0, new Vector2(activeCollider.bounds.center.x, activeCollider.bounds.center.y) + (grappleDirection * playerAnimationData.grappleLineRendererOffset));
+                grappleArrowLineRenderer.SetPosition(1, new Vector2(activeCollider.bounds.center.x, activeCollider.bounds.center.y) + (grappleDirection * playerUnlocks.grappleDistance));
 
                 // Check for "fixed update"
                 if (timeScaleLerpTimer > playerPhysicsData.timeScaleLerpTime)
@@ -1000,8 +1005,9 @@ namespace Loppy
             // Reset time slow
             Time.timeScale = 1;
 
-            // Deactivate grapple line renderer
-            grappleLineRenderer.enabled = false;
+            // Deactivate indicators
+            grappleRangeCircle.SetActive(false);
+            grappleArrowLineRenderer.enabled = false;
 
             // Trigger event action
             onGrappleFreeze?.Invoke(false);

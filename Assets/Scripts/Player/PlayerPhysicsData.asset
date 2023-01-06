@@ -20,7 +20,7 @@ MonoBehaviour:
     m_Bits: 4096
   terrainLayer:
     serializedVersion: 2
-    m_Bits: 32768
+    m_Bits: 1081344
   maxRunSpeed: 10
   acceleration: 100
   groundDeceleration: 200

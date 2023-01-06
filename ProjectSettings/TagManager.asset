@@ -20,6 +20,11 @@ TagManager:
   - Enemy
   - 
   - 
+  - 
+  - 
+  - 
+  - Foreground
+  - 
   - Terrain
   - 
   - 
@@ -32,23 +37,21 @@ TagManager:
   - 
   - 
   - 
-  - 
-  - 
-  - 
-  - 
-  - 
   m_SortingLayers:
-  - name: UI
-    uniqueID: 3631959931
-    locked: 0
-  - name: Player
-    uniqueID: 1573855223
+  - name: Default
+    uniqueID: 0
     locked: 0
   - name: Terrain
     uniqueID: 1708207479
     locked: 0
-  - name: Default
-    uniqueID: 0
+  - name: Player
+    uniqueID: 1573855223
+    locked: 0
+  - name: Foreground
+    uniqueID: 3305210409
+    locked: 0
+  - name: UI
+    uniqueID: 3631959931
     locked: 0
   - name: Cursor
     uniqueID: 3779268051

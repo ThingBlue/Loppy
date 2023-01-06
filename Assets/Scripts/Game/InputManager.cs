@@ -71,11 +71,15 @@ namespace Loppy
         // Getter for mouse position in world space
         public Vector3 getMousePositionInWorld()
         {
-            Vector3 mousePosition = Input.mousePosition;
-            mousePosition.z = 0;
-            Vector3 mousePositionInWorld = Camera.main.ScreenToWorldPoint(mousePosition);
-            mousePositionInWorld.z = 0;
-            return mousePositionInWorld;
+            // Create plane at zero
+            Plane plane = new Plane(Vector3.back, Vector3.zero);
+
+            // Cast ray onto plane
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+
+            // Return hit location
+            if (plane.Raycast(ray, out float enter)) return ray.GetPoint(enter);
+            return Vector3.zero; // Should never execute
         }
 
         #endregion

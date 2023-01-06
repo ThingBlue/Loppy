@@ -200,6 +200,12 @@ namespace Loppy
             grappleLineRenderer.endWidth = 0.2f;
         }
 
+        private void Start()
+        {
+            // Disable grapple line renderer
+            grappleLineRenderer.enabled = false;
+        }
+
         private void Update()
         {
             handleInput();

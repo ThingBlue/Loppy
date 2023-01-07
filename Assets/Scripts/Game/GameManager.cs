@@ -134,7 +134,7 @@ namespace Loppy
             gameSettings.jumpKeyBinds = new List<KeyCode> { KeyCode.Space };
             gameSettings.dashKeyBinds = new List<KeyCode> { KeyCode.LeftShift };
             gameSettings.glideKeyBinds = new List<KeyCode> { KeyCode.LeftControl };
-            gameSettings.grappleKeyBinds = new List<KeyCode> { KeyCode.E };
+            gameSettings.grappleKeyBinds = new List<KeyCode> { KeyCode.Mouse1 };
 
             // Menu controls
             gameSettings.pauseKeyBinds = new List<KeyCode> { KeyCode.Escape };

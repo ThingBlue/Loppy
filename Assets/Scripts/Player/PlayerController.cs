@@ -106,21 +106,24 @@ namespace Loppy
         private bool gliding = false;
 
         // Grapple
-        private bool grappleFreezing = false;
+        private bool grappleAiming = false;
         private bool grappling = false;
         private bool canGrapple = false;
         private bool grappleBufferUsable = false;
 
-        private Vector2 grappleDirection = Vector2.zero;
-        private bool grappleHitEnemy = false;
+        private Vector2 grappleAimDirection = Vector2.zero;
+
+        private Collider2D grappleAimTargetCollider = null;
+        private Vector3 grappleAimTargetPosition = Vector2.zero;
+        private bool grappleAimHitEnemy = false;
+
         private Collider2D grappleTargetCollider = null;
         private Vector3 grappleTargetPosition = Vector2.zero;
+        private bool grappleHitEnemy = false;
 
-        private float grappleFreezeTimer = 0;
         private float grappleBufferTimer = 0;
         private float grappleControlLossMultiplier = 1;
         private float grappleControlLossTimer = 0;
-
 
         #endregion
 
@@ -163,7 +166,7 @@ namespace Loppy
         public event Action onDashJump;
         public event Action<bool> onDash;
         public event Action<bool> onGlide;
-        public event Action<bool> onGrappleFreeze;
+        public event Action<bool> onGrappleAim;
         public event Action<bool> onGrapple;
 
         #endregion
@@ -238,12 +241,9 @@ namespace Loppy
             if (hasControl)
             {
                 // Handle movement machanics
-                if (!grappleFreezing)
-                {
-                    handleJump();
-                    handleDash();
-                    handleGlide();
-                }
+                handleJump();
+                handleDash();
+                handleGlide();
                 handleGrapple();
             }
 
@@ -283,14 +283,14 @@ namespace Loppy
 
             // Jump
             jumpKey = InputManager.instance.getKey("jump");
-            if (InputManager.instance.getKeyDown("jump") && !grappleFreezing)
+            if (InputManager.instance.getKeyDown("jump"))
             {
                 jumpToConsume = true;
                 jumpBufferTimer = 0;
             }
 
             // Dash
-            if (InputManager.instance.getKeyDown("dash") && !grappleFreezing)
+            if (InputManager.instance.getKeyDown("dash"))
             {
                 dashToConsume = true;
                 dashBufferTimer = 0;
@@ -891,8 +891,93 @@ namespace Loppy
         {
             bool canUseGrappleBuffer = grappleBufferUsable && grappleBufferTimer < playerPhysicsData.grappleBufferTime;
 
-            // Check for conditions to initiate grapple freeze
-            if (playerUnlocks.grappleUnlocked && !grappling && !grappleFreezing && (grappleToConsume || canUseGrappleBuffer) && canGrapple) StartCoroutine(grappleFreeze());
+            // Check for conditions to initiate grapple aim
+            if (playerUnlocks.grappleUnlocked && !grappleAiming && (grappleToConsume || canUseGrappleBuffer) && canGrapple)
+            {
+                // Invoke event action
+                onGrappleAim?.Invoke(true);
+
+                // Start grapple aim
+                grappleAiming = true;
+
+                // Activate grapple indicators
+                grappleRangeCircle.SetActive(true);
+                grappleArrowLineRenderer.enabled = true;
+            }
+
+            // Handle grapple aim
+            if (grappleAiming)
+            {
+                // Get grapple direction
+                grappleAimDirection = InputManager.instance.getMousePositionInWorld() - activeCollider.bounds.center;
+                grappleAimDirection = grappleAimDirection.normalized;
+
+                // Search for grapple target
+                Physics2D.queriesHitTriggers = true;
+                Physics2D.queriesStartInColliders = true;
+                RaycastHit2D enemyHit = Physics2D.Raycast(activeCollider.bounds.center, grappleAimDirection, playerUnlocks.grappleDistance, playerPhysicsData.enemyLayer);
+                RaycastHit2D terrainHit = Physics2D.Raycast(activeCollider.bounds.center, grappleAimDirection, playerUnlocks.grappleDistance, playerPhysicsData.terrainLayer);
+                Physics2D.queriesHitTriggers = detectTriggers;
+                Physics2D.queriesStartInColliders = false;
+                // Enemy hit detected
+                if (enemyHit.collider)
+                {
+                    grappleAimHitEnemy = true;
+                    grappleAimTargetCollider = enemyHit.collider;
+                }
+                // Terrain hit detected
+                else if (terrainHit.collider)
+                {
+                    grappleAimHitEnemy = false;
+                    grappleAimTargetCollider = terrainHit.collider;
+                    grappleAimTargetPosition = terrainHit.point;
+                }
+                // No hits
+                else
+                {
+                    grappleAimTargetCollider = null;
+                }
+
+                // Draw indicators
+                grappleRangeCircle.transform.localScale = new Vector2(playerUnlocks.grappleDistance * 2, playerUnlocks.grappleDistance * 2);
+                grappleArrowLineRenderer.SetPosition(0, new Vector2(activeCollider.bounds.center.x, activeCollider.bounds.center.y) + (grappleAimDirection * playerAnimationData.grappleLineRendererOffset));
+                grappleArrowLineRenderer.SetPosition(1, new Vector2(activeCollider.bounds.center.x, activeCollider.bounds.center.y) + (grappleAimDirection * playerUnlocks.grappleDistance));
+            }
+
+            // Check for conditions to end grapple aim and start grapple
+            if (grappleAiming && !grappleKey)
+            {
+                // End grapple freeze
+                grappleAiming = false;
+
+                // Deactivate indicators
+                grappleRangeCircle.SetActive(false);
+                grappleArrowLineRenderer.enabled = false;
+
+                // Trigger event action
+                onGrappleAim?.Invoke(false);
+
+                // Check if grapple target found
+                if (grappleAimTargetCollider != null)
+                {
+                    // Move grapple target position slightly closer to player
+                    if (!grappleAimHitEnemy) grappleAimTargetPosition -= (grappleAimTargetPosition - activeCollider.bounds.center).normalized * playerPhysicsData.grappleTargetOffset;
+
+                    // Set grapple target
+                    grappleHitEnemy = grappleAimHitEnemy;
+                    grappleTargetCollider = grappleAimTargetCollider;
+                    grappleTargetPosition = grappleAimTargetPosition;
+
+                    // Set grappling flag
+                    grappling = true;
+
+                    // Set startup velocity
+                    velocity = grappleAimDirection * playerPhysicsData.grappleVelocity;
+
+                    // Trigger event action
+                    onGrapple?.Invoke(true);
+                }
+            }
 
             // Handle grapple
             if (grappling)
@@ -920,110 +1005,6 @@ namespace Loppy
 
             // Consume grapple flag
             grappleToConsume = false;
-        }
-
-        private IEnumerator grappleFreeze()
-        {
-            // Invoke event action
-            onGrappleFreeze?.Invoke(true);
-
-            // Start grapple freeze
-            grappleFreezing = true;
-            grappleFreezeTimer = 0;
-
-            // Timer to keep track of time scale lerping
-            float timeScaleLerpTimer = 0;
-
-            // Activate grapple indicators
-            grappleRangeCircle.SetActive(true);
-            grappleArrowLineRenderer.enabled = true;
-
-            // Loop until freeze ends
-            while (grappleKey && grappleFreezeTimer < playerPhysicsData.grappleFreezeTime)
-            {
-                // Get grapple direction
-                grappleDirection = InputManager.instance.getMousePositionInWorld() - activeCollider.bounds.center;
-                grappleDirection = grappleDirection.normalized;
-
-                // Search for grapple target
-                Physics2D.queriesHitTriggers = true;
-                Physics2D.queriesStartInColliders = true;
-                RaycastHit2D enemyHit = Physics2D.Raycast(activeCollider.bounds.center, grappleDirection, playerUnlocks.grappleDistance, playerPhysicsData.enemyLayer);
-                RaycastHit2D terrainHit = Physics2D.Raycast(activeCollider.bounds.center, grappleDirection, playerUnlocks.grappleDistance, playerPhysicsData.terrainLayer);
-                Physics2D.queriesHitTriggers = detectTriggers;
-                Physics2D.queriesStartInColliders = false;
-                // Enemy hit detected
-                if (enemyHit.collider)
-                {
-                    grappleHitEnemy = true;
-                    grappleTargetCollider = enemyHit.collider;
-                }
-                // Terrain hit detected
-                else if (terrainHit.collider)
-                {
-                    grappleHitEnemy = false;
-                    grappleTargetCollider = terrainHit.collider;
-                    grappleTargetPosition = terrainHit.point;
-
-                    // Move grapple target position slightly closer to player
-                    grappleTargetPosition -= (grappleTargetPosition - activeCollider.bounds.center).normalized * playerPhysicsData.grappleTargetOffset;
-                }
-                // No hits
-                else
-                {
-                    grappleTargetCollider = null;
-                }
-
-                // Draw indicators
-                grappleRangeCircle.transform.localScale = new Vector2(playerUnlocks.grappleDistance * 2, playerUnlocks.grappleDistance * 2);
-                grappleArrowLineRenderer.SetPosition(0, new Vector2(activeCollider.bounds.center.x, activeCollider.bounds.center.y) + (grappleDirection * playerAnimationData.grappleLineRendererOffset));
-                grappleArrowLineRenderer.SetPosition(1, new Vector2(activeCollider.bounds.center.x, activeCollider.bounds.center.y) + (grappleDirection * playerUnlocks.grappleDistance));
-
-                // Check for "fixed update"
-                if (timeScaleLerpTimer > playerPhysicsData.timeScaleLerpTime)
-                {
-                    // Slow time
-                    Time.timeScale = Mathf.Lerp(Time.timeScale, 0, playerPhysicsData.timeScaleLerpFactor);
-
-                    // Decelerate
-                    velocity = Vector2.MoveTowards(velocity, Vector2.zero, playerPhysicsData.grappleFreezeDeceleration * playerPhysicsData.timeScaleLerpTime);
-
-                    // Decrement timer
-                    timeScaleLerpTimer -= playerPhysicsData.timeScaleLerpTime;
-                }
-
-                // Increment timers
-                grappleFreezeTimer += Time.unscaledDeltaTime;
-                timeScaleLerpTimer += Time.unscaledDeltaTime;
-
-                yield return new WaitForEndOfFrame();
-            }
-
-            // End grapple freeze
-            grappleFreezing = false;
-
-            // Reset time slow
-            Time.timeScale = 1;
-
-            // Deactivate indicators
-            grappleRangeCircle.SetActive(false);
-            grappleArrowLineRenderer.enabled = false;
-
-            // Trigger event action
-            onGrappleFreeze?.Invoke(false);
-
-            // Check if grapple target found
-            if (grappleTargetCollider != null)
-            {
-                // Set grappling flag
-                grappling = true;
-
-                // Set startup velocity
-                velocity = grappleDirection * playerPhysicsData.grappleVelocity;
-
-                // Trigger event action
-                onGrapple?.Invoke(true);
-            }
         }
 
         private void resetGrapple()

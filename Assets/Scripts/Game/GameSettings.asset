@@ -27,5 +27,5 @@ MonoBehaviour:
   jumpKeyBinds: 20000000
   dashKeyBinds: 30010000
   glideKeyBinds: 32010000
-  grappleKeyBinds: 65000000
+  grappleKeyBinds: 44010000
   pauseKeyBinds: 1b000000

@@ -6694,10 +6694,10 @@ MonoBehaviour:
       - m_Target: {fileID: 912741367}
         m_TargetAssemblyTypeName: Loppy.UIManager, Assembly-CSharp
         m_MethodName: onBrightnessInputFieldEndEdit
-        m_Mode: 1
+        m_Mode: 2
         m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_ObjectArgument: {fileID: 676119722}
+          m_ObjectArgumentAssemblyTypeName: TMPro.TMP_InputField, Unity.TextMeshPro
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
@@ -8797,11 +8797,11 @@ MonoBehaviour:
   applyChangesGraphicsButton: {fileID: 1785815779}
   applyDefaultsGraphicsButton: {fileID: 1736656099}
   audioTabPanel: {fileID: 1293498925}
-  applyChangesAudioButton: {fileID: 0}
-  applyDefaultsAudioButton: {fileID: 0}
+  applyChangesAudioButton: {fileID: 1605628393}
+  applyDefaultsAudioButton: {fileID: 395011198}
   controlsTabPanel: {fileID: 1638460544}
-  applyChangesControlsButton: {fileID: 0}
-  applyDefaultsControlsButton: {fileID: 0}
+  applyChangesControlsButton: {fileID: 566557675}
+  applyDefaultsControlsButton: {fileID: 195478144}
   debugMenuPanel: {fileID: 1866437531}
 --- !u!4 &912741368
 Transform:
@@ -18843,10 +18843,10 @@ MonoBehaviour:
       - m_Target: {fileID: 912741367}
         m_TargetAssemblyTypeName: Loppy.UIManager, Assembly-CSharp
         m_MethodName: onBrightnessSliderValueChanged
-        m_Mode: 1
+        m_Mode: 2
         m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_ObjectArgument: {fileID: 1888623090}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.UI.Slider, UnityEngine.UI
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 

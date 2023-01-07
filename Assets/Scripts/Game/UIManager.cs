@@ -173,16 +173,16 @@ namespace Loppy
             setGraphicsTabDisplayValues();
         }
 
-        public void onBrightnessSliderValueChanged()
+        public void onBrightnessSliderValueChanged(Slider change)
         {
             // Set input field value
-            brightnessInputField.text = Mathf.Round(brightnessSlider.value * 200).ToString();
+            brightnessInputField.text = Mathf.Round(change.value * 200).ToString();
         }
 
-        public void onBrightnessInputFieldEndEdit()
+        public void onBrightnessInputFieldEndEdit(TMP_InputField change)
         {
             // Set slider value
-            brightnessSlider.value = int.Parse(brightnessInputField.text) / 200f;
+            brightnessSlider.value = int.Parse(change.text) / 200f;
         }
 
         public void onApplyChangesGraphicsButtonPressed()

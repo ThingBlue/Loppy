@@ -26,9 +26,9 @@ MonoBehaviour:
   groundDeceleration: 200
   airDeceleration: 30
   groundingForce: -2
-  jumpStrength: 16
+  jumpStrength: 18
   maxFallSpeed: 40
-  fallAcceleration: 36
+  fallAcceleration: 50
   jumpEndEarlyGravityModifier: 5
   jumpBufferTime: 0.1
   coyoteTime: 0.1
@@ -36,7 +36,7 @@ MonoBehaviour:
   wallFallAcceleration: 16
   maxWallFallSpeed: 6
   fastWallFallSpeed: 12
-  wallJumpStrength: {x: 6, y: 16}
+  wallJumpStrength: {x: 7, y: 18}
   wallJumpControlLossTime: 0.15
   wallJumpCoyoteTime: 0.1
   ledgeGrabDeceleration: 8
@@ -55,11 +55,7 @@ MonoBehaviour:
   glideFallSpeed: 5
   glideFallAcceleration: 20
   grappleVelocity: 30
-  grappleFreezeTime: 0.5
   grappleBufferTime: 0.1
-  grappleFreezeDeceleration: 0
-  timeScaleLerpFactor: 0.15
-  timeScaleLerpTime: 0.016666668
   grappleControlLossTime: 0.2
   grappleTargetOffset: 0.4
   raycastDistance: 0.05

@@ -71,6 +71,7 @@ namespace Loppy
         private Vector2 externalVelocity = Vector2.zero;
 
         // Jump
+        private bool canEndJumpEarly = false;
         private bool endedJumpEarly = false;
 
         private bool jumpBufferUsable = false;
@@ -684,7 +685,11 @@ namespace Loppy
             bool canUseWallJumpCoyote = wallJumpCoyoteUsable && wallJumpCoyoteTimer < playerPhysicsData.wallJumpCoyoteTime;
 
             // Detect early jump end
-            if (!endedJumpEarly && !onGround && !onWall && !jumpKey && velocity.y > 0) endedJumpEarly = true;
+            if (!endedJumpEarly && !onGround && !onWall && !jumpKey && velocity.y > 0 && canEndJumpEarly)
+            {
+                endedJumpEarly = true;
+                canEndJumpEarly = false;
+            }
 
             // Check for jump input
             if (!jumpToConsume && !canUseJumpBuffer) return;
@@ -701,6 +706,7 @@ namespace Loppy
         {
             // Reset jump flags
             endedJumpEarly = false;
+            canEndJumpEarly = true;
             jumpBufferUsable = false;
             coyoteUsable = false;
 
@@ -715,6 +721,7 @@ namespace Loppy
         {
             // Reset jump flags
             endedJumpEarly = false;
+            canEndJumpEarly = true;
             jumpBufferUsable = false;
             wallJumpCoyoteUsable = false;
 
@@ -734,6 +741,7 @@ namespace Loppy
         {
             // Reset jump flags
             endedJumpEarly = false;
+            canEndJumpEarly = true;
             airJumpsRemaining--;
 
             // Apply air jump velocity
@@ -748,6 +756,7 @@ namespace Loppy
         {
             // Reset jump flags
             endedJumpEarly = false;
+            canEndJumpEarly = true;
             jumpBufferUsable = false;
             coyoteUsable = false;
             if (!onGround && !onWall) airJumpsRemaining--;
@@ -769,10 +778,11 @@ namespace Loppy
         private void resetJump()
         {
             // Reset jump flags
+            endedJumpEarly = false;
+            canEndJumpEarly = false;
             jumpBufferUsable = true;
             if (onGround) coyoteUsable = true;
             if (onWall && !onGround) wallJumpCoyoteUsable = true;
-            endedJumpEarly = false;
 
             // Reset number of air jumps
             airJumpsRemaining = playerUnlocks.airJumps;
@@ -949,6 +959,10 @@ namespace Loppy
             {
                 // End grapple freeze
                 grappleAiming = false;
+
+                // Make sure jump flag is set to false
+                endedJumpEarly = false;
+                canEndJumpEarly = false;
 
                 // Deactivate indicators
                 grappleRangeCircle.SetActive(false);

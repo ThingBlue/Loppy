@@ -231,7 +231,6 @@ namespace Loppy
             dashCoyoteTimer += Time.fixedDeltaTime;
             dashJumpControlLossTimer += Time.fixedDeltaTime;
             ledgeClimbTimer += Time.fixedDeltaTime;
-            //grappleFreezeTimer += Time.fixedDeltaTime;
             grappleBufferTimer += Time.fixedDeltaTime;
             grappleControlLossTimer += Time.fixedDeltaTime;
 
@@ -323,15 +322,13 @@ namespace Loppy
             dashJumpControlLossMultiplier = Mathf.Clamp(dashJumpControlLossTimer / playerPhysicsData.dashJumpControlLossTime, 0f, 1f);
             grappleControlLossMultiplier = Mathf.Clamp(grappleControlLossTimer / playerPhysicsData.grappleControlLossTime, 0f, 1f);
 
+            if (dashing) return;
+            if (grappling) return;
+
             #region Vertical physics
 
-            // Dashing
-            if (dashing)
-            {
-
-            }
             // Climbing ledge
-            else if (climbingLedge)
+            if (climbingLedge)
             {
                 // Reset y velocity
                 velocity.y = 0;
@@ -375,13 +372,8 @@ namespace Loppy
 
             #region Horizontal physics
 
-            // Dashing
-            if (dashing)
-            {
-
-            }
             // Player input is in the opposite direction of current velocity
-            else if (playerInput.x != 0 && velocity.x != 0 && Mathf.Sign(playerInput.x) != Mathf.Sign(velocity.x) && wallJumpControlLossMultiplier == 1 && dashJumpControlLossMultiplier == 1 && grappleControlLossMultiplier == 1)
+            if (playerInput.x != 0 && velocity.x != 0 && Mathf.Sign(playerInput.x) != Mathf.Sign(velocity.x) && wallJumpControlLossMultiplier == 1 && dashJumpControlLossMultiplier == 1 && grappleControlLossMultiplier == 1)
             {
                 // Instantly reset velocity
                 velocity.x = 0;
@@ -1004,6 +996,8 @@ namespace Loppy
                 {
                     // Stop grappling
                     grappling = false;
+
+                    // Start grapple control loss
                     grappleControlLossTimer = 0;
                     grappleControlLossMultiplier = 0;
 

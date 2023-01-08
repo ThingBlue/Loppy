@@ -54,7 +54,7 @@ MonoBehaviour:
   dashJumpControlLossTime: 0.3
   glideFallSpeed: 5
   glideFallAcceleration: 20
-  grappleVelocity: 30
+  grappleVelocity: 27
   grappleBufferTime: 0.1
   grappleControlLossTime: 0.2
   grappleTargetOffset: 0.4

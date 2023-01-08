@@ -365,7 +365,7 @@ namespace Loppy
                 if (endedJumpEarly && velocity.y > 0) airborneAcceleration *= playerPhysicsData.jumpEndEarlyGravityModifier;
 
                 // Accelerate towards maxFallSpeed using airborneAcceleration
-                velocity.y = Mathf.MoveTowards(velocity.y, -playerPhysicsData.maxFallSpeed, grappleControlLossMultiplier * airborneAcceleration * Time.fixedDeltaTime);
+                velocity.y = Mathf.MoveTowards(velocity.y, -playerPhysicsData.maxFallSpeed, airborneAcceleration * Time.fixedDeltaTime);
             }
 
             #endregion

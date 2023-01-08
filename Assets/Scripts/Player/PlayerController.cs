@@ -75,9 +75,9 @@ namespace Loppy
         private bool endedJumpEarly = false;
 
         private bool jumpBufferUsable = false;
-        private bool coyoteUsable = false;
+        private bool jumpCoyoteUsable = false;
         private float jumpBufferTimer = 0;
-        private float coyoteTimer = 0;
+        private float jumpCoyoteTimer = 0;
 
         private bool wallJumpCoyoteUsable = false;
         private float wallJumpCoyoteTimer = 0;
@@ -222,7 +222,7 @@ namespace Loppy
         {
             // Increment timers
             jumpBufferTimer += Time.fixedDeltaTime;
-            coyoteTimer += Time.fixedDeltaTime;
+            jumpCoyoteTimer += Time.fixedDeltaTime;
             wallJumpCoyoteTimer += Time.fixedDeltaTime;
             wallJumpControlLossTimer += Time.fixedDeltaTime;
             dashTimer += Time.fixedDeltaTime;
@@ -446,7 +446,7 @@ namespace Loppy
                 onGround = false;
 
                 // Start coyote timer
-                coyoteTimer = 0;
+                jumpCoyoteTimer = 0;
                 dashCoyoteTimer = 0;
 
                 // Invoke event action
@@ -673,7 +673,7 @@ namespace Loppy
         private void handleJump()
         {
             bool canUseJumpBuffer = jumpBufferUsable && jumpBufferTimer < playerPhysicsData.jumpBufferTime;
-            bool canUseCoyote = coyoteUsable && coyoteTimer < playerPhysicsData.coyoteTime;
+            bool canUseCoyote = jumpCoyoteUsable && jumpCoyoteTimer < playerPhysicsData.coyoteTime;
             bool canUseWallJumpCoyote = wallJumpCoyoteUsable && wallJumpCoyoteTimer < playerPhysicsData.wallJumpCoyoteTime;
 
             // Detect early jump end
@@ -700,7 +700,7 @@ namespace Loppy
             endedJumpEarly = false;
             canEndJumpEarly = true;
             jumpBufferUsable = false;
-            coyoteUsable = false;
+            jumpCoyoteUsable = false;
 
             // Apply jump velocity
             velocity.y = playerPhysicsData.jumpStrength;
@@ -731,6 +731,10 @@ namespace Loppy
 
         private void airJump()
         {
+            // End other movement abilities
+            endGlide();
+            endGrapple();
+
             // Reset jump flags
             endedJumpEarly = false;
             canEndJumpEarly = true;
@@ -750,7 +754,7 @@ namespace Loppy
             endedJumpEarly = false;
             canEndJumpEarly = true;
             jumpBufferUsable = false;
-            coyoteUsable = false;
+            jumpCoyoteUsable = false;
             if (!onGround && !onWall) airJumpsRemaining--;
 
             // Apply dash jump velocity
@@ -773,7 +777,7 @@ namespace Loppy
             endedJumpEarly = false;
             canEndJumpEarly = false;
             jumpBufferUsable = true;
-            if (onGround) coyoteUsable = true;
+            if (onGround) jumpCoyoteUsable = true;
             if (onWall && !onGround) wallJumpCoyoteUsable = true;
 
             // Reset number of air jumps
@@ -796,6 +800,10 @@ namespace Loppy
             //    Dash cooldown elapsed
             if (playerUnlocks.dashUnlocked && !dashing && (dashToConsume || canUseDashBuffer) && (canDash || canUseDashCoyote) && dashCooldownTimer > playerPhysicsData.dashCooldownTime)
             {
+                // End other movement abilities
+                endGlide();
+                endGrapple();
+
                 // Set dash velocity
                 if (onWall) dashVelocity = playerPhysicsData.dashVelocity * new Vector2(-wallDirection, 0);
                 else dashVelocity = playerPhysicsData.dashVelocity * new Vector2(lastPlayerInput.x, 0);
@@ -831,8 +839,7 @@ namespace Loppy
                 // Check if dash time has been reached
                 if (dashTimer >= playerPhysicsData.dashTime)
                 {
-                    // Reset dashing flag
-                    dashing = false;
+                    endDash();
 
                     // Start dash cooldown timer
                     dashCooldownTimer = 0;
@@ -840,14 +847,23 @@ namespace Loppy
                     // Set player velocity at end of dash
                     velocity.x *= playerPhysicsData.dashEndHorizontalMultiplier;
                     velocity.y = Mathf.Min(0, velocity.y);
-
-                    // Invoke event action
-                    onDash?.Invoke(false);
                 }
             }
 
             // Reset dash to consume flag regardless
             dashToConsume = false;
+        }
+
+        private void endDash()
+        {
+            if (dashing)
+            {
+                // Reset dashing flag
+                dashing = false;
+
+                // Invoke event action
+                onDash?.Invoke(false);
+            }
         }
 
         private void resetDash()
@@ -876,6 +892,14 @@ namespace Loppy
 
             // Check for conditions to stop glide
             if (gliding && (!glideKey || onGround || onWall || dashing))
+            {
+                endGlide();
+            }
+        }
+
+        private void endGlide()
+        {
+            if (gliding)
             {
                 // Reset gliding flag
                 gliding = false;
@@ -952,9 +976,18 @@ namespace Loppy
                 // End grapple freeze
                 grappleAiming = false;
 
-                // Make sure jump flag is set to false
+                // End other movement abilities
+                endDash();
+                endGlide();
+
+                // Make sure jump flags are set to false
                 endedJumpEarly = false;
                 canEndJumpEarly = false;
+
+                // Set coyote flags to false
+                jumpCoyoteUsable = false;
+                wallJumpCoyoteUsable = false;
+                dashCoyoteUsable = false;
 
                 // Deactivate indicators
                 grappleRangeCircle.SetActive(false);
@@ -994,15 +1027,11 @@ namespace Loppy
                 // Check if we have reached target position
                 if (activeCollider.OverlapPoint(grappleTargetPosition))
                 {
-                    // Stop grappling
-                    grappling = false;
+                    endGrapple();
 
                     // Start grapple control loss
                     grappleControlLossTimer = 0;
                     grappleControlLossMultiplier = 0;
-
-                    // Trigger event action
-                    onGrapple?.Invoke(false);
                 }
                 // Move towards target
                 else
@@ -1013,6 +1042,18 @@ namespace Loppy
 
             // Consume grapple flag
             grappleToConsume = false;
+        }
+
+        private void endGrapple()
+        {
+            if (grappling)
+            {
+                // Stop grappling
+                grappling = false;
+
+                // Trigger event action
+                onGrapple?.Invoke(false);
+            }
         }
 
         private void resetGrapple()

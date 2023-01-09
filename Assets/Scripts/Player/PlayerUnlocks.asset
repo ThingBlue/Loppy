@@ -20,3 +20,4 @@ MonoBehaviour:
   glideUnlocked: 1
   grappleUnlocked: 1
   grappleDistance: 10
+  alternateGrappleDistance: 10

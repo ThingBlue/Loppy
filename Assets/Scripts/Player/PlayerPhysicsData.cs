@@ -167,6 +167,32 @@ namespace Loppy
 
         #endregion
 
+        #region Alternate grapple
+
+        [Header("ALTERNATE GRAPPLE")]
+        [Tooltip("Magnitude of velocity applied when grappling")]
+        public float alternateGrappleVelocity = 10;
+
+        [Tooltip("Amount of time a grapple is buffered")]
+        public float alternateGrappleBufferTime = 0.1f;
+
+        [Tooltip("Amount of time before full horizontal movement is returned after a grapple")]
+        public float alternateGrappleControlLossTime = 0.5f;
+
+        [Tooltip("Distance that the grapple target position is moved back to prevent getting stuck")]
+        public float alternateGrappleTargetOffset = 0.4f;
+
+        [Tooltip("Amount of time a grapple freeze lasts")]
+        public float alternateGrappleFreezeTime = 4;
+
+        [Tooltip("Factor of timescale reduction per frame")]
+        public float timeScaleLerpFactor = 0.5f;
+
+        [Tooltip("Amount of time between each time scale lerp")]
+        public float timeScaleLerpTime = (1f / 60f);
+
+        #endregion
+
         #region Collision
 
         [Header("COLLISION")]

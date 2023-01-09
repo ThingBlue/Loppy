@@ -24,5 +24,6 @@ namespace Loppy
         // Grapple
         public bool grappleUnlocked = true;
         public float grappleDistance = 5;
+        public float alternateGrappleDistance = 5;
     }
 }

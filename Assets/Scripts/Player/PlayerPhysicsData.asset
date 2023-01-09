@@ -58,6 +58,13 @@ MonoBehaviour:
   grappleBufferTime: 0.1
   grappleControlLossTime: 0.2
   grappleTargetOffset: 0.4
+  alternateGrappleVelocity: 27
+  alternateGrappleBufferTime: 0.1
+  alternateGrappleControlLossTime: 0.2
+  alternateGrappleTargetOffset: 0.4
+  alternateGrappleFreezeTime: 1
+  timeScaleLerpFactor: 0.15
+  timeScaleLerpTime: 0.016666668
   raycastDistance: 0.05
   maxWalkAngle: 30
   maxClimbAngle: 30

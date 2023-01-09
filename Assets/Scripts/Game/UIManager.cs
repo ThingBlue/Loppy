@@ -100,6 +100,11 @@ namespace Loppy
             DebugCanvasManager.instance.onDebugMenuOpened();
         }
 
+        public void onExitGameButtonPressed()
+        {
+            Application.Quit();
+        }
+
         #endregion
 
         #region Settings menu

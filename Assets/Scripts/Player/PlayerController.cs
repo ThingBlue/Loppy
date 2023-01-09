@@ -1182,8 +1182,8 @@ namespace Loppy
                 // Search for grapple target
                 Physics2D.queriesHitTriggers = true;
                 Physics2D.queriesStartInColliders = true;
-                RaycastHit2D enemyHit = Physics2D.Raycast(activeCollider.bounds.center, alternateGrappleAimDirection, playerUnlocks.alternateGrappleDistance, playerPhysicsData.enemyLayer);
-                RaycastHit2D terrainHit = Physics2D.Raycast(activeCollider.bounds.center, alternateGrappleAimDirection, playerUnlocks.alternateGrappleDistance, playerPhysicsData.terrainLayer);
+                RaycastHit2D enemyHit = Physics2D.Raycast(activeCollider.bounds.center, alternateGrappleAimDirection, playerUnlocks.grappleDistance, playerPhysicsData.enemyLayer);
+                RaycastHit2D terrainHit = Physics2D.Raycast(activeCollider.bounds.center, alternateGrappleAimDirection, playerUnlocks.grappleDistance, playerPhysicsData.terrainLayer);
                 Physics2D.queriesHitTriggers = detectTriggers;
                 Physics2D.queriesStartInColliders = false;
                 // Enemy hit detected
@@ -1206,9 +1206,9 @@ namespace Loppy
                 }
 
                 // Draw indicators
-                alternateGrappleRangeCircle.transform.localScale = new Vector2(playerUnlocks.alternateGrappleDistance * 2, playerUnlocks.alternateGrappleDistance * 2);
+                alternateGrappleRangeCircle.transform.localScale = new Vector2(playerUnlocks.grappleDistance * 2, playerUnlocks.grappleDistance * 2);
                 alternateGrappleArrowLineRenderer.SetPosition(0, new Vector2(activeCollider.bounds.center.x, activeCollider.bounds.center.y) + (alternateGrappleAimDirection * playerAnimationData.alternateGrappleLineRendererOffset));
-                alternateGrappleArrowLineRenderer.SetPosition(1, new Vector2(activeCollider.bounds.center.x, activeCollider.bounds.center.y) + (alternateGrappleAimDirection * playerUnlocks.alternateGrappleDistance));
+                alternateGrappleArrowLineRenderer.SetPosition(1, new Vector2(activeCollider.bounds.center.x, activeCollider.bounds.center.y) + (alternateGrappleAimDirection * playerUnlocks.grappleDistance));
 
                 // Check for "fixed update"
                 if (timeScaleLerpTimer > playerPhysicsData.timeScaleLerpTime)

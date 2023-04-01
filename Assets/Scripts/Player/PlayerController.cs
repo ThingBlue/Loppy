@@ -3,6 +3,7 @@
 using System;
 using System.Collections;
 using System.Linq;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UIElements;
 using static UnityEngine.GraphicsBuffer;
@@ -48,6 +49,8 @@ namespace Loppy
         public PlayerPhysicsData playerPhysicsData;
         public PlayerUnlocks playerUnlocks;
         public PlayerAnimationData playerAnimationData;
+
+        public TMP_Text YVelocityText;
 
         #endregion
 
@@ -291,6 +294,9 @@ namespace Loppy
 
             // Reset input
             playerInputDown = Vector2.zero;
+
+            // Debug
+            YVelocityText.text = "Y Velocity: " + velocity.y.ToString();
         }
 
         #region Input
@@ -489,6 +495,26 @@ namespace Loppy
 
                 // Invoke event action
                 onGrounded?.Invoke(true, Mathf.Abs(velocity.y));
+
+                // Reset y velocity
+                if (groundNormal != Vector2.zero) // Make sure ground normal exists
+                {
+                    // Handle slopes
+                    if (!Mathf.Approximately(Math.Abs(groundNormal.y), 1f))
+                    {
+                        // Change y velocity to match ground slope
+                        float groundSlope = -groundNormal.x / groundNormal.y;
+                        velocity.y = velocity.x * groundSlope;
+
+                        // Give the player a constant velocity so that they stick to sloped ground
+                        if (velocity.x != 0) velocity.y += playerPhysicsData.groundingForce;
+                    }
+                    // No slope
+                    else
+                    {
+                        velocity.y = 0;
+                    }
+                }
             }
             // Leave ground
             else if (onGround && (groundHitCount == 0 || groundAngle > playerPhysicsData.maxWalkAngle))

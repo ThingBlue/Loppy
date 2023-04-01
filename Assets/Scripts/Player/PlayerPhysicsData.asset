@@ -25,23 +25,23 @@ MonoBehaviour:
   acceleration: 100
   groundDeceleration: 200
   airDeceleration: 30
-  groundingForce: -2
-  jumpStrength: 18
+  groundingForce: 0
+  jumpStrength: 17
   maxFallSpeed: 40
-  fallAcceleration: 50
-  jumpEndEarlyGravityModifier: 5
+  fallAcceleration: 42
+  jumpEndEarlyGravityModifier: 4
   jumpBufferTime: 0.1
   coyoteTime: 0.1
   wallClimbSpeed: 8
   wallFallAcceleration: 16
   maxWallFallSpeed: 6
   fastWallFallSpeed: 12
-  wallJumpStrength: {x: 7, y: 18}
+  wallJumpStrength: {x: 7, y: 17}
   wallJumpControlLossTime: 0.15
   wallJumpCoyoteTime: 0.1
   ledgeGrabDeceleration: 8
-  ledgeGrabPoint: {x: 0.4, y: 1}
-  standUpOffset: {x: 0.4, y: 0}
+  ledgeGrabPoint: {x: 0.3, y: 1.2}
+  standUpOffset: {x: 0.3, y: 0}
   ledgeRaycastDistance: 2
   ledgeClimbDuration: 0.2
   dashVelocity: 25
@@ -50,7 +50,7 @@ MonoBehaviour:
   dashEndHorizontalMultiplier: 0.25
   dashBufferTime: 0.1
   dashCoyoteTime: 0.1
-  dashJumpStrength: {x: 30, y: 18}
+  dashJumpStrength: {x: 30, y: 17}
   dashJumpControlLossTime: 0.3
   glideFallSpeed: 5
   glideFallAcceleration: 20

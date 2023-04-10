@@ -196,13 +196,16 @@ namespace Loppy
         #region Collision
 
         [Header("COLLISION")]
-        [Tooltip("The raycast distance for collision detection"), Range(0f, 1.0f)]
+        [Tooltip("The raycast distance for collision detection")]
         public float raycastDistance = 0.05f;
 
-        [Tooltip("Maximum angle of walkable ground"), Range(0f, 1.0f)]
+        [Tooltip("The raycast distance for ground after leaving a platform")]
+        public float groundCheckRaycastDistance = 2.0f;
+
+        [Tooltip("Maximum angle of walkable ground")]
         public float maxWalkAngle = 30;
 
-        [Tooltip("Maximum angle of climbable wall"), Range(0f, 1.0f)]
+        [Tooltip("Maximum angle of climbable wall")]
         public float maxClimbAngle = 30;
 
         #endregion

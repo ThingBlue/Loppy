@@ -25,7 +25,7 @@ MonoBehaviour:
   acceleration: 100
   groundDeceleration: 200
   airDeceleration: 30
-  groundingForce: 0
+  groundingForce: -2
   jumpStrength: 17
   maxFallSpeed: 40
   fallAcceleration: 42
@@ -40,7 +40,7 @@ MonoBehaviour:
   wallJumpControlLossTime: 0.15
   wallJumpCoyoteTime: 0.1
   ledgeGrabDeceleration: 8
-  ledgeGrabPoint: {x: 0.3, y: 1.2}
+  ledgeGrabPoint: {x: 0.3, y: 1}
   standUpOffset: {x: 0.3, y: 0}
   ledgeRaycastDistance: 2
   ledgeClimbDuration: 0.2

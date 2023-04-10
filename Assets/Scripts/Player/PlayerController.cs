@@ -163,6 +163,7 @@ namespace Loppy
         private CapsuleCollider2D activeCollider;
 
         public bool onGround = false;
+        private bool leavingGround = false;
         private Vector2 groundNormal = Vector2.zero;
         private Vector2 ceilingNormal = Vector2.zero;
 
@@ -488,6 +489,7 @@ namespace Loppy
             if (!onGround && groundHitCount > 0 && groundAngle <= playerPhysicsData.maxWalkAngle)
             {
                 onGround = true;
+                leavingGround = false;
                 resetJump();
                 resetDash();
                 resetGrapple();
@@ -505,9 +507,6 @@ namespace Loppy
                         // Change y velocity to match ground slope
                         float groundSlope = -groundNormal.x / groundNormal.y;
                         velocity.y = velocity.x * groundSlope;
-
-                        // Give the player a constant velocity so that they stick to sloped ground
-                        if (velocity.x != 0) velocity.y += playerPhysicsData.groundingForce;
                     }
                     // No slope
                     else
@@ -519,14 +518,51 @@ namespace Loppy
             // Leave ground
             else if (onGround && (groundHitCount == 0 || groundAngle > playerPhysicsData.maxWalkAngle))
             {
-                onGround = false;
+                // Check if player used a movement ability to leave ground
+                if (leavingGround)
+                {
+                    // Leave ground
+                    onGround = false;
 
-                // Start coyote timer
-                jumpCoyoteTimer = 0;
-                dashCoyoteTimer = 0;
+                    // Start coyote timer
+                    jumpCoyoteTimer = 0;
+                    dashCoyoteTimer = 0;
 
-                // Invoke event action
-                onGrounded?.Invoke(false, 0);
+                    // Invoke event action
+                    onGrounded?.Invoke(false, 0);
+                }
+                // Check if player walked off platform
+                else if (!leavingGround)
+                {
+                    // Do raycast downwards
+                    Physics2D.queriesHitTriggers = false;
+                    var hit = Physics2D.Raycast(activeCollider.bounds.center, Vector2.down, playerPhysicsData.groundCheckRaycastDistance, playerPhysicsData.terrainLayer);
+                    Physics2D.queriesHitTriggers = detectTriggers;
+
+                    Vector2 hitNormal = getRaycastNormal(Vector2.down);
+                    float groundCheckAngle = Vector2.Angle(hitNormal, Vector2.up);
+
+                    // There is still a platform, don't leave ground
+                    if (hit.collider && hitNormal != Vector2.zero && groundCheckAngle <= playerPhysicsData.maxWalkAngle)
+                    {
+                        // Change y velocity to match ground slope
+                        float groundSlope = -groundNormal.x / groundNormal.y;
+                        velocity.y = velocity.x * groundSlope + playerPhysicsData.groundingForce; // Add some negative grounding force
+                    }
+                    // No hits, leave ground
+                    else
+                    {
+                        // Leave ground
+                        onGround = false;
+
+                        // Start coyote timer
+                        jumpCoyoteTimer = 0;
+                        dashCoyoteTimer = 0;
+
+                        // Invoke event action
+                        onGrounded?.Invoke(false, 0);
+                    }
+                }
             }
             // On ground
             else if (onGround && groundHitCount > 0 && groundAngle <= playerPhysicsData.maxWalkAngle)
@@ -534,6 +570,11 @@ namespace Loppy
                 // Handle slopes
                 if (groundNormal != Vector2.zero) // Make sure ground normal exists
                 {
+                    // Change y velocity to match ground slope
+                    float groundSlope = -groundNormal.x / groundNormal.y;
+                    velocity.y = velocity.x * groundSlope;
+
+                    /*
                     if (!Mathf.Approximately(Math.Abs(groundNormal.y), 1f))
                     {
                         // Change y velocity to match ground slope
@@ -541,8 +582,9 @@ namespace Loppy
                         velocity.y = velocity.x * groundSlope;
 
                         // Give the player a constant velocity so that they stick to sloped ground
-                        if (velocity.x != 0) velocity.y += playerPhysicsData.groundingForce;
+                        //if (velocity.x != 0) velocity.y += playerPhysicsData.groundingForce;
                     }
+                    */
                 }
             }
 
@@ -774,6 +816,7 @@ namespace Loppy
         private void normalJump()
         {
             // Reset jump flags
+            leavingGround = true;
             endedJumpEarly = false;
             canEndJumpEarly = true;
             jumpBufferUsable = false;
@@ -834,6 +877,7 @@ namespace Loppy
             jumpBufferUsable = false;
             jumpCoyoteUsable = false;
             if (!onGround && !onWall) airJumpsRemaining--;
+            if (onGround) leavingGround = true;
 
             // Apply dash jump velocity
             velocity = Vector2.Scale(playerPhysicsData.dashJumpStrength, new(Mathf.Sign(velocity.x), 1));
@@ -882,6 +926,10 @@ namespace Loppy
                 endGlide();
                 endGrapple();
                 endAlternateGrapple();
+
+                // Reset grounded flags
+                onGround = false;
+                leavingGround = true;
 
                 // Set dash velocity
                 if (onWall) dashVelocity = playerPhysicsData.dashVelocity * new Vector2(-wallDirection, 0);
@@ -1067,6 +1115,9 @@ namespace Loppy
                 jumpCoyoteUsable = false;
                 wallJumpCoyoteUsable = false;
                 dashCoyoteUsable = false;
+
+                // Leave ground
+                leavingGround = true;
 
                 // Deactivate indicators
                 grappleRangeCircle.SetActive(false);

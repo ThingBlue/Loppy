@@ -543,8 +543,11 @@ namespace Loppy
                     float groundCheckAngle = Vector2.Angle(hitNormal, Vector2.up);
 
                     // There is still a platform, don't leave ground
-                    if (hit.collider && hitNormal != Vector2.zero && groundCheckAngle <= playerPhysicsData.maxWalkAngle)
+                    if (hitNormal != Vector2.zero && groundCheckAngle <= playerPhysicsData.maxWalkAngle)
                     {
+                        // Move player down to ground
+                        //transform.position = new Vector2(transform.position.x, transform.position.y - hit.distance + (activeCollider.size.y / 2));
+
                         // Change y velocity to match ground slope
                         float groundSlope = -groundNormal.x / groundNormal.y;
                         velocity.y = velocity.x * groundSlope + playerPhysicsData.groundingForce; // Add some negative grounding force
@@ -552,6 +555,8 @@ namespace Loppy
                     // No hits, leave ground
                     else
                     {
+                        velocity.y = 0;
+
                         // Leave ground
                         onGround = false;
 
@@ -694,7 +699,7 @@ namespace Loppy
         private Vector2 getRaycastNormal(Vector2 castDirection)
         {
             Physics2D.queriesHitTriggers = false;
-            var hit = Physics2D.CapsuleCast(activeCollider.bounds.center, activeCollider.size, activeCollider.direction, 0, castDirection, playerPhysicsData.raycastDistance * 2, playerPhysicsData.terrainLayer);
+            var hit = Physics2D.CapsuleCast(activeCollider.bounds.center, activeCollider.size, activeCollider.direction, 0, castDirection, playerPhysicsData.normalRaycastDistance, playerPhysicsData.terrainLayer);
             Physics2D.queriesHitTriggers = detectTriggers;
 
             if (!hit.collider) return Vector2.zero;

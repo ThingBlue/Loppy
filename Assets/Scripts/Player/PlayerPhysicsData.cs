@@ -197,7 +197,10 @@ namespace Loppy
 
         [Header("COLLISION")]
         [Tooltip("The raycast distance for collision detection")]
-        public float raycastDistance = 0.05f;
+        public float raycastDistance = 0.1f;
+
+        [Tooltip("The raycast distance for normal checking")]
+        public float normalRaycastDistance = 0.2f;
 
         [Tooltip("The raycast distance for ground after leaving a platform")]
         public float groundCheckRaycastDistance = 2.0f;

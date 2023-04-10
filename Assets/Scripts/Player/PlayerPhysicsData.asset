@@ -65,7 +65,9 @@ MonoBehaviour:
   alternateGrappleFreezeTime: 1
   timeScaleLerpFactor: 0.15
   timeScaleLerpTime: 0.016666668
-  raycastDistance: 0.05
+  raycastDistance: 0.1
+  normalRaycastDistance: 1
+  groundCheckRaycastDistance: 4
   maxWalkAngle: 30
   maxClimbAngle: 30
   externalVelocityDecay: 100

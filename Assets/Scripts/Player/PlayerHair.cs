@@ -6,6 +6,8 @@ namespace Loppy
 {
     public class PlayerHair : MonoBehaviour
     {
+        #region Variables
+
         public LineRenderer lineRenderer;
         public int length;
         public Vector3[] segmentPositions;
@@ -13,30 +15,34 @@ namespace Loppy
 
         public Transform targetOrigin;
         public float targetDistance = 0.1f;
+        private float defaultRotation;
 
         public float smoothSpeed = 0.002f;
-        public bool useTrailSpeed = true;
-        public float trailSpeed = 2000;
+        public float angleLerpSpeed = 0.05f;
 
         public bool enableWiggle = true;
-        public Transform wiggleOrigin;
         public float wiggleSpeed = 10;
         public float wiggleMagnitude = 20;
-        public float wiggleRotation = 0;
+
+        #endregion
 
         private void Start()
         {
+            // Initialize line node positions
             lineRenderer.positionCount = length;
             segmentPositions = new Vector3[length];
             segmentVelocities = new Vector3[length];
+
+            // Initialize default rotation
+            defaultRotation = targetOrigin.rotation.eulerAngles.z;
         }
 
         private void Update()
         {
-            // Do wiggle
+            // Handle wiggle
             if (enableWiggle)
             {
-                wiggleOrigin.localRotation = Quaternion.Euler(0, 0, Mathf.Sin(Time.time * wiggleSpeed) * wiggleMagnitude + wiggleRotation);
+                targetOrigin.localRotation = Quaternion.Euler(0, 0, Mathf.Sin(Time.time * wiggleSpeed) * wiggleMagnitude + defaultRotation);
             }
 
             // Update position of head node
@@ -45,19 +51,13 @@ namespace Loppy
             // Recursively update positions of subsequent nodes
             for (int i = 1; i < segmentPositions.Length; i++)
             {
-                /*
-                Vector3 targetPosition = segmentPositions[i - 1] + (segmentPositions[i] - segmentPositions[i - 1]).normalized * targetDistance;
-                segmentPositions[i] = Vector3.SmoothDamp(segmentPositions[i], targetPosition, ref segmentVelocities[i], smoothSpeed);
-                */
+                // Lerp direction towards origin direction
+                Vector3 direction = segmentPositions[i] - segmentPositions[i - 1];
+                Vector3 targetDirection = Vector3.Lerp(direction, targetOrigin.right, angleLerpSpeed);
 
-                if (useTrailSpeed)
-                {
-                    segmentPositions[i] = Vector3.SmoothDamp(segmentPositions[i], segmentPositions[i - 1] + targetOrigin.right * targetDistance, ref segmentVelocities[i], smoothSpeed + i / trailSpeed);
-                }
-                else
-                {
-                    segmentPositions[i] = Vector3.SmoothDamp(segmentPositions[i], segmentPositions[i - 1] + targetOrigin.right * targetDistance, ref segmentVelocities[i], smoothSpeed);
-                }
+                // Smooth damp position towards position of previous node
+                Vector3 targetPosition = segmentPositions[i - 1] + targetDirection.normalized * targetDistance;
+                segmentPositions[i] = Vector3.SmoothDamp(segmentPositions[i], targetPosition, ref segmentVelocities[i], smoothSpeed);
             }
 
             // Apply new positions

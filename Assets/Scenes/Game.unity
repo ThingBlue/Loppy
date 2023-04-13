@@ -560,37 +560,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 48513006}
   m_CullTransparentMesh: 1
---- !u!1 &58944685
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 58944686}
-  m_Layer: 0
-  m_Name: HairBack2TargetOrigin
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &58944686
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 58944685}
-  m_LocalRotation: {x: -0, y: -0, z: 0.000000029802322, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1213545153}
-  m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: -95}
 --- !u!1 &59905465
 GameObject:
   m_ObjectHideFlags: 0
@@ -1254,13 +1223,11 @@ MonoBehaviour:
   lineRenderer: {fileID: 81842977}
   length: 8
   segmentPositions: []
-  targetOrigin: {fileID: 58944686}
+  targetOrigin: {fileID: 1213545153}
   targetDistance: 0.15
   smoothSpeed: 0.01
-  useTrailSpeed: 0
-  trailSpeed: 2000
+  angleLerpSpeed: 0.03
   enableWiggle: 1
-  wiggleOrigin: {fileID: 1213545153}
   wiggleSpeed: 2
   wiggleMagnitude: 10
   wiggleRotation: -90
@@ -2793,7 +2760,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 217983963}
   m_LocalRotation: {x: -0, y: -0, z: -0.67559016, w: 0.7372774}
-  m_LocalPosition: {x: 0.049999952, y: 0.35000002, z: 0}
+  m_LocalPosition: {x: 0.05, y: 0.35000002, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2958,7 +2925,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 226886714}
   m_LocalRotation: {x: -0, y: -0, z: -0.7372774, w: 0.67559016}
-  m_LocalPosition: {x: -0.28999996, y: 0.42999995, z: 0}
+  m_LocalPosition: {x: -0.28999996, y: 0.43, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4811,7 +4778,7 @@ GameObject:
   m_Component:
   - component: {fileID: 452425266}
   m_Layer: 0
-  m_Name: HairBack1WiggleOrigin
+  m_Name: HairBack1TargetOrigin
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4828,8 +4795,7 @@ Transform:
   m_LocalPosition: {x: 0.07, y: 0.295, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 931196961}
+  m_Children: []
   m_Father: {fileID: 905620974}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: -87}
@@ -9613,37 +9579,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 924313222}
   m_CullTransparentMesh: 1
---- !u!1 &931196960
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 931196961}
-  m_Layer: 0
-  m_Name: HairBack1TargetOrigin
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &931196961
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 931196960}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 452425266}
-  m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: -85}
 --- !u!1 &935329218
 GameObject:
   m_ObjectHideFlags: 0
@@ -11088,10 +11023,8 @@ MonoBehaviour:
   targetOrigin: {fileID: 217983964}
   targetDistance: 0.1
   smoothSpeed: 0.002
-  useTrailSpeed: 0
-  trailSpeed: 2000
+  angleLerpSpeed: 0.01
   enableWiggle: 0
-  wiggleOrigin: {fileID: 0}
   wiggleSpeed: 10
   wiggleMagnitude: 20
   wiggleRotation: 0
@@ -12534,7 +12467,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1213545153}
   m_Layer: 0
-  m_Name: HairBack2WiggleOrigin
+  m_Name: HairBack2TargetOrigin
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -12551,8 +12484,7 @@ Transform:
   m_LocalPosition: {x: -0.1, y: 0.28, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 58944686}
+  m_Children: []
   m_Father: {fileID: 905620974}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: -93}
@@ -13473,10 +13405,8 @@ MonoBehaviour:
   targetOrigin: {fileID: 226886715}
   targetDistance: 0.11
   smoothSpeed: 0.002
-  useTrailSpeed: 0
-  trailSpeed: 2000
+  angleLerpSpeed: 0.01
   enableWiggle: 0
-  wiggleOrigin: {fileID: 0}
   wiggleSpeed: 10
   wiggleMagnitude: 20
   wiggleRotation: 0
@@ -16700,13 +16630,11 @@ MonoBehaviour:
   lineRenderer: {fileID: 1576264332}
   length: 8
   segmentPositions: []
-  targetOrigin: {fileID: 931196961}
+  targetOrigin: {fileID: 452425266}
   targetDistance: 0.15
   smoothSpeed: 0.01
-  useTrailSpeed: 0
-  trailSpeed: 2000
+  angleLerpSpeed: 0.03
   enableWiggle: 1
-  wiggleOrigin: {fileID: 452425266}
   wiggleSpeed: 2
   wiggleMagnitude: 10
   wiggleRotation: -70
@@ -17214,6 +17142,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1629058777}
   - component: {fileID: 1629058778}
+  - component: {fileID: 1629058779}
   m_Layer: 8
   m_Name: Sprite
   m_TagString: Untagged
@@ -17291,6 +17220,28 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!114 &1629058779
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1629058776}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e8b462bb97a04ca4d9774f474bf6d4d4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  playerController: {fileID: 2118610475}
+  playerAnimationData: {fileID: 11400000, guid: b4454766c814bff4ba998cda5ed3e76d, type: 2}
+  headSpriteRenderer: {fileID: 1679001762}
+  bodySpriteRenderer: {fileID: 1724857774}
+  overcoatSpriteRenderer: {fileID: 1830632069}
+  hairFront1TargetOrigin: {fileID: 217983964}
+  hairFront2TargetOrigin: {fileID: 226886715}
+  hairBack1TargetOrigin: {fileID: 452425266}
+  hairBack2TargetOrigin: {fileID: 1213545153}
+  faceRight: 0
 --- !u!1 &1638460544
 GameObject:
   m_ObjectHideFlags: 0

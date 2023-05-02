@@ -6,10 +6,16 @@ namespace Loppy
 {
     public class CursorManager : MonoBehaviour
     {
+        public static CursorManager instance;
+
         public Texture2D cursorTexture;
 
         private void Awake()
         {
+            // Singleton
+            if (instance == null) instance = this;
+            else Destroy(this);
+
             Cursor.SetCursor(cursorTexture, Vector2.zero, CursorMode.Auto);
             Cursor.lockState = CursorLockMode.None;
         }

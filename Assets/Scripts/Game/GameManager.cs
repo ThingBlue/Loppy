@@ -99,6 +99,10 @@ namespace Loppy
 
             // Menu controls
             foreach (KeyCode keyBind in gameSettings.pauseKeyBinds) InputManager.instance.addKeyToMap("pause", keyBind);
+
+            // DEBUG
+            foreach (KeyCode keyBind in gameSettings.advanceDialogueKeyBinds) InputManager.instance.addKeyToMap("advanceDialogue", keyBind);
+            foreach (KeyCode keyBind in gameSettings.startDialogueKeyBinds) InputManager.instance.addKeyToMap("startDialogue", keyBind);
         }
 
         #endregion

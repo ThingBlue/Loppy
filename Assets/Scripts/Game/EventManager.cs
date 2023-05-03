@@ -21,9 +21,15 @@ namespace Loppy
     {
         public static EventManager instance;
 
-        #region Events
+        #region Game events
 
 
+
+        #endregion
+
+        #region Player events
+
+        public UnityEvent playerJumpEvent;
 
         #endregion
 

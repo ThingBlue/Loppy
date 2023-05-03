@@ -29,13 +29,14 @@ namespace Loppy
 
         #endregion
 
-        public Queue<Monologue> monologues;
-        public Queue<string> sentences;
+        private Queue<Monologue> monologues;
+        private Queue<string> sentences;
+        private Queue<char> currentSentence;
 
         private bool advanceDialogueKeyDown;
 
+        private float textOutputTimer = 0;
         private bool inDialogue = false;
-        private bool sentenceComplete = true;
 
         private void Awake()
         {
@@ -49,10 +50,15 @@ namespace Loppy
             // Initialize dialogue queue
             monologues = new Queue<Monologue>();
             sentences = new Queue<string>();
+            currentSentence = new Queue<char>();
         }
 
         private void Update()
         {
+            // Handle timers
+            textOutputTimer += Time.deltaTime;
+
+            // Handle input
             if (InputManager.instance.getKeyDown("advanceDialogue"))
             {
                 advanceDialogueKeyDown = true;
@@ -61,17 +67,46 @@ namespace Loppy
 
         private void FixedUpdate()
         {
+            // Check for input
             if (advanceDialogueKeyDown)
             {
-                if (sentenceComplete)
+                // Unfinished sentence
+                if (currentSentence.Count > 0)
                 {
-                    nextSentence();
+                    // Immediately complete current sentence
+                    while (currentSentence.Count > 0)
+                    {
+                        // Dequeue and output next character
+                        char nextChar = currentSentence.Dequeue();
+                        dialogueText.text += nextChar;
+                    }
                 }
+                // Current sentence finished
                 else
                 {
-                    // DEBUG
-                    sentenceComplete = true;
+                    // Go to next sentence
+                    nextSentence();
                 }
+            }
+
+            // Output text
+            if (currentSentence.Count > 0)
+            {
+                if (textOutputTimer >= textOutputDelay)
+                {
+                    // Dequeue and output next character
+                    char nextChar = currentSentence.Dequeue();
+                    dialogueText.text += nextChar;
+
+                    // Decrement timer
+                    textOutputTimer -= textOutputDelay;
+                }
+            }
+            // Sentence already completed
+            else
+            {
+                // Keep timer at 0
+                textOutputTimer = 0;
             }
 
             // Reset key down
@@ -89,7 +124,6 @@ namespace Loppy
 
             // Set dialogue state
             inDialogue = true;
-            sentenceComplete = false;
             dialogueBoxAnimator.SetBool("inDialogue", inDialogue);
 
             // Begin dialogue
@@ -127,32 +161,24 @@ namespace Loppy
                 return;
             }
 
-            // Fetch and display next sentence
-            string sentence = sentences.Dequeue();
-
-            // Output letters one by one
-            StopAllCoroutines();
-            StartCoroutine(outputSentence(sentence));
-        }
-
-        IEnumerator outputSentence(string sentence)
-        {
+            // Clean existing dialogue
             dialogueText.text = "";
+            currentSentence.Clear();
 
+            // Fetch and enqueue new sentence
+            string sentence = sentences.Dequeue();
             for (int i = 0; i < sentence.Length; i++)
             {
-                dialogueText.text += sentence[i];
-                yield return new WaitForSeconds(textOutputDelay);
+                currentSentence.Enqueue(sentence[i]);
             }
 
-            sentenceComplete = true;
+            return;
         }
 
         public void endDialogue()
         {
             // Reset dialogue state
             inDialogue = false;
-            sentenceComplete = true;
             dialogueBoxAnimator.SetBool("inDialogue", inDialogue);
         }
     }

@@ -4403,16 +4403,16 @@ MonoBehaviour:
   dialogue:
   - name: A
     sentences:
-    - Hi B
-    - Good day
+    - Hi B ASDFASDFASDFASFASFASFASFASDFASFSDASDFASFASAFSFSDFASDFASDFASFASFASFASD
+    - Good day asdfasfasdfasdfasdf
   - name: B
     sentences:
-    - Hi A
-    - I am B
+    - Hi A asdfasfasfasdfasfasdfasdf
+    - ' I am B a fasdfasfasfasdfasdfasdfasd'
   - name: A
     sentences:
-    - Woah
-    - i CAN'T BELIEVE IT'S b
+    - Woah asdfasfasfsadfasdfasdfasfasdf
+    - i CAN'T BELIEVE IT'S b asdfasfasfasfasfasfs
 --- !u!1 &415382265
 GameObject:
   m_ObjectHideFlags: 0

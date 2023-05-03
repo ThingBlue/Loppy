@@ -7,6 +7,8 @@ namespace Loppy
     [CreateAssetMenu]
     public class PlayerPhysicsData : ScriptableObject
     {
+        #region Layers
+
         [Header("LAYERS")]
         [Tooltip("Layer containing player")]
         public LayerMask playerLayer;
@@ -16,6 +18,10 @@ namespace Loppy
 
         [Tooltip("Layer containing terrain")]
         public LayerMask terrainLayer;
+
+        #endregion
+
+        #region Movement
 
         [Header("MOVEMENT")]
         [Tooltip("Maximum horizontal velocity")]
@@ -32,6 +38,10 @@ namespace Loppy
 
         [Tooltip("A constant downward velocity applied while on ground")]
         public float groundingForce = -2;
+
+        #endregion
+
+        #region Jump
 
         [Header("JUMP")]
         [Tooltip("Vertical velocity applied instantly upon jumping")]
@@ -51,6 +61,10 @@ namespace Loppy
 
         [Tooltip("Amount of time where jump is still usable after leaving ground")]
         public float coyoteTime = 0.1f;
+
+        #endregion
+
+        #region Walls
 
         [Header("WALLS")]
         [Tooltip("Velocity of upwards movement on walls")]
@@ -74,6 +88,10 @@ namespace Loppy
         [Tooltip("Amount of time where wall jump is still usable after leaving a wall")]
         public float wallJumpCoyoteTime = 0.1f;
 
+        #endregion
+
+        #region Ledges
+
         [Header("LEDGES")]
         [Tooltip("Rate of velocity loss when grabbing a ledge")]
         public float ledgeGrabDeceleration = 8;
@@ -89,6 +107,10 @@ namespace Loppy
 
         [Tooltip("Ledge climb animation time")]
         public float ledgeClimbDuration = 0.2f;
+
+        #endregion
+
+        #region Dash
 
         [Header("DASH")]
         [Tooltip("Horizontal velocity applied instantly upon dashing")]
@@ -115,6 +137,10 @@ namespace Loppy
         [Tooltip("Amount of time before full horizontal movement is returned after a dash jump")]
         public float dashJumpControlLossTime = 0.3f;
 
+        #endregion
+
+        #region Glide
+
         [Header("GLIDE")]
         [Tooltip("Maximum fall speed during glide")]
         public float glideFallSpeed = 4;
@@ -122,24 +148,16 @@ namespace Loppy
         [Tooltip("Rate of downwards velocity gain during glide")]
         public float glideFallAcceleration = 20;
 
+        #endregion
+
+        #region Grapple
+
         [Header("GRAPPLE")]
         [Tooltip("Magnitude of velocity applied when grappling")]
         public float grappleVelocity = 10;
 
-        [Tooltip("Amount of time a grapple freeze lasts")]
-        public float grappleFreezeTime = 4;
-
         [Tooltip("Amount of time a grapple is buffered")]
         public float grappleBufferTime = 0.1f;
-
-        [Tooltip("Rate of velocity loss during grapple freeze")]
-        public float grappleFreezeDeceleration = 100;
-
-        [Tooltip("Factor of timescale reduction per frame")]
-        public float timeScaleLerpFactor = 0.5f;
-
-        [Tooltip("Amount of time between each time scale lerp")]
-        public float timeScaleLerpTime = (1f / 60f);
 
         [Tooltip("Amount of time before full horizontal movement is returned after a grapple")]
         public float grappleControlLossTime = 0.5f;
@@ -147,18 +165,60 @@ namespace Loppy
         [Tooltip("Distance that the grapple target position is moved back to prevent getting stuck")]
         public float grappleTargetOffset = 0.4f;
 
-        [Header("COLLISION")]
-        [Tooltip("The raycast distance for collision detection"), Range(0f, 1.0f)]
-        public float raycastDistance = 0.05f;
+        #endregion
 
-        [Tooltip("Maximum angle of walkable ground"), Range(0f, 1.0f)]
+        #region Alternate grapple
+
+        [Header("ALTERNATE GRAPPLE")]
+        [Tooltip("Magnitude of velocity applied when grappling")]
+        public float alternateGrappleVelocity = 10;
+
+        [Tooltip("Amount of time a grapple is buffered")]
+        public float alternateGrappleBufferTime = 0.1f;
+
+        [Tooltip("Amount of time before full horizontal movement is returned after a grapple")]
+        public float alternateGrappleControlLossTime = 0.5f;
+
+        [Tooltip("Distance that the grapple target position is moved back to prevent getting stuck")]
+        public float alternateGrappleTargetOffset = 0.4f;
+
+        [Tooltip("Amount of time a grapple freeze lasts")]
+        public float alternateGrappleFreezeTime = 4;
+
+        [Tooltip("Factor of timescale reduction per frame")]
+        public float timeScaleLerpFactor = 0.5f;
+
+        [Tooltip("Amount of time between each time scale lerp")]
+        public float timeScaleLerpTime = (1f / 60f);
+
+        #endregion
+
+        #region Collision
+
+        [Header("COLLISION")]
+        [Tooltip("The raycast distance for collision detection")]
+        public float raycastDistance = 0.1f;
+
+        [Tooltip("The raycast distance for normal checking")]
+        public float normalRaycastDistance = 0.2f;
+
+        [Tooltip("The raycast distance for ground after leaving a platform")]
+        public float groundCheckRaycastDistance = 2.0f;
+
+        [Tooltip("Maximum angle of walkable ground")]
         public float maxWalkAngle = 30;
 
-        [Tooltip("Maximum angle of climbable wall"), Range(0f, 1.0f)]
+        [Tooltip("Maximum angle of climbable wall")]
         public float maxClimbAngle = 30;
+
+        #endregion
+
+        #region External
 
         [Header("EXTERNAL")]
         [Tooltip("The rate at which external velocity decays. Should be close to Fall Acceleration")]
         public int externalVelocityDecay = 100; // This may become deprecated in a future version
+
+        #endregion
     }
 }

@@ -50,6 +50,21 @@ TagManager:
   - name: Player
     uniqueID: 1573855223
     locked: 0
+  - name: PlayerHairBack
+    uniqueID: 2055748735
+    locked: 0
+  - name: PlayerHead
+    uniqueID: 2851034673
+    locked: 0
+  - name: PlayerBody
+    uniqueID: 1850523463
+    locked: 0
+  - name: PlayerOvercoat
+    uniqueID: 1090772257
+    locked: 0
+  - name: PlayerHairFront
+    uniqueID: 202004891
+    locked: 0
   - name: Foreground
     uniqueID: 3305210409
     locked: 0

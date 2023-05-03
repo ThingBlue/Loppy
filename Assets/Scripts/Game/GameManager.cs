@@ -95,9 +95,14 @@ namespace Loppy
             foreach (KeyCode keyBind in gameSettings.dashKeyBinds) InputManager.instance.addKeyToMap("dash", keyBind);
             foreach (KeyCode keyBind in gameSettings.glideKeyBinds) InputManager.instance.addKeyToMap("glide", keyBind);
             foreach (KeyCode keyBind in gameSettings.grappleKeyBinds) InputManager.instance.addKeyToMap("grapple", keyBind);
+            foreach (KeyCode keyBind in gameSettings.alternateGrappleKeyBinds) InputManager.instance.addKeyToMap("alternateGrapple", keyBind);
 
             // Menu controls
             foreach (KeyCode keyBind in gameSettings.pauseKeyBinds) InputManager.instance.addKeyToMap("pause", keyBind);
+
+            // DEBUG
+            foreach (KeyCode keyBind in gameSettings.advanceDialogueKeyBinds) InputManager.instance.addKeyToMap("advanceDialogue", keyBind);
+            foreach (KeyCode keyBind in gameSettings.startDialogueKeyBinds) InputManager.instance.addKeyToMap("startDialogue", keyBind);
         }
 
         #endregion
@@ -134,7 +139,8 @@ namespace Loppy
             gameSettings.jumpKeyBinds = new List<KeyCode> { KeyCode.Space };
             gameSettings.dashKeyBinds = new List<KeyCode> { KeyCode.LeftShift };
             gameSettings.glideKeyBinds = new List<KeyCode> { KeyCode.LeftControl };
-            gameSettings.grappleKeyBinds = new List<KeyCode> { KeyCode.E };
+            gameSettings.grappleKeyBinds = new List<KeyCode> { KeyCode.Mouse1 };
+            gameSettings.alternateGrappleKeyBinds = new List<KeyCode> { KeyCode.E };
 
             // Menu controls
             gameSettings.pauseKeyBinds = new List<KeyCode> { KeyCode.Escape };

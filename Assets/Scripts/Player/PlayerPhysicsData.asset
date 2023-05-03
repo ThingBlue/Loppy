@@ -26,22 +26,22 @@ MonoBehaviour:
   groundDeceleration: 200
   airDeceleration: 30
   groundingForce: -2
-  jumpStrength: 16
+  jumpStrength: 17
   maxFallSpeed: 40
-  fallAcceleration: 36
-  jumpEndEarlyGravityModifier: 5
+  fallAcceleration: 42
+  jumpEndEarlyGravityModifier: 4
   jumpBufferTime: 0.1
   coyoteTime: 0.1
   wallClimbSpeed: 8
   wallFallAcceleration: 16
   maxWallFallSpeed: 6
   fastWallFallSpeed: 12
-  wallJumpStrength: {x: 6, y: 16}
+  wallJumpStrength: {x: 7, y: 17}
   wallJumpControlLossTime: 0.15
   wallJumpCoyoteTime: 0.1
   ledgeGrabDeceleration: 8
-  ledgeGrabPoint: {x: 0.4, y: 1}
-  standUpOffset: {x: 0.4, y: 0}
+  ledgeGrabPoint: {x: 0.3, y: 1}
+  standUpOffset: {x: 0.3, y: 0}
   ledgeRaycastDistance: 2
   ledgeClimbDuration: 0.2
   dashVelocity: 25
@@ -50,19 +50,24 @@ MonoBehaviour:
   dashEndHorizontalMultiplier: 0.25
   dashBufferTime: 0.1
   dashCoyoteTime: 0.1
-  dashJumpStrength: {x: 30, y: 18}
+  dashJumpStrength: {x: 30, y: 17}
   dashJumpControlLossTime: 0.3
   glideFallSpeed: 5
   glideFallAcceleration: 20
-  grappleVelocity: 30
-  grappleFreezeTime: 0.5
+  grappleVelocity: 27
   grappleBufferTime: 0.1
-  grappleFreezeDeceleration: 0
-  timeScaleLerpFactor: 0.15
-  timeScaleLerpTime: 0.016666668
   grappleControlLossTime: 0.2
   grappleTargetOffset: 0.4
-  raycastDistance: 0.05
+  alternateGrappleVelocity: 27
+  alternateGrappleBufferTime: 0.1
+  alternateGrappleControlLossTime: 0.2
+  alternateGrappleTargetOffset: 0.4
+  alternateGrappleFreezeTime: 1
+  timeScaleLerpFactor: 0.15
+  timeScaleLerpTime: 0.016666668
+  raycastDistance: 0.1
+  normalRaycastDistance: 1
+  groundCheckRaycastDistance: 4
   maxWalkAngle: 30
   maxClimbAngle: 30
   externalVelocityDecay: 100

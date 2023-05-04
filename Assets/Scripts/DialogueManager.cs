@@ -14,6 +14,16 @@ namespace Loppy
 
         [TextArea(3, 10)]
         public List<string> sentences;
+
+        public List<DialogueOption> options;
+    }
+
+    [System.Serializable]
+    public class DialogueOption
+    {
+        public string option;
+
+        public List<Monologue> dialogue;
     }
 
     public class DialogueManager : MonoBehaviour

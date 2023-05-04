@@ -4406,14 +4406,31 @@ MonoBehaviour:
     sentences:
     - Hi B ASDFASDFASDFASFASFASFASFASDFASFSDASDFASFASAFSFSDFASDFASDFASFASFASFASD
     - Good day asdfasfasdfasdfasdf
+    options: []
   - name: B
     sentences:
     - Hi A asdfasfasfasdfasfasdfasdf
     - ' I am B a fasdfasfasfasdfasdfasdfasd'
+    options: []
   - name: A
     sentences:
     - Woah asdfasfasfsadfasdfasdfasfasdf
     - i CAN'T BELIEVE IT'S b asdfasfasfasfasfasfs
+    options:
+    - option: Option 1
+      dialogue:
+      - name: You selected option 1
+        sentences:
+        - Congratz! You selected otion 1.
+        - MUWEHWHHWEHWEWUIHWEWEUWEHWEIWEW
+        options: []
+    - option: Option 2
+      dialogue:
+      - name: You selected option 2
+        sentences:
+        - Congratz! You selected otion 1.
+        - HAHAHAHAHAHAHAHAHAHAHAHAHAHAHAHAHAHAHAHAH
+        options: []
 --- !u!1 &415382265
 GameObject:
   m_ObjectHideFlags: 0

@@ -4384,10 +4384,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 708cdc5c1149a0945a7b6af4c7b1105e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  textOutputDelay: 0.01
   nameText: {fileID: 827902647}
   dialogueText: {fileID: 453865360}
-  dialogueBoxAnimator: {fileID: 2008421529}
+  dialogueBox: {fileID: 2008421527}
+  textOutputDelay: 0.01
+  fadeSpeed: 0.1
 --- !u!114 &412774485
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -22282,7 +22283,6 @@ GameObject:
   - component: {fileID: 2008421526}
   - component: {fileID: 2008421528}
   - component: {fileID: 2008421527}
-  - component: {fileID: 2008421529}
   m_Layer: 5
   m_Name: DialogueBox
   m_TagString: Untagged
@@ -22350,26 +22350,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2008421525}
   m_CullTransparentMesh: 1
---- !u!95 &2008421529
-Animator:
-  serializedVersion: 5
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2008421525}
-  m_Enabled: 1
-  m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: f2ac3f514cc898945910b2a3dfb38e64, type: 2}
-  m_CullingMode: 0
-  m_UpdateMode: 0
-  m_ApplyRootMotion: 0
-  m_LinearVelocityBlending: 0
-  m_StabilizeFeet: 0
-  m_WarningMessage: 
-  m_HasTransformHierarchy: 1
-  m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorStateOnDisable: 0
 --- !u!1 &2011162225
 GameObject:
   m_ObjectHideFlags: 0

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
-
+using UnityEngine.UI;
 
 namespace Loppy
 {
@@ -11,6 +11,8 @@ namespace Loppy
     public class Monologue
     {
         public string name;
+
+        [TextArea(3, 10)]
         public List<string> sentences;
     }
 
@@ -20,12 +22,12 @@ namespace Loppy
 
         #region Inspector members
 
-        public float textOutputDelay = 0.01f;
-
         public TMP_Text nameText;
         public TMP_Text dialogueText;
+        public Image dialogueBox;
 
-        public Animator dialogueBoxAnimator;
+        public float textOutputDelay = 0.01f;
+        public float fadeSpeed = 0.1f;
 
         #endregion
 
@@ -33,10 +35,15 @@ namespace Loppy
         private Queue<string> sentences;
         private Queue<char> currentSentence;
 
+        public delegate void OutputCompleteDelegate();
+        private OutputCompleteDelegate currentOutputCompleteCallback;
+
         private bool advanceDialogueKeyDown;
 
         private float textOutputTimer = 0;
-        private bool inDialogue = false;
+
+        private float dialogueAlpha = 0;
+        private float targetAlpha = 0;
 
         private void Awake()
         {
@@ -109,12 +116,21 @@ namespace Loppy
                 textOutputTimer = 0;
             }
 
+            // Handle alpha
+            dialogueAlpha = Mathf.MoveTowards(dialogueAlpha, targetAlpha, fadeSpeed);
+            nameText.color = new Color(255, 255, 255, dialogueAlpha);
+            dialogueText.color = new Color(255, 255, 255, dialogueAlpha);
+            dialogueBox.color = new Color(0, 0, 0, dialogueAlpha * 0.6f);
+
             // Reset key down
             advanceDialogueKeyDown = false;
         }
 
-        public void triggerDialogue(List<Monologue> dialogue)
+        public void triggerDialogue(List<Monologue> dialogue, OutputCompleteDelegate outputCompleteCallback = null)
         {
+            // Handle callback if there is an existing dialogue
+            if (monologues.Count > 0 && currentOutputCompleteCallback != null) currentOutputCompleteCallback();
+
             // Clean and enqueue new dialogue
             monologues.Clear();
             for (int i = 0; i < dialogue.Count; i++)
@@ -122,9 +138,11 @@ namespace Loppy
                 monologues.Enqueue(dialogue[i]);
             }
 
-            // Set dialogue state
-            inDialogue = true;
-            dialogueBoxAnimator.SetBool("inDialogue", inDialogue);
+            // Set dialogue target alpha
+            targetAlpha = 1;
+
+            // Set callback
+            currentOutputCompleteCallback = outputCompleteCallback;
 
             // Begin dialogue
             nextMonologue();
@@ -177,9 +195,15 @@ namespace Loppy
 
         public void endDialogue()
         {
-            // Reset dialogue state
-            inDialogue = false;
-            dialogueBoxAnimator.SetBool("inDialogue", inDialogue);
+            // Reset dialogue target alpha
+            targetAlpha = 0;
+
+            // Handle callback
+            if (currentOutputCompleteCallback != null)
+            {
+                currentOutputCompleteCallback();
+                currentOutputCompleteCallback = null;
+            }
         }
     }
 }

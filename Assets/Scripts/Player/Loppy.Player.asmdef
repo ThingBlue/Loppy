@@ -1,0 +1,16 @@
+{
+    "name": "Loppy.Player",
+    "rootNamespace": "",
+    "references": [
+        "GUID:bbb6f45706a99854cb78e0bfd25d1d9f"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

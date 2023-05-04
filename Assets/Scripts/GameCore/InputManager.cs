@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-namespace Loppy
+namespace Loppy.GameCore
 {
     public class InputManager : MonoBehaviour
     {

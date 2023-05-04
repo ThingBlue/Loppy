@@ -1,3 +1,4 @@
+using Loppy.GameCore;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -5,7 +6,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Loppy
+namespace Loppy.UI
 {
     [System.Serializable]
     public class Monologue

@@ -1,14 +1,14 @@
 // ReSharper disable ClassWithVirtualMembersNeverInherited.Global
 
+using Loppy.GameCore;
 using System;
 using System.Collections;
 using System.Linq;
-using TMPro;
 using UnityEngine;
 using UnityEngine.UIElements;
 using static UnityEngine.GraphicsBuffer;
 
-namespace Loppy
+namespace Loppy.Player
 {
     public enum PlayerForce
     {
@@ -49,8 +49,6 @@ namespace Loppy
         public PlayerPhysicsData playerPhysicsData;
         public PlayerUnlocks playerUnlocks;
         public PlayerAnimationData playerAnimationData;
-
-        public TMP_Text YVelocityText;
 
         #endregion
 
@@ -295,9 +293,6 @@ namespace Loppy
 
             // Reset input
             playerInputDown = Vector2.zero;
-
-            // Debug
-            YVelocityText.text = "Y Velocity: " + velocity.y.ToString();
         }
 
         #region Input

@@ -1,8 +1,9 @@
+using Loppy.GameCore;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Loppy
+namespace Loppy.UI
 {
     public class DialogueTrigger : MonoBehaviour
     {

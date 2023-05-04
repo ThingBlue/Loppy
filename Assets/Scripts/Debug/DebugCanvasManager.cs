@@ -1,10 +1,12 @@
+using Loppy.GameCore;
+using Loppy.Player;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Loppy
+namespace Loppy.Debug
 {
     public class DebugCanvasManager : MonoBehaviour
     {
@@ -37,6 +39,9 @@ namespace Loppy
 
         private void Start()
         {
+            // Subscribe to events
+            EventManager.instance.debugMenuOpened.AddListener(onDebugMenuOpened);
+
             // Disable menu
             debugMenuPanel.SetActive(false);
         }
@@ -46,21 +51,6 @@ namespace Loppy
             // Set value for state text
             gameStateText.text = $"Game State: {GameManager.gameState}";
             playerStateText.text = $"Player State: {player.playerState}";
-        }
-
-        public void onDebugMenuOpened()
-        {
-            // Set value for toggles
-            wallClimbToggle.isOn = playerUnlocks.wallClimbUnlocked;
-            grappleToggle.isOn = playerUnlocks.grappleUnlocked;
-            dashToggle.isOn = playerUnlocks.dashUnlocked;
-            directionalDashToggle.isOn = playerUnlocks.directionalDashUnlocked;
-            glideToggle.isOn = playerUnlocks.glideUnlocked;
-
-            // Set value for input fields
-            airJumpsInputField.text = playerUnlocks.airJumps.ToString();
-            airDashesInputField.text = playerUnlocks.airDashes.ToString();
-            grappleDistanceInputField.text = playerUnlocks.grappleDistance.ToString();
         }
 
         public void onWallClingToggleChanged(Toggle change)
@@ -108,5 +98,24 @@ namespace Loppy
             debugMenuPanel.SetActive(false);
             pauseMenuPanel.SetActive(true);
         }
+
+        #region Event system callbacks
+
+        private void onDebugMenuOpened()
+        {
+            // Set value for toggles
+            wallClimbToggle.isOn = playerUnlocks.wallClimbUnlocked;
+            grappleToggle.isOn = playerUnlocks.grappleUnlocked;
+            dashToggle.isOn = playerUnlocks.dashUnlocked;
+            directionalDashToggle.isOn = playerUnlocks.directionalDashUnlocked;
+            glideToggle.isOn = playerUnlocks.glideUnlocked;
+
+            // Set value for input fields
+            airJumpsInputField.text = playerUnlocks.airJumps.ToString();
+            airDashesInputField.text = playerUnlocks.airDashes.ToString();
+            grappleDistanceInputField.text = playerUnlocks.grappleDistance.ToString();
+        }
+
+        #endregion
     }
 }

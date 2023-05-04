@@ -1,10 +1,11 @@
+using Loppy.GameCore;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Loppy
+namespace Loppy.UI
 {
     public class UIManager : MonoBehaviour
     {
@@ -56,6 +57,10 @@ namespace Loppy
 
         private void Start()
         {
+            // Subscribe to events
+            EventManager.instance.pauseEvent.AddListener(onPause);
+            EventManager.instance.unpauseEvent.AddListener(onUnpause);
+
             // Disable menus
             pauseMenuPanel.SetActive(false);
             settingsMenuPanel.SetActive(false);
@@ -63,14 +68,7 @@ namespace Loppy
 
         #region Pause menu
 
-        public void togglePause(bool pause)
-        {
-            pauseMenuPanel.SetActive(pause);
-            if (!pause) settingsMenuPanel.SetActive(false);
-            if (!pause) debugMenuPanel.SetActive(false);
-        }
-
-        public void onContinueButtonPressed() { GameManager.instance.togglePause(false); }
+        public void onContinueButtonPressed() { EventManager.instance.unpauseEvent.Invoke(); }
 
         public void onSettingsButtonPressed()
         {
@@ -96,8 +94,7 @@ namespace Loppy
             pauseMenuPanel.SetActive(false);
             debugMenuPanel.SetActive(true);
 
-            // Set display values for graphics tab
-            DebugCanvasManager.instance.onDebugMenuOpened();
+            EventManager.instance.debugMenuOpened.Invoke();
         }
 
         public void onExitGameButtonPressed()
@@ -316,6 +313,24 @@ namespace Loppy
         }
 
         #endregion
+
+        #endregion
+
+        #region Event system callbacks
+
+        private void onPause()
+        {
+            // Show pause menu
+            pauseMenuPanel.SetActive(true);
+        }
+
+        private void onUnpause()
+        {
+            // Hide menus
+            pauseMenuPanel.SetActive(false);
+            settingsMenuPanel.SetActive(false);
+            debugMenuPanel.SetActive(false);
+        }
 
         #endregion
     }

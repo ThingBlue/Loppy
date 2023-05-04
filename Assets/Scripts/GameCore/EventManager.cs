@@ -15,7 +15,7 @@ using UnityEngine.Events;
  *         EventManager.instance.eventName.Invoke();
  */
 
-namespace Loppy
+namespace Loppy.GameCore
 {
     public class EventManager : MonoBehaviour
     {
@@ -23,7 +23,10 @@ namespace Loppy
 
         #region Game events
 
+        public UnityEvent pauseEvent;
+        public UnityEvent unpauseEvent;
 
+        public UnityEvent debugMenuOpened;
 
         #endregion
 
@@ -42,9 +45,11 @@ namespace Loppy
 
         private void Start()
         {
-            // Initialize unity event system
-
             // Initialize events
+            if (pauseEvent == null) pauseEvent = new UnityEvent();
+            if (unpauseEvent == null) unpauseEvent = new UnityEvent();
+
+            if (debugMenuOpened == null) debugMenuOpened = new UnityEvent();
         }
     }
 }

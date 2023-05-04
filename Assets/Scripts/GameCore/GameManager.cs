@@ -1,9 +1,8 @@
-using Loppy;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Loppy
+namespace Loppy.GameCore
 {
     public enum GameState
     {
@@ -36,6 +35,10 @@ namespace Loppy
 
         private void Start()
         {
+            // Subscribe to events
+            EventManager.instance.pauseEvent.AddListener(onPause);
+            EventManager.instance.unpauseEvent.AddListener(onUnpause);
+
             // Apply settings at the start of the game
             applyGraphicsSettings();
             applyAudioSettings();
@@ -45,29 +48,9 @@ namespace Loppy
         private void Update()
         {
             // Pause
-            if (gameState == GameState.GAME && InputManager.instance.getKeyDown("pause")) togglePause(true);
+            if (gameState == GameState.GAME && InputManager.instance.getKeyDown("pause")) EventManager.instance.pauseEvent.Invoke();
             // Unpause
-            else if (gameState == GameState.PAUSED && InputManager.instance.getKeyDown("pause")) togglePause(false);
-        }
-
-        public void togglePause(bool pause)
-        {
-            // Pause
-            if (pause)
-            {
-                gameState = GameState.PAUSED;
-                timeScaleBeforePause = Time.timeScale;
-                Time.timeScale = 0;
-            }
-            // Unpause
-            else if (!pause)
-            {
-                gameState = GameState.GAME;
-                Time.timeScale = timeScaleBeforePause;
-            }
-
-            // Trigger togglePause callback in UIManager
-            UIManager.instance.togglePause(pause);
+            else if (gameState == GameState.PAUSED && InputManager.instance.getKeyDown("pause")) EventManager.instance.unpauseEvent.Invoke();
         }
 
         #region Apply settings
@@ -149,5 +132,23 @@ namespace Loppy
         }
 
         #endregion
+
+        #region Event system callbacks
+
+        private void onPause()
+        {
+            gameState = GameState.PAUSED;
+            timeScaleBeforePause = Time.timeScale;
+            Time.timeScale = 0;
+        }
+
+        private void onUnpause()
+        {
+            gameState = GameState.GAME;
+            Time.timeScale = timeScaleBeforePause;
+        }
+
+        #endregion
+
     }
 }

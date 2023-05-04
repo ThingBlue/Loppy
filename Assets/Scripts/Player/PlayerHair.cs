@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Loppy
+namespace Loppy.Player
 {
     public class PlayerHair : MonoBehaviour
     {

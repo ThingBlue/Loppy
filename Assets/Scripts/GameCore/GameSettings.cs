@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Loppy
+namespace Loppy.GameCore
 {
     [CreateAssetMenu]
     public class GameSettings : ScriptableObject

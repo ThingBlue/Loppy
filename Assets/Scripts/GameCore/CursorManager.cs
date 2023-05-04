@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Loppy
+namespace Loppy.GameCore
 {
     public class CursorManager : MonoBehaviour
     {

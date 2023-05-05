@@ -1,5 +1,8 @@
+using Codice.CM.Common.Merge;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace Loppy.Player
@@ -15,14 +18,18 @@ namespace Loppy.Player
 
         public Transform targetOrigin;
         public float targetDistance = 0.1f;
-        private float defaultRotation;
 
         public float smoothSpeed = 0.002f;
         public float angleLerpSpeed = 0.05f;
 
         public bool enableWiggle = true;
+        public Transform wiggleOrigin;
         public float wiggleSpeed = 10;
         public float wiggleMagnitude = 20;
+
+        public bool enableRigidity = true;
+        public float angleRigidityMultiplier = 0.2f;
+        public float smoothRigidityMultiplier = 0.2f;
 
         #endregion
 
@@ -32,18 +39,12 @@ namespace Loppy.Player
             lineRenderer.positionCount = length;
             segmentPositions = new Vector3[length];
             segmentVelocities = new Vector3[length];
-
-            // Initialize default rotation
-            defaultRotation = targetOrigin.rotation.eulerAngles.z;
         }
 
         private void Update()
         {
             // Handle wiggle
-            if (enableWiggle)
-            {
-                targetOrigin.localRotation = Quaternion.Euler(0, 0, Mathf.Sin(Time.time * wiggleSpeed) * wiggleMagnitude + defaultRotation);
-            }
+            if (enableWiggle) wiggleOrigin.localRotation = Quaternion.Euler(0, 0, Mathf.Sin(Time.time * wiggleSpeed) * wiggleMagnitude);
 
             // Update position of head node
             segmentPositions[0] = targetOrigin.position;
@@ -51,13 +52,34 @@ namespace Loppy.Player
             // Recursively update positions of subsequent nodes
             for (int i = 1; i < segmentPositions.Length; i++)
             {
+                // Get direction from last segment
+                Vector3 direction = (segmentPositions[i] - segmentPositions[i - 1]).normalized;
+
                 // Lerp direction towards origin direction
-                Vector3 direction = segmentPositions[i] - segmentPositions[i - 1];
-                Vector3 targetDirection = Vector3.Lerp(direction, targetOrigin.right, angleLerpSpeed);
+                Vector3 targetDirection = new Vector3();
+                if (enableRigidity)
+                {
+                    targetDirection = enableWiggle ?
+                        Vector3.Lerp(direction, wiggleOrigin.right, angleLerpSpeed / (i * angleRigidityMultiplier)) :
+                        Vector3.Lerp(direction, targetOrigin.right, angleLerpSpeed / (i * angleRigidityMultiplier));
+                }
+                else
+                {
+                    targetDirection = enableWiggle ?
+                        Vector3.Lerp(direction, wiggleOrigin.right, angleLerpSpeed) :
+                        Vector3.Lerp(direction, targetOrigin.right, angleLerpSpeed);
+                }
 
                 // Smooth damp position towards position of previous node
                 Vector3 targetPosition = segmentPositions[i - 1] + targetDirection.normalized * targetDistance;
-                segmentPositions[i] = Vector3.SmoothDamp(segmentPositions[i], targetPosition, ref segmentVelocities[i], smoothSpeed);
+                if (enableRigidity)
+                {
+                    segmentPositions[i] = Vector3.SmoothDamp(segmentPositions[i], targetPosition, ref segmentVelocities[i], smoothSpeed * (i * smoothRigidityMultiplier));
+                }
+                else
+                {
+                    segmentPositions[i] = Vector3.SmoothDamp(segmentPositions[i], targetPosition, ref segmentVelocities[i], smoothSpeed);
+                }
             }
 
             // Apply new positions

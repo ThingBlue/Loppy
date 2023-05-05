@@ -1,4 +1,5 @@
 using Loppy.GameCore;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -8,7 +9,7 @@ using UnityEngine.UI;
 
 namespace Loppy.UI
 {
-    [System.Serializable]
+    [Serializable]
     public class Monologue
     {
         public string name;
@@ -19,7 +20,7 @@ namespace Loppy.UI
         public List<DialogueOption> options;
     }
 
-    [System.Serializable]
+    [Serializable]
     public class DialogueOption
     {
         public string option;

@@ -1,28 +1,32 @@
-using System.Collections;
+using Loppy.GameCore;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace Loppy.Player
 {
+    [Serializable]
     public class PlayerHairData
     {
-        public Vector3 hairFront1TargetOriginLocalPositionLeft;
-        public Vector3 hairFront2TargetOriginLocalPositionLeft;
-        public Vector3 hairBack1TargetOriginLocalPositionLeft;
-        public Vector3 hairBack2TargetOriginLocalPositionLeft;
-        public float hairFront1TargetOriginLocalRotationLeft;
-        public float hairFront2TargetOriginLocalRotationLeft;
-        public float hairBack1TargetOriginLocalRotationLeft;
-        public float hairBack2TargetOriginLocalRotationLeft;
+        public PlayerState playerState;
 
-        public Vector3 hairFront1TargetOriginLocalPositionRight;
-        public Vector3 hairFront2TargetOriginLocalPositionRight;
-        public Vector3 hairBack1TargetOriginLocalPositionRight;
-        public Vector3 hairBack2TargetOriginLocalPositionRight;
-        public float hairFront1TargetOriginLocalRotationRight;
-        public float hairFront2TargetOriginLocalRotationRight;
-        public float hairBack1TargetOriginLocalRotationRight;
-        public float hairBack2TargetOriginLocalRotationRight;
+        public Vector3 front1LocalPositionLeft;
+        public Vector3 front2LocalPositionLeft;
+        public Vector3 back1LocalPositionLeft;
+        public Vector3 back2LocalPositionLeft;
+        public float front1LocalRotationLeft;
+        public float front2LocalRotationLeft;
+        public float back1LocalRotationLeft;
+        public float back2LocalRotationLeft;
+
+        public Vector3 front1LocalPositionRight;
+        public Vector3 front2LocalPositionRight;
+        public Vector3 back1LocalPositionRight;
+        public Vector3 back2LocalPositionRight;
+        public float front1LocalRotationRight;
+        public float front2LocalRotationRight;
+        public float back1LocalRotationRight;
+        public float back2LocalRotationRight;
     }
 
     public class PlayerAnimation : MonoBehaviour
@@ -51,11 +55,6 @@ namespace Loppy.Player
 
         #endregion
 
-        private void Start()
-        {
-            initializeHairData();
-        }
-
         private void Update()
         {
             // Get face right from player controller
@@ -68,63 +67,40 @@ namespace Loppy.Player
             overcoatSpriteRenderer.flipX = faceRight;
 
             // Handle hair
-            if (!faceRight)
+            for (int i = 0; i < playerAnimationData.playerHairData.Count; i++)
             {
-                // Set positions
-                hairFront1TargetOrigin.localPosition = playerAnimationData.playerHairData[playerController.playerState].hairFront1TargetOriginLocalPositionLeft;
-                hairFront2TargetOrigin.localPosition = playerAnimationData.playerHairData[playerController.playerState].hairFront2TargetOriginLocalPositionLeft;
-                hairBack1TargetOrigin.localPosition = playerAnimationData.playerHairData[playerController.playerState].hairBack1TargetOriginLocalPositionLeft;
-                hairBack2TargetOrigin.localPosition = playerAnimationData.playerHairData[playerController.playerState].hairBack2TargetOriginLocalPositionLeft;
+                if (playerController.playerState == playerAnimationData.playerHairData[i].playerState)
+                {
+                    if (!faceRight)
+                    {
+                        // Set positions
+                        hairFront1TargetOrigin.localPosition = playerAnimationData.playerHairData[i].front1LocalPositionLeft;
+                        hairFront2TargetOrigin.localPosition = playerAnimationData.playerHairData[i].front2LocalPositionLeft;
+                        hairBack1TargetOrigin.localPosition = playerAnimationData.playerHairData[i].back1LocalPositionLeft;
+                        hairBack2TargetOrigin.localPosition = playerAnimationData.playerHairData[i].back2LocalPositionLeft;
 
-                // Set rotations
-                hairFront1TargetOrigin.localRotation = Quaternion.Euler(0, 0, playerAnimationData.playerHairData[playerController.playerState].hairFront1TargetOriginLocalRotationLeft - 90);
-                hairFront2TargetOrigin.localRotation = Quaternion.Euler(0, 0, playerAnimationData.playerHairData[playerController.playerState].hairFront2TargetOriginLocalRotationLeft - 90);
-                hairBack1TargetOrigin.localRotation = Quaternion.Euler(0, 0, playerAnimationData.playerHairData[playerController.playerState].hairBack1TargetOriginLocalRotationLeft - 90);
-                hairBack2TargetOrigin.localRotation = Quaternion.Euler(0, 0, playerAnimationData.playerHairData[playerController.playerState].hairBack2TargetOriginLocalRotationLeft - 90);
+                        // Set rotations
+                        hairFront1TargetOrigin.localRotation = Quaternion.Euler(0, 0, playerAnimationData.playerHairData[i].front1LocalRotationLeft - 90);
+                        hairFront2TargetOrigin.localRotation = Quaternion.Euler(0, 0, playerAnimationData.playerHairData[i].front2LocalRotationLeft - 90);
+                        hairBack1TargetOrigin.localRotation = Quaternion.Euler(0, 0, playerAnimationData.playerHairData[i].back1LocalRotationLeft - 90);
+                        hairBack2TargetOrigin.localRotation = Quaternion.Euler(0, 0, playerAnimationData.playerHairData[i].back2LocalRotationLeft - 90);
+                    }
+                    else
+                    {
+                        // Set positions
+                        hairFront1TargetOrigin.localPosition = playerAnimationData.playerHairData[i].front1LocalPositionRight;
+                        hairFront2TargetOrigin.localPosition = playerAnimationData.playerHairData[i].front2LocalPositionRight;
+                        hairBack1TargetOrigin.localPosition = playerAnimationData.playerHairData[i].back1LocalPositionRight;
+                        hairBack2TargetOrigin.localPosition = playerAnimationData.playerHairData[i].back2LocalPositionRight;
+
+                        // Set rotations
+                        hairFront1TargetOrigin.localRotation = Quaternion.Euler(0, 0, playerAnimationData.playerHairData[i].front1LocalRotationRight - 90);
+                        hairFront2TargetOrigin.localRotation = Quaternion.Euler(0, 0, playerAnimationData.playerHairData[i].front2LocalRotationRight - 90);
+                        hairBack1TargetOrigin.localRotation = Quaternion.Euler(0, 0, playerAnimationData.playerHairData[i].back1LocalRotationRight - 90);
+                        hairBack2TargetOrigin.localRotation = Quaternion.Euler(0, 0, playerAnimationData.playerHairData[i].back2LocalRotationRight - 90);
+                    }
+                }
             }
-            else
-            {
-                // Set positions
-                hairFront1TargetOrigin.localPosition = playerAnimationData.playerHairData[playerController.playerState].hairFront1TargetOriginLocalPositionRight;
-                hairFront2TargetOrigin.localPosition = playerAnimationData.playerHairData[playerController.playerState].hairFront2TargetOriginLocalPositionRight;
-                hairBack1TargetOrigin.localPosition = playerAnimationData.playerHairData[playerController.playerState].hairBack1TargetOriginLocalPositionRight;
-                hairBack2TargetOrigin.localPosition = playerAnimationData.playerHairData[playerController.playerState].hairBack2TargetOriginLocalPositionRight;
-
-                // Set rotations
-                hairFront1TargetOrigin.localRotation = Quaternion.Euler(0, 0, playerAnimationData.playerHairData[playerController.playerState].hairFront1TargetOriginLocalRotationRight - 90);
-                hairFront2TargetOrigin.localRotation = Quaternion.Euler(0, 0, playerAnimationData.playerHairData[playerController.playerState].hairFront2TargetOriginLocalRotationRight - 90);
-                hairBack1TargetOrigin.localRotation = Quaternion.Euler(0, 0, playerAnimationData.playerHairData[playerController.playerState].hairBack1TargetOriginLocalRotationRight - 90);
-                hairBack2TargetOrigin.localRotation = Quaternion.Euler(0, 0, playerAnimationData.playerHairData[playerController.playerState].hairBack2TargetOriginLocalRotationRight - 90);
-            }
-        }
-
-        private void initializeHairData()
-        {
-            // Initialize dictionary
-            playerAnimationData.playerHairData = new Dictionary<PlayerState, PlayerHairData>();
-
-            // Idle
-            PlayerHairData newHairData = new PlayerHairData();
-
-            newHairData.hairFront1TargetOriginLocalPositionLeft = new Vector3(0.05f, 0.35f, 0);
-            newHairData.hairFront2TargetOriginLocalPositionLeft = new Vector3(-0.29f, 0.43f, 0);
-            newHairData.hairBack1TargetOriginLocalPositionLeft = new Vector3(0.07f, 0.295f, 0);
-            newHairData.hairBack2TargetOriginLocalPositionLeft = new Vector3(-0.1f, 0.28f, 0);
-            newHairData.hairFront1TargetOriginLocalRotationLeft = 5;
-            newHairData.hairFront2TargetOriginLocalRotationLeft = -5;
-            newHairData.hairBack1TargetOriginLocalRotationLeft = 3;
-            newHairData.hairBack2TargetOriginLocalRotationLeft = -3;
-
-            newHairData.hairFront1TargetOriginLocalPositionRight = new Vector3(0.29f, 0.43f, 0);
-            newHairData.hairFront2TargetOriginLocalPositionRight = new Vector3(-0.05f, 0.35f, 0);
-            newHairData.hairBack1TargetOriginLocalPositionRight = new Vector3(0.1f, 0.28f, 0);
-            newHairData.hairBack2TargetOriginLocalPositionRight = new Vector3(-0.07f, 0.295f, 0);
-            newHairData.hairFront1TargetOriginLocalRotationRight = 5;
-            newHairData.hairFront2TargetOriginLocalRotationRight = -5;
-            newHairData.hairBack1TargetOriginLocalRotationRight = 3;
-            newHairData.hairBack2TargetOriginLocalRotationRight = -3;
-
-            playerAnimationData.playerHairData[PlayerState.IDLE] = newHairData;
         }
     }
 }

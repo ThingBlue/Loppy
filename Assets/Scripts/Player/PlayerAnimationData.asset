@@ -12,4 +12,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1101ea382f005d34888b8a71b8ebe1ef, type: 3}
   m_Name: PlayerAnimationData
   m_EditorClassIdentifier: 
+  playerHairData:
+  - playerState: 1
+    front1LocalPositionLeft: {x: 0.05, y: 0.35, z: 0}
+    front2LocalPositionLeft: {x: -0.29, y: 0.43, z: 0}
+    back1LocalPositionLeft: {x: 0.07, y: 0.25, z: 0}
+    back2LocalPositionLeft: {x: -0.1, y: 0.25, z: 0}
+    front1LocalRotationLeft: 5
+    front2LocalRotationLeft: -5
+    back1LocalRotationLeft: 5
+    back2LocalRotationLeft: -5
+    front1LocalPositionRight: {x: 0.29, y: 0.43, z: 0}
+    front2LocalPositionRight: {x: -0.05, y: 0.35, z: 0}
+    back1LocalPositionRight: {x: 0.1, y: 0.25, z: 0}
+    back2LocalPositionRight: {x: -0.07, y: 0.25, z: 0}
+    front1LocalRotationRight: 5
+    front2LocalRotationRight: -5
+    back1LocalRotationRight: 5
+    back2LocalRotationRight: -5
   grappleLineRendererOffset: 1
+  alternateGrappleLineRendererOffset: 0.5

@@ -69,6 +69,7 @@ namespace Loppy.GameCore
 
         public void applyControlsSettings()
         {
+            // Add every key bind in list to input manger
             for (int i = 0; i < gameSettings.keyBinds.Count; i++)
             {
                 foreach (KeyCode keyCode in gameSettings.keyBinds[i].keys)

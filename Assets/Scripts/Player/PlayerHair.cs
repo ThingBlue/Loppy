@@ -56,30 +56,18 @@ namespace Loppy.Player
                 Vector3 direction = (segmentPositions[i] - segmentPositions[i - 1]).normalized;
 
                 // Lerp direction towards origin direction
-                Vector3 targetDirection = new Vector3();
-                if (enableRigidity)
-                {
-                    targetDirection = enableWiggle ?
-                        Vector3.Lerp(direction, wiggleOrigin.right, angleLerpSpeed / (i * angleRigidityMultiplier)) :
-                        Vector3.Lerp(direction, targetOrigin.right, angleLerpSpeed / (i * angleRigidityMultiplier));
-                }
-                else
-                {
-                    targetDirection = enableWiggle ?
-                        Vector3.Lerp(direction, wiggleOrigin.right, angleLerpSpeed) :
-                        Vector3.Lerp(direction, targetOrigin.right, angleLerpSpeed);
-                }
-
+                Vector3 targetDirection = Vector3.Lerp(
+                    direction,
+                    enableWiggle ? wiggleOrigin.right : targetOrigin.right,
+                    enableRigidity ? angleLerpSpeed / (i * angleRigidityMultiplier) : angleLerpSpeed);
+                
                 // Smooth damp position towards position of previous node
                 Vector3 targetPosition = segmentPositions[i - 1] + targetDirection.normalized * targetDistance;
-                if (enableRigidity)
-                {
-                    segmentPositions[i] = Vector3.SmoothDamp(segmentPositions[i], targetPosition, ref segmentVelocities[i], smoothSpeed * (i * smoothRigidityMultiplier));
-                }
-                else
-                {
-                    segmentPositions[i] = Vector3.SmoothDamp(segmentPositions[i], targetPosition, ref segmentVelocities[i], smoothSpeed);
-                }
+                segmentPositions[i] = Vector3.SmoothDamp(
+                    segmentPositions[i],
+                    targetPosition,
+                    ref segmentVelocities[i],
+                    enableRigidity ? smoothSpeed * (i * smoothRigidityMultiplier) : smoothSpeed);
             }
 
             // Apply new positions

@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
@@ -5,12 +6,26 @@ using UnityEngine;
 
 namespace Loppy.GameCore
 {
+    [Serializable]
+    public class KeyBind
+    {
+        public string name;
+        public List<KeyCode> keys;
+
+        public KeyBind(string name, List<KeyCode> keys)
+        {
+            this.name = name;
+            this.keys = keys;
+        }
+    }
+
     public class InputManager : MonoBehaviour
     {
         // Singleton
         public static InputManager instance;
 
         public Dictionary<string, List<KeyCode>> keyMap;
+        public List<string> keysInMap;
 
         private void Awake()
         {
@@ -86,6 +101,7 @@ namespace Loppy.GameCore
 
         #region Setters
 
+        // Clears all binds for a single key in map
         public void clearKeyListInMap(string key)
         {
             if (!keyMap.ContainsKey(key)) return;
@@ -93,10 +109,21 @@ namespace Loppy.GameCore
             keyMap[key].Clear();
         }
 
+        // Clears the entire map
+        public void clearKeyMap()
+        {
+            foreach (string key in keysInMap) clearKeyListInMap(key);
+            keysInMap.Clear();
+        }
+
         public void addKeyToMap(string key, KeyCode value)
         {
             // Create new keycode mapping if it doesn't exist
-            if (!keyMap.ContainsKey(key)) keyMap.Add(key, new List<KeyCode>());
+            if (!keyMap.ContainsKey(key))
+            {
+                keyMap.Add(key, new List<KeyCode>());
+                keysInMap.Add(key);
+            }
 
             // Check if current value already exists in the list
             if (keyMap[key].Contains(value)) return;
@@ -107,7 +134,11 @@ namespace Loppy.GameCore
         public void setKeyListInMap(string key, List<KeyCode> value)
         {
             // Create new keycode mapping if it doesn't exist
-            if (!keyMap.ContainsKey(key)) keyMap.Add(key, value);
+            if (!keyMap.ContainsKey(key))
+            {
+                keyMap.Add(key, value);
+                keysInMap.Add(key);
+            }
             else keyMap[key] = value;
         }
 

@@ -11323,7 +11323,7 @@ MonoBehaviour:
   wiggleMagnitude: 20
   enableRigidity: 1
   angleRigidityMultiplier: 0.1
-  smoothRigidityMultiplier: 0.1
+  smoothRigidityMultiplier: 0.05
 --- !u!1 &1080056301
 GameObject:
   m_ObjectHideFlags: 0
@@ -13897,7 +13897,7 @@ MonoBehaviour:
   wiggleMagnitude: 20
   enableRigidity: 1
   angleRigidityMultiplier: 0.1
-  smoothRigidityMultiplier: 0.1
+  smoothRigidityMultiplier: 0.05
 --- !u!120 &1325139282
 LineRenderer:
   m_ObjectHideFlags: 0
@@ -18476,6 +18476,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0bad234b64f247a438bb25b2e90a8174, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  keysInMap: []
 --- !u!4 &1706551895
 Transform:
   m_ObjectHideFlags: 0

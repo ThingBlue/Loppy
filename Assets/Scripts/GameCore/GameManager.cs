@@ -69,23 +69,13 @@ namespace Loppy.GameCore
 
         public void applyControlsSettings()
         {
-            // Game controls
-            foreach (KeyCode keyBind in gameSettings.upKeyBinds) InputManager.instance.addKeyToMap("up", keyBind);
-            foreach (KeyCode keyBind in gameSettings.downKeyBinds) InputManager.instance.addKeyToMap("down", keyBind);
-            foreach (KeyCode keyBind in gameSettings.leftKeyBinds) InputManager.instance.addKeyToMap("left", keyBind);
-            foreach (KeyCode keyBind in gameSettings.rightKeyBinds) InputManager.instance.addKeyToMap("right", keyBind);
-            foreach (KeyCode keyBind in gameSettings.jumpKeyBinds) InputManager.instance.addKeyToMap("jump", keyBind);
-            foreach (KeyCode keyBind in gameSettings.dashKeyBinds) InputManager.instance.addKeyToMap("dash", keyBind);
-            foreach (KeyCode keyBind in gameSettings.glideKeyBinds) InputManager.instance.addKeyToMap("glide", keyBind);
-            foreach (KeyCode keyBind in gameSettings.grappleKeyBinds) InputManager.instance.addKeyToMap("grapple", keyBind);
-            foreach (KeyCode keyBind in gameSettings.alternateGrappleKeyBinds) InputManager.instance.addKeyToMap("alternateGrapple", keyBind);
-
-            // Menu controls
-            foreach (KeyCode keyBind in gameSettings.pauseKeyBinds) InputManager.instance.addKeyToMap("pause", keyBind);
-
-            // DEBUG
-            foreach (KeyCode keyBind in gameSettings.advanceDialogueKeyBinds) InputManager.instance.addKeyToMap("advanceDialogue", keyBind);
-            foreach (KeyCode keyBind in gameSettings.startDialogueKeyBinds) InputManager.instance.addKeyToMap("startDialogue", keyBind);
+            for (int i = 0; i < gameSettings.keyBinds.Count; i++)
+            {
+                foreach (KeyCode keyCode in gameSettings.keyBinds[i].keys)
+                {
+                    InputManager.instance.addKeyToMap(gameSettings.keyBinds[i].name, keyCode);
+                }
+            }
         }
 
         #endregion
@@ -114,19 +104,22 @@ namespace Loppy.GameCore
 
         public void applyControlsDefaults()
         {
+            gameSettings.keyBinds.Clear();
+            InputManager.instance.clearKeyMap();
+
             // Game controls
-            gameSettings.upKeyBinds = new List<KeyCode> { KeyCode.W, KeyCode.UpArrow };
-            gameSettings.downKeyBinds = new List<KeyCode> { KeyCode.S, KeyCode.DownArrow };
-            gameSettings.leftKeyBinds = new List<KeyCode> { KeyCode.A, KeyCode.LeftArrow };
-            gameSettings.rightKeyBinds = new List<KeyCode> { KeyCode.D, KeyCode.RightArrow };
-            gameSettings.jumpKeyBinds = new List<KeyCode> { KeyCode.Space };
-            gameSettings.dashKeyBinds = new List<KeyCode> { KeyCode.LeftShift };
-            gameSettings.glideKeyBinds = new List<KeyCode> { KeyCode.LeftControl };
-            gameSettings.grappleKeyBinds = new List<KeyCode> { KeyCode.Mouse1 };
-            gameSettings.alternateGrappleKeyBinds = new List<KeyCode> { KeyCode.E };
+            gameSettings.keyBinds.Add(new KeyBind("up", new List<KeyCode> { KeyCode.W, KeyCode.UpArrow }));
+            gameSettings.keyBinds.Add(new KeyBind("down", new List<KeyCode> { KeyCode.S, KeyCode.DownArrow }));
+            gameSettings.keyBinds.Add(new KeyBind("left", new List<KeyCode> { KeyCode.A, KeyCode.LeftArrow }));
+            gameSettings.keyBinds.Add(new KeyBind("right", new List<KeyCode> { KeyCode.D, KeyCode.RightArrow }));
+            gameSettings.keyBinds.Add(new KeyBind("jump", new List<KeyCode> { KeyCode.Space }));
+            gameSettings.keyBinds.Add(new KeyBind("dash", new List<KeyCode> { KeyCode.LeftShift }));
+            gameSettings.keyBinds.Add(new KeyBind("glide", new List<KeyCode> { KeyCode.LeftControl }));
+            gameSettings.keyBinds.Add(new KeyBind("grapple", new List<KeyCode> { KeyCode.Mouse1 }));
+            gameSettings.keyBinds.Add(new KeyBind("alternateGrapple", new List<KeyCode> { KeyCode.E }));
 
             // Menu controls
-            gameSettings.pauseKeyBinds = new List<KeyCode> { KeyCode.Escape };
+            gameSettings.keyBinds.Add(new KeyBind("pause", new List<KeyCode> { KeyCode.Escape }));
 
             applyControlsSettings();
         }

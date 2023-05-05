@@ -20,8 +20,9 @@ namespace Loppy.GameCore
         public float soundVolume = 50;
 
         [Header("CONTROLS")]
-        public Dictionary<string, List<KeyCode>> keyBinds;
+        public List<KeyBind> keyBinds;
 
+        /*
         [Header("CONTROLS")]
         public List<KeyCode> upKeyBinds = new List<KeyCode> { KeyCode.W, KeyCode.UpArrow };
         public List<KeyCode> downKeyBinds = new List<KeyCode> { KeyCode.S, KeyCode.DownArrow };
@@ -37,6 +38,6 @@ namespace Loppy.GameCore
 
         public List<KeyCode> advanceDialogueKeyBinds = new List<KeyCode> { KeyCode.Mouse0 };
         public List<KeyCode> startDialogueKeyBinds = new List<KeyCode> { KeyCode.L };
-
+        */
     }
 }

@@ -32,12 +32,10 @@ namespace Loppy.GameCore
             // Singleton
             if (instance == null) instance = this;
             else Destroy(this);
-        }
 
-        private void Start()
-        {
             // Initialize key map
             keyMap = new Dictionary<string, List<KeyCode>>();
+            keysInMap = new List<string>();
         }
 
         #region Getters

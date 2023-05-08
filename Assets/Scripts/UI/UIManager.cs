@@ -14,7 +14,7 @@ namespace Loppy.UI
 
         #region Inspector members
 
-        public GameSettings gameSettings;
+        public SettingsData settingsData;
 
         // Pause menu
         public GameObject pauseMenuPanel;
@@ -111,16 +111,16 @@ namespace Loppy.UI
         public void setGraphicsTabDisplayValues()
         {
             // Resolution dropdown
-            if (gameSettings.resolution == new Vector2Int(2560, 1440)) resolutionDropdown.value = 0;
-            if (gameSettings.resolution == new Vector2Int(1920, 1080)) resolutionDropdown.value = 1;
-            if (gameSettings.resolution == new Vector2Int(1600, 900)) resolutionDropdown.value = 2;
-            if (gameSettings.resolution == new Vector2Int(1366, 768)) resolutionDropdown.value = 3;
-            if (gameSettings.resolution == new Vector2Int(1360, 768)) resolutionDropdown.value = 4;
-            if (gameSettings.resolution == new Vector2Int(1280, 720)) resolutionDropdown.value = 5;
-            if (gameSettings.resolution == new Vector2Int(1176, 664)) resolutionDropdown.value = 6;
+            if (settingsData.resolution == new Vector2Int(2560, 1440)) resolutionDropdown.value = 0;
+            if (settingsData.resolution == new Vector2Int(1920, 1080)) resolutionDropdown.value = 1;
+            if (settingsData.resolution == new Vector2Int(1600, 900)) resolutionDropdown.value = 2;
+            if (settingsData.resolution == new Vector2Int(1366, 768)) resolutionDropdown.value = 3;
+            if (settingsData.resolution == new Vector2Int(1360, 768)) resolutionDropdown.value = 4;
+            if (settingsData.resolution == new Vector2Int(1280, 720)) resolutionDropdown.value = 5;
+            if (settingsData.resolution == new Vector2Int(1176, 664)) resolutionDropdown.value = 6;
 
             // Refresh rate dropdown
-            switch (gameSettings.refreshRate)
+            switch (settingsData.refreshRate)
             {
                 case 144:
                     refreshRateDropdown.value = 0;
@@ -142,7 +142,7 @@ namespace Loppy.UI
             }
 
             // Full screen dropdown
-            switch (gameSettings.fullScreenMode)
+            switch (settingsData.fullScreenMode)
             {
                 case FullScreenMode.ExclusiveFullScreen:
                     fullScreenDropdown.value = 0;
@@ -158,10 +158,10 @@ namespace Loppy.UI
             }
 
             // Brightness slider
-            brightnessSlider.value = gameSettings.brightness / 200f;
+            brightnessSlider.value = settingsData.brightness / 200f;
 
             // Brightness input field
-            brightnessInputField.text = Mathf.Round(gameSettings.brightness).ToString();
+            brightnessInputField.text = Mathf.Round(settingsData.brightness).ToString();
         }
 
         public void onGraphicsTabButtonPressed()
@@ -193,25 +193,25 @@ namespace Loppy.UI
             switch (resolutionDropdown.value)
             {
                 case 0:
-                    gameSettings.resolution = new(2560, 1440);
+                    settingsData.resolution = new(2560, 1440);
                     break;
                 case 1:
-                    gameSettings.resolution = new(1920, 1080);
+                    settingsData.resolution = new(1920, 1080);
                     break;
                 case 2:
-                    gameSettings.resolution = new(1600, 900);
+                    settingsData.resolution = new(1600, 900);
                     break;
                 case 3:
-                    gameSettings.resolution = new(1366, 768);
+                    settingsData.resolution = new(1366, 768);
                     break;
                 case 4:
-                    gameSettings.resolution = new(1360, 768);
+                    settingsData.resolution = new(1360, 768);
                     break;
                 case 5:
-                    gameSettings.resolution = new(1280, 720);
+                    settingsData.resolution = new(1280, 720);
                     break;
                 case 6:
-                    gameSettings.resolution = new(1176, 664);
+                    settingsData.resolution = new(1176, 664);
                     break;
                 default:
                     break;
@@ -221,19 +221,19 @@ namespace Loppy.UI
             switch (refreshRateDropdown.value)
             {
                 case 0:
-                    gameSettings.refreshRate = 144;
+                    settingsData.refreshRate = 144;
                     break;
                 case 1:
-                    gameSettings.refreshRate = 120;
+                    settingsData.refreshRate = 120;
                     break;
                 case 2:
-                    gameSettings.refreshRate = 100;
+                    settingsData.refreshRate = 100;
                     break;
                 case 3:
-                    gameSettings.refreshRate = 60;
+                    settingsData.refreshRate = 60;
                     break;
                 case 4:
-                    gameSettings.refreshRate = 50;
+                    settingsData.refreshRate = 50;
                     break;
                 default:
                     break;
@@ -243,28 +243,28 @@ namespace Loppy.UI
             switch (fullScreenDropdown.value)
             {
                 case 0:
-                    gameSettings.fullScreenMode = FullScreenMode.ExclusiveFullScreen;
+                    settingsData.fullScreenMode = FullScreenMode.ExclusiveFullScreen;
                     break;
                 case 1:
-                    gameSettings.fullScreenMode = FullScreenMode.FullScreenWindow;
+                    settingsData.fullScreenMode = FullScreenMode.FullScreenWindow;
                     break;
                 case 2:
-                    gameSettings.fullScreenMode = FullScreenMode.Windowed;
+                    settingsData.fullScreenMode = FullScreenMode.Windowed;
                     break;
                 default:
                     break;
             }
 
             // Brightness
-            gameSettings.brightness = brightnessSlider.value * 200;
+            settingsData.brightness = brightnessSlider.value * 200;
 
             // Apply changes
-            GameManager.instance.applyGraphicsSettings();
+            SettingsManager.instance.applyGraphicsSettings();
         }
 
         public void onApplyDefaultsGraphicsButtonPressed()
         {
-            GameManager.instance.applyGraphicsDefaults();
+            SettingsManager.instance.applyGraphicsDefaults();
             setGraphicsTabDisplayValues();
         }
 
@@ -285,7 +285,7 @@ namespace Loppy.UI
 
         }
 
-        public void onApplyDefaultsAudioButtonPressed() { GameManager.instance.applyAudioDefaults(); }
+        public void onApplyDefaultsAudioButtonPressed() { SettingsManager.instance.applyAudioDefaults(); }
 
         #endregion
 
@@ -304,7 +304,7 @@ namespace Loppy.UI
 
         }
 
-        public void onApplyDefaultsControlsButtonPressed() { GameManager.instance.applyControlsDefaults(); }
+        public void onApplyDefaultsControlsButtonPressed() { SettingsManager.instance.applyControlsDefaults(); }
 
         public void onBackButtonPressed()
         {

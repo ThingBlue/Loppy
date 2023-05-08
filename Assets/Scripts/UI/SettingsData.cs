@@ -1,11 +1,12 @@
+using Loppy.GameCore;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Loppy.GameCore
+namespace Loppy.UI
 {
     [CreateAssetMenu]
-    public class GameSettings : ScriptableObject
+    public class SettingsData : ScriptableObject
     {
         [Header("GRAPHICS")]
         public Vector2Int resolution = new(1920, 1080);

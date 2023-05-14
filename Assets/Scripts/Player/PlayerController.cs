@@ -3,10 +3,7 @@
 using Loppy.GameCore;
 using System;
 using System.Collections;
-using System.Linq;
 using UnityEngine;
-using UnityEngine.UIElements;
-using static UnityEngine.GraphicsBuffer;
 
 namespace Loppy.Player
 {
@@ -162,12 +159,12 @@ namespace Loppy.Player
 
         public bool onGround = false;
         private bool leavingGround = false;
-        private Vector2 groundNormal = Vector2.zero;
+        public Vector2 groundNormal = Vector2.zero;
         private Vector2 ceilingNormal = Vector2.zero;
 
         public bool onWall = false;
         private int wallDirection = 0;
-        private Vector2 wallNormal = Vector2.zero;
+        public Vector2 wallNormal = Vector2.zero;
 
         public bool onLedge = false;
         private bool climbingLedge = false;
@@ -175,6 +172,10 @@ namespace Loppy.Player
         private float ledgeClimbTimer = 0;
 
         private bool detectTriggers = false;
+
+        private GameObject currentPlatform = null;
+        private bool collidingWithPlatform = false;
+        private bool fallingThroughPlatform = false;
 
         #endregion
 
@@ -481,10 +482,13 @@ namespace Loppy.Player
             float groundAngle = Vector2.Angle(groundNormal, Vector2.up);
 
             // Enter ground
-            if (!onGround && groundHitCount > 0 && groundAngle <= playerPhysicsData.maxWalkAngle)
+            if (!onGround && groundHitCount > 0 &&               // Ground detected
+                groundAngle <= playerPhysicsData.maxWalkAngle && // Walkable angle
+                !fallingThroughPlatform)                         // Player is not trying to fall through platform
             {
                 onGround = true;
                 leavingGround = false;
+                fallingThroughPlatform = false;
                 resetJump();
                 resetDash();
                 resetGrapple();
@@ -511,10 +515,11 @@ namespace Loppy.Player
                 }
             }
             // Leave ground
-            else if (onGround && (groundHitCount == 0 || groundAngle > playerPhysicsData.maxWalkAngle))
+            else if (onGround && (groundHitCount == 0 || groundAngle > playerPhysicsData.maxWalkAngle || fallingThroughPlatform))
             {
-                // Check if player used a movement ability to leave ground
-                if (leavingGround)
+                // Check if player is leaving ground intentionally
+                // Using a movement ability or falling through platform
+                if (leavingGround || fallingThroughPlatform)
                 {
                     // Leave ground
                     onGround = false;
@@ -567,24 +572,27 @@ namespace Loppy.Player
             // On ground
             else if (onGround && groundHitCount > 0 && groundAngle <= playerPhysicsData.maxWalkAngle)
             {
-                // Handle slopes
-                if (groundNormal != Vector2.zero) // Make sure ground normal exists
+                if (!fallingThroughPlatform)
                 {
-                    // Change y velocity to match ground slope
-                    float groundSlope = -groundNormal.x / groundNormal.y;
-                    velocity.y = velocity.x * groundSlope;
-
-                    /*
-                    if (!Mathf.Approximately(Math.Abs(groundNormal.y), 1f))
+                    // Handle slopes
+                    if (groundNormal != Vector2.zero) // Make sure ground normal exists
                     {
                         // Change y velocity to match ground slope
                         float groundSlope = -groundNormal.x / groundNormal.y;
                         velocity.y = velocity.x * groundSlope;
 
-                        // Give the player a constant velocity so that they stick to sloped ground
-                        //if (velocity.x != 0) velocity.y += playerPhysicsData.groundingForce;
+                        /*
+                        if (!Mathf.Approximately(Math.Abs(groundNormal.y), 1f))
+                        {
+                            // Change y velocity to match ground slope
+                            float groundSlope = -groundNormal.x / groundNormal.y;
+                            velocity.y = velocity.x * groundSlope;
+
+                            // Give the player a constant velocity so that they stick to sloped ground
+                            //if (velocity.x != 0) velocity.y += playerPhysicsData.groundingForce;
+                        }
+                        */
                     }
-                    */
                 }
             }
 
@@ -597,6 +605,13 @@ namespace Loppy.Player
 
                 // Set ceiling collision flag to true
                 ceilingCollision = true;
+            }
+
+            // Handle platforms
+            if (playerInput.y < 0 && currentPlatform != null && !fallingThroughPlatform)
+            {
+                StartCoroutine(disableCollision());
+                fallingThroughPlatform = true;
             }
 
             #endregion
@@ -783,6 +798,25 @@ namespace Loppy.Player
             Physics2D.queriesHitTriggers = detectTriggers;
 
             return !hit;
+        }
+
+        private IEnumerator disableCollision()
+        {
+            // Ignore collision until player can fall through platform
+            Physics2D.IgnoreCollision(activeCollider, currentPlatform.GetComponent<BoxCollider2D>());
+            yield return new WaitForSeconds(playerPhysicsData.platformCollisionIgnoreTime);
+
+            // Stop ignoring collision
+            Physics2D.IgnoreCollision(activeCollider, currentPlatform.GetComponent<BoxCollider2D>(), false);
+
+            // Reset current platform
+            if (!collidingWithPlatform)
+            {
+                currentPlatform = null;
+            }
+
+            // Reset flags
+            fallingThroughPlatform = false;
         }
 
         #endregion
@@ -1421,8 +1455,6 @@ namespace Loppy.Player
 
         private void idleState()
         {
-            sprite.color = Color.blue;
-
             // Switch states
             if      (dashing)            playerState = PlayerState.DASH;
             else if (!onGround)          playerState = PlayerState.AIRBORNE;
@@ -1431,8 +1463,6 @@ namespace Loppy.Player
 
         private void runState()
         {
-            sprite.color = Color.red;
-
             // Switch states
             if      (dashing)         playerState = PlayerState.DASH;
             else if (!onGround)       playerState = PlayerState.AIRBORNE;
@@ -1441,8 +1471,6 @@ namespace Loppy.Player
 
         private void airborneState()
         {
-            sprite.color = Color.yellow;
-
             // Switch states
             if      (dashing)                     playerState = PlayerState.DASH;
             else if (gliding)                     playerState = PlayerState.GLIDE;
@@ -1453,8 +1481,6 @@ namespace Loppy.Player
 
         private void onWallState()
         {
-            sprite.color = Color.cyan;
-
             // Switch states
             if      (climbingLedge)               playerState = PlayerState.CLIMB_LEDGE;
             else if (onLedge)                     playerState = PlayerState.ON_LEDGE;
@@ -1466,8 +1492,6 @@ namespace Loppy.Player
 
         private void onLedgeState()
         {
-            sprite.color = Color.gray;
-
             // Switch states
             if      (climbingLedge)        playerState = PlayerState.CLIMB_LEDGE;
             else if (dashing)              playerState = PlayerState.DASH;
@@ -1478,16 +1502,12 @@ namespace Loppy.Player
 
         private void climbLedgeState()
         {
-            sprite.color = Color.black;
-
             // Switch states
             if (!climbingLedge) playerState = PlayerState.IDLE;
         }
 
         private void dashState()
         {
-            sprite.color = Color.green;
-
             // Switch states
             if      (!dashing && onGround) playerState = PlayerState.RUN;
             else if (!dashing && onWall)   playerState = PlayerState.ON_WALL;
@@ -1496,13 +1516,32 @@ namespace Loppy.Player
 
         private void glideState()
         {
-            sprite.color = Color.magenta;
-
             // Switch states
             if      (dashing)  playerState = PlayerState.DASH;
             else if (onGround) playerState = PlayerState.IDLE;
             else if (onWall)   playerState = PlayerState.ON_WALL;
             else if (!gliding) playerState = PlayerState.AIRBORNE;
+        }
+
+        #endregion
+
+        #region Collision callbacks
+
+        private void OnCollisionEnter2D(Collision2D collision)
+        {
+            if (collision.gameObject.tag == "Platform")
+            {
+                currentPlatform = collision.gameObject;
+                collidingWithPlatform = true;
+            }
+        }
+
+        private void OnCollisionExit(Collision collision)
+        {
+            if (collision.gameObject.tag == "Platform")
+            {
+                collidingWithPlatform = false;
+            }
         }
 
         #endregion

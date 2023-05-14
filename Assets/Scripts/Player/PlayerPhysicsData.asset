@@ -70,4 +70,5 @@ MonoBehaviour:
   groundCheckRaycastDistance: 4
   maxWalkAngle: 30
   maxClimbAngle: 30
+  platformCollisionIgnoreTime: 0.3
   externalVelocityDecay: 100

@@ -211,6 +211,9 @@ namespace Loppy.Player
         [Tooltip("Maximum angle of climbable wall")]
         public float maxClimbAngle = 30;
 
+        [Tooltip("The amount of time to ignore a platform's collider to allow the player to fall through the platform")]
+        public float platformCollisionIgnoreTime = 0.25f;
+
         #endregion
 
         #region External

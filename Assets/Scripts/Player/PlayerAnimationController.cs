@@ -29,7 +29,7 @@ namespace Loppy.Player
         public float back2LocalRotationRight;
     }
 
-    public class PlayerAnimation : MonoBehaviour
+    public class PlayerAnimationController : MonoBehaviour
     {
         #region Inspector members
 
@@ -49,11 +49,9 @@ namespace Loppy.Player
 
         #endregion
 
-        #region Variables
-
         public bool faceRight = false;
-
-        #endregion
+        private float targetRotation;
+        private float rotationVelocity = 0;
 
         private void Update()
         {
@@ -67,6 +65,11 @@ namespace Loppy.Player
             overcoatSpriteRenderer.flipX = faceRight;
 
             // Handle hair
+            handleHair();
+        }
+
+        private void handleHair()
+        {
             for (int i = 0; i < playerAnimationData.playerHairData.Count; i++)
             {
                 if (playerController.playerState == playerAnimationData.playerHairData[i].playerState)

@@ -7,6 +7,9 @@ namespace Loppy.Player
     [CreateAssetMenu]
     public class PlayerAnimationData : ScriptableObject
     {
+        [Header("ROTATION")]
+        public float rotationSmoothSpeed = 0.1f;
+
         [Header("HAIR")]
         public List<PlayerHairData> playerHairData;
 

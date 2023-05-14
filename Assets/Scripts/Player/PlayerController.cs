@@ -3,6 +3,7 @@
 using Loppy.GameCore;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Loppy.Player
@@ -173,9 +174,9 @@ namespace Loppy.Player
 
         private bool detectTriggers = false;
 
-        private GameObject currentPlatform = null;
-        private bool collidingWithPlatform = false;
+        private Collider2D currentPlatformCollider = null;
         private bool fallingThroughPlatform = false;
+        private Dictionary<Collider2D, Coroutine> platformCoroutines;
 
         #endregion
 
@@ -229,6 +230,7 @@ namespace Loppy.Player
             Physics2D.queriesStartInColliders = false;
             activeCollider = standingCollider;
             playerState = PlayerState.IDLE;
+            platformCoroutines = new Dictionary<Collider2D, Coroutine>();
 
             // Initialize grapple line renderer
             grappleArrowLineRenderer.positionCount = 2;
@@ -597,7 +599,7 @@ namespace Loppy.Player
             }
 
             // Enter ceiling
-            if (ceilingHitCount > 0 && Math.Abs(ceilingNormal.y) > Math.Abs(ceilingNormal.x))
+            if (ceilingHitCount > 0 && Math.Abs(ceilingNormal.y) > Math.Abs(ceilingNormal.x) && ceilingHits[0].collider.gameObject.tag != "Platform")
             {
                 // Prevent sticking to ceiling if we did an air jump after receiving external velocity w/ PlayerForce.Decay
                 externalVelocity.y = Mathf.Min(0f, externalVelocity.y);
@@ -608,10 +610,23 @@ namespace Loppy.Player
             }
 
             // Handle platforms
-            if (playerInput.y < 0 && currentPlatform != null && !fallingThroughPlatform)
+            if (groundHitCount > 0 && groundHits[0].collider.gameObject.tag == "Platform")
             {
-                StartCoroutine(disableCollision());
-                fallingThroughPlatform = true;
+                currentPlatformCollider = groundHits[0].collider;
+
+                // Handle platforms
+                if (playerInput.y < 0 && (!platformCoroutines.ContainsKey(currentPlatformCollider) || platformCoroutines[currentPlatformCollider] == null))
+                {
+                    // Begin falling through platform and add coroutine to dictionary
+                    platformCoroutines[currentPlatformCollider] = StartCoroutine(disableCollision(currentPlatformCollider));
+
+                    // Reset flags
+                    fallingThroughPlatform = true;
+                }
+            }
+            else
+            {
+                currentPlatformCollider = null;
             }
 
             #endregion
@@ -717,6 +732,20 @@ namespace Loppy.Player
             return hit.normal; // Defaults to Vector2.zero if nothing was hit
         }
 
+        private IEnumerator disableCollision(Collider2D platformCollider)
+        {
+            // Ignore collision until player can fall through platform
+            Physics2D.IgnoreCollision(activeCollider, platformCollider);
+            yield return new WaitForSeconds(playerPhysicsData.platformCollisionIgnoreTime);
+
+            // Stop ignoring collision
+            Physics2D.IgnoreCollision(activeCollider, platformCollider, false);
+
+            // Reset flags
+            fallingThroughPlatform = false;
+            platformCoroutines[platformCollider] = null;
+        }
+
         private bool getLedgeCorner(out Vector2 cornerPos)
         {
             // Reset corner position
@@ -798,25 +827,6 @@ namespace Loppy.Player
             Physics2D.queriesHitTriggers = detectTriggers;
 
             return !hit;
-        }
-
-        private IEnumerator disableCollision()
-        {
-            // Ignore collision until player can fall through platform
-            Physics2D.IgnoreCollision(activeCollider, currentPlatform.GetComponent<BoxCollider2D>());
-            yield return new WaitForSeconds(playerPhysicsData.platformCollisionIgnoreTime);
-
-            // Stop ignoring collision
-            Physics2D.IgnoreCollision(activeCollider, currentPlatform.GetComponent<BoxCollider2D>(), false);
-
-            // Reset current platform
-            if (!collidingWithPlatform)
-            {
-                currentPlatform = null;
-            }
-
-            // Reset flags
-            fallingThroughPlatform = false;
         }
 
         #endregion
@@ -1525,25 +1535,5 @@ namespace Loppy.Player
 
         #endregion
 
-        #region Collision callbacks
-
-        private void OnCollisionEnter2D(Collision2D collision)
-        {
-            if (collision.gameObject.tag == "Platform")
-            {
-                currentPlatform = collision.gameObject;
-                collidingWithPlatform = true;
-            }
-        }
-
-        private void OnCollisionExit(Collision collision)
-        {
-            if (collision.gameObject.tag == "Platform")
-            {
-                collidingWithPlatform = false;
-            }
-        }
-
-        #endregion
     }
 }

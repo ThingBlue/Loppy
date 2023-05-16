@@ -15,19 +15,19 @@ MonoBehaviour:
   testLevel:
     type: entrance
     children:
-    - type: corridor1
+    - type: corridorHorizontal
       children:
       - type: junction1
         children:
-        - type: corridor1
+        - type: corridorHorizontal
           children:
-          - type: deadEnd1
+          - type: deadEndHorizontal
             children: []
-        - type: corridor2
+        - type: corridorVertical
           children:
           - type: junction2
             children:
             - type: exit
               children: []
-            - type: deadEnd2
+            - type: deadEndVertical
               children: []

@@ -123,6 +123,74 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &501276273
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 501276276}
+  - component: {fileID: 501276275}
+  - component: {fileID: 501276274}
+  m_Layer: 0
+  m_Name: EventSystem
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &501276274
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 501276273}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f231c4fb786f3946a6b90b886c48677, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_SendPointerHoverToParent: 1
+  m_HorizontalAxis: Horizontal
+  m_VerticalAxis: Vertical
+  m_SubmitButton: Submit
+  m_CancelButton: Cancel
+  m_InputActionsPerSecond: 10
+  m_RepeatDelay: 0.5
+  m_ForceModuleActive: 0
+--- !u!114 &501276275
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 501276273}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 76c392e42b5098c458856cdf6ecaaaa1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_FirstSelected: {fileID: 0}
+  m_sendNavigationEvents: 1
+  m_DragThreshold: 10
+--- !u!4 &501276276
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 501276273}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1432443716
 GameObject:
   m_ObjectHideFlags: 0
@@ -134,6 +202,7 @@ GameObject:
   - component: {fileID: 1432443719}
   - component: {fileID: 1432443718}
   - component: {fileID: 1432443717}
+  - component: {fileID: 1432443720}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -207,6 +276,39 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1432443720
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1432443716}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_RenderShadows: 1
+  m_RequiresDepthTextureOption: 2
+  m_RequiresOpaqueTextureOption: 2
+  m_CameraType: 0
+  m_Cameras: []
+  m_RendererIndex: -1
+  m_VolumeLayerMask:
+    serializedVersion: 2
+    m_Bits: 1
+  m_VolumeTrigger: {fileID: 0}
+  m_VolumeFrameworkUpdateModeOption: 2
+  m_RenderPostProcessing: 0
+  m_Antialiasing: 0
+  m_AntialiasingQuality: 2
+  m_StopNaN: 0
+  m_Dithering: 0
+  m_ClearDepth: 1
+  m_AllowXRRendering: 1
+  m_RequiresDepthTexture: 0
+  m_RequiresColorTexture: 0
+  m_Version: 2
 --- !u!1 &1644190202
 GameObject:
   m_ObjectHideFlags: 0
@@ -236,28 +338,95 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 892d90d19a2a22a499c731d33b177258, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  roomData:
-  - region: 
-    type: 
-    name: 
-    roomPrefab: {fileID: 0}
-    size: {x: 0, y: 0}
-    entrance: {x: 0, y: 0}
-    exits: []
   roomRegions:
-  - region: Intro
+  - region: test
     types:
-    - type: asdf
+    - type: entrance
       rooms:
-      - region: 
-        type: 
-        name: 
-        roomPrefab: {fileID: 0}
-        size: {x: 0, y: 0}
-        entrance: {x: 0, y: 0}
+      - name: testEntrance
+        roomPrefab: {fileID: 5920931384760467256, guid: 7ccdb5e7ab5a8db439c4d44649886250, type: 3}
+        size: {x: 1, y: 1}
+        entrance: {x: -0.5, y: 0}
+        exitCount: 1
+        exits:
+        - {x: 0.5, y: 0}
+    - type: exit
+      rooms:
+      - name: testExit
+        roomPrefab: {fileID: 5211390174303199085, guid: fc9a9f10b765d2843bb57a6520602147, type: 3}
+        size: {x: 1, y: 1}
+        entrance: {x: -0.5, y: 0}
+        exitCount: 0
         exits: []
-  - region: Intro
-    types: []
+    - type: corridorHorizontal
+      rooms:
+      - name: testCorridorHorizontal1
+        roomPrefab: {fileID: 1545915187575959443, guid: a653a51c61246d04e8a822266b490ed7, type: 3}
+        size: {x: 1, y: 1}
+        entrance: {x: -0.5, y: 0}
+        exitCount: 1
+        exits:
+        - {x: 0.5, y: 0}
+    - type: corridorVertical
+      rooms:
+      - name: testCorridorVertical1
+        roomPrefab: {fileID: 5139249586478869005, guid: ba0d9fd9ad10c0f4da3fc4c1eb9743b9, type: 3}
+        size: {x: 1, y: 1}
+        entrance: {x: 0, y: 0.5}
+        exitCount: 1
+        exits:
+        - {x: 0, y: -0.5}
+      - name: testCorridorVertical2
+        roomPrefab: {fileID: 5139249586478869005, guid: 34691224b9237d74db597e5afb5e1186, type: 3}
+        size: {x: 1, y: 2}
+        entrance: {x: 0, y: 1}
+        exitCount: 1
+        exits:
+        - {x: 0, y: -1}
+    - type: junction1
+      rooms:
+      - name: testJunction1
+        roomPrefab: {fileID: 9170282334753474944, guid: 26eef6e446fa9f54b9dabe77bedf2c4f, type: 3}
+        size: {x: 1, y: 1}
+        entrance: {x: -0.5, y: 0}
+        exitCount: 2
+        exits:
+        - {x: 0.5, y: 0}
+        - {x: 0, y: -0.5}
+    - type: junction2
+      rooms:
+      - name: testJunction2
+        roomPrefab: {fileID: 6498903313681426180, guid: ff53b1910afff8c459d87b8d9c34bcda, type: 3}
+        size: {x: 1, y: 1}
+        entrance: {x: 0, y: 0.5}
+        exitCount: 2
+        exits:
+        - {x: 0.5, y: 0}
+        - {x: 0, y: -0.5}
+    - type: deadEndHorizontal
+      rooms:
+      - name: testDeadEndHorizontal1
+        roomPrefab: {fileID: 4942241973497353112, guid: 1029c546051097a45b51da231f68b2f3, type: 3}
+        size: {x: 1, y: 1}
+        entrance: {x: -0.5, y: 0}
+        exitCount: 0
+        exits: []
+      - name: testDeadEndHorizontal2
+        roomPrefab: {fileID: 4942241973497353112, guid: b30601bab722bbf449ecf474dc750dfd, type: 3}
+        size: {x: 2, y: 1}
+        entrance: {x: -1, y: 0}
+        exitCount: 0
+        exits: []
+    - type: deadEndVertical
+      rooms:
+      - name: testDeadEndVertical1
+        roomPrefab: {fileID: 2852378099186052875, guid: c579fd71d707a004980799ea73f26194, type: 3}
+        size: {x: 1, y: 1}
+        entrance: {x: 0, y: 0.5}
+        exitCount: 0
+        exits: []
+  levelGenerationData: {fileID: 11400000, guid: 3bd40300f558bf94089cf0ff0ffc45a0, type: 2}
+  randomSeed: 42
 --- !u!4 &1644190204
 Transform:
   m_ObjectHideFlags: 0
@@ -271,5 +440,5 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 1
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

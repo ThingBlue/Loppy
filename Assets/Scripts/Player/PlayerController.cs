@@ -221,6 +221,8 @@ namespace Loppy.Player
 
         #endregion
 
+        #region Unity functions
+
         private void Awake()
         {
             // Initialize members
@@ -297,6 +299,8 @@ namespace Loppy.Player
             // Reset input
             playerInputDown = Vector2.zero;
         }
+
+        #endregion
 
         #region Input
 
@@ -1426,6 +1430,10 @@ namespace Loppy.Player
             // Decay external velocity
             externalVelocity = Vector2.MoveTowards(externalVelocity, Vector2.zero, playerPhysicsData.externalVelocityDecay * Time.fixedDeltaTime);
         }
+
+        #region Combat
+
+        #endregion
 
         #region State machine
 

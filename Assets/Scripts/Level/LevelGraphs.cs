@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Loppy.Level
 {
     [CreateAssetMenu]
-    public class LevelGenerationData : ScriptableObject
+    public class LevelGraphs : ScriptableObject
     {
         [Header("LEVELS")]
         public RoomDataNode testLevel;

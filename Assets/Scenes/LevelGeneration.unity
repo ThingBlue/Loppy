@@ -347,85 +347,99 @@ MonoBehaviour:
         roomPrefab: {fileID: 5920931384760467256, guid: 7ccdb5e7ab5a8db439c4d44649886250, type: 3}
         size: {x: 1, y: 1}
         entrance: {x: -0.5, y: 0}
+        entranceDirection: 1
         exitCount: 1
         exits:
         - {x: 0.5, y: 0}
+        exitDirections: 02000000
     - type: exit
       rooms:
       - name: testExit
         roomPrefab: {fileID: 5211390174303199085, guid: fc9a9f10b765d2843bb57a6520602147, type: 3}
         size: {x: 1, y: 1}
         entrance: {x: -0.5, y: 0}
+        entranceDirection: 1
         exitCount: 0
         exits: []
-    - type: corridorHorizontal
+        exitDirections: 02000000
+    - type: corridor
       rooms:
       - name: testCorridorHorizontal1
         roomPrefab: {fileID: 1545915187575959443, guid: a653a51c61246d04e8a822266b490ed7, type: 3}
         size: {x: 1, y: 1}
         entrance: {x: -0.5, y: 0}
+        entranceDirection: 1
         exitCount: 1
         exits:
         - {x: 0.5, y: 0}
-    - type: corridorVertical
-      rooms:
+        exitDirections: 02000000
       - name: testCorridorVertical1
         roomPrefab: {fileID: 5139249586478869005, guid: ba0d9fd9ad10c0f4da3fc4c1eb9743b9, type: 3}
         size: {x: 1, y: 1}
         entrance: {x: 0, y: 0.5}
+        entranceDirection: 3
         exitCount: 1
         exits:
         - {x: 0, y: -0.5}
+        exitDirections: 04000000
       - name: testCorridorVertical2
         roomPrefab: {fileID: 5139249586478869005, guid: 34691224b9237d74db597e5afb5e1186, type: 3}
         size: {x: 1, y: 2}
         entrance: {x: 0, y: 1}
+        entranceDirection: 3
         exitCount: 1
         exits:
         - {x: 0, y: -1}
-    - type: junction1
+        exitDirections: 04000000
+    - type: junction
       rooms:
       - name: testJunction1
         roomPrefab: {fileID: 9170282334753474944, guid: 26eef6e446fa9f54b9dabe77bedf2c4f, type: 3}
         size: {x: 1, y: 1}
         entrance: {x: -0.5, y: 0}
+        entranceDirection: 1
         exitCount: 2
         exits:
         - {x: 0.5, y: 0}
         - {x: 0, y: -0.5}
-    - type: junction2
-      rooms:
+        exitDirections: 0200000004000000
       - name: testJunction2
         roomPrefab: {fileID: 6498903313681426180, guid: ff53b1910afff8c459d87b8d9c34bcda, type: 3}
         size: {x: 1, y: 1}
         entrance: {x: 0, y: 0.5}
+        entranceDirection: 3
         exitCount: 2
         exits:
         - {x: 0.5, y: 0}
         - {x: 0, y: -0.5}
-    - type: deadEndHorizontal
+        exitDirections: 0200000004000000
+    - type: deadEnd
       rooms:
       - name: testDeadEndHorizontal1
         roomPrefab: {fileID: 4942241973497353112, guid: 1029c546051097a45b51da231f68b2f3, type: 3}
         size: {x: 1, y: 1}
         entrance: {x: -0.5, y: 0}
+        entranceDirection: 1
         exitCount: 0
         exits: []
+        exitDirections: 
       - name: testDeadEndHorizontal2
         roomPrefab: {fileID: 4942241973497353112, guid: b30601bab722bbf449ecf474dc750dfd, type: 3}
         size: {x: 2, y: 1}
         entrance: {x: -1, y: 0}
+        entranceDirection: 1
         exitCount: 0
         exits: []
-    - type: deadEndVertical
-      rooms:
+        exitDirections: 
       - name: testDeadEndVertical1
         roomPrefab: {fileID: 2852378099186052875, guid: c579fd71d707a004980799ea73f26194, type: 3}
         size: {x: 1, y: 1}
         entrance: {x: 0, y: 0.5}
+        entranceDirection: 3
         exitCount: 0
         exits: []
-  levelGenerationData: {fileID: 11400000, guid: 3bd40300f558bf94089cf0ff0ffc45a0, type: 2}
+        exitDirections: 
+  levelGraphs: {fileID: 11400000, guid: 3bd40300f558bf94089cf0ff0ffc45a0, type: 2}
   randomSeed: 42
 --- !u!4 &1644190204
 Transform:

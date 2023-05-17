@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 
 namespace Loppy.Level
@@ -12,6 +13,15 @@ namespace Loppy.Level
         public List<RoomDataNode> children;
     }
 
+    public enum EntranceDirection
+    {
+        NONE = 0,
+        LEFT,
+        RIGHT,
+        TOP,
+        BOTTOM
+    }
+
     [Serializable]
     public class RoomData
     {
@@ -19,8 +29,10 @@ namespace Loppy.Level
         public GameObject roomPrefab;
         public Vector2 size;
         public Vector2 entrance;
+        public EntranceDirection entranceDirection;
         public int exitCount;
         public List<Vector2> exits;
+        public List<EntranceDirection> exitDirections;
     }
 
     [Serializable]
@@ -42,15 +54,23 @@ namespace Loppy.Level
         #region Inspector members
 
         public List<RoomRegion> roomRegions;
-        public LevelGenerationData levelGenerationData;
+        public LevelGraphs levelGraphs;
 
         #endregion
 
         public int randomSeed;
 
+        private List<RoomData> generatedRooms;
+        private List<GameObject> generatedRoomGameObjects;
+
         private void Start()
         {
-            if (!generateLevel(levelGenerationData.testLevel, "test"))
+            // Initialize generated room lists
+            generatedRooms = new List<RoomData>();
+            generatedRoomGameObjects = new List<GameObject>();
+
+            // Generate test level
+            if (!generateLevel(levelGraphs.testLevel, "test"))
             {
                 Debug.Log("Failed to generate level");
             }
@@ -77,16 +97,19 @@ namespace Loppy.Level
             // Try to generate level
             while (failureCount < 10)
             {
-                if (generateRoom(levelData, Vector2.zero, regionIndex)) return true;
+                if (generateRoom(levelData, Vector2.zero, EntranceDirection.LEFT, regionIndex)) return true;
 
+                deleteGeneratedRooms();
                 failureCount++;
             }
             return false;
         }
 
         // Recursively generates rooms using the level data node given
-        private bool generateRoom(RoomDataNode node, Vector2 entrancePosition, int regionIndex)
+        private bool generateRoom(RoomDataNode node, Vector2 entrancePosition, EntranceDirection entranceDirection, int regionIndex)
         {
+            if (entranceDirection == EntranceDirection.NONE) return false;
+
             UnityEngine.Random.InitState(randomSeed);
 
             // Find type index
@@ -116,11 +139,14 @@ namespace Loppy.Level
 
                 // Check if room fits
                 RoomData roomData = roomRegions[regionIndex].types[typeIndex].rooms[randomIndex];
+                // Check if entrance direction matches exit direction of last room
+                if (roomData.entranceDirection != entranceDirection) continue;
 
                 // Room fits, generate it
-                // Find position to generate room
                 Vector2 roomCenter = entrancePosition - roomData.entrance;
-                GameObject.Instantiate(roomRegions[regionIndex].types[typeIndex].rooms[randomIndex].roomPrefab, roomCenter, Quaternion.identity);
+                GameObject newRoomGameObject = GameObject.Instantiate(roomRegions[regionIndex].types[typeIndex].rooms[randomIndex].roomPrefab, roomCenter, Quaternion.identity);
+                generatedRooms.Add(roomData);
+                generatedRoomGameObjects.Add(newRoomGameObject);
 
                 // Recurse
                 for (int i = 0; i < node.children.Count; i++)
@@ -128,14 +154,35 @@ namespace Loppy.Level
                     // Calculate position of exit for current room
                     Vector2 exitPosition = roomCenter + roomData.exits[i];
 
+                    // Calculate entrance direction of next room
+                    EntranceDirection nextEntranceDirection = EntranceDirection.NONE;
+                    if (roomData.exitDirections[i] == EntranceDirection.LEFT) nextEntranceDirection = EntranceDirection.RIGHT;
+                    if (roomData.exitDirections[i] == EntranceDirection.RIGHT) nextEntranceDirection = EntranceDirection.LEFT;
+                    if (roomData.exitDirections[i] == EntranceDirection.TOP) nextEntranceDirection = EntranceDirection.BOTTOM;
+                    if (roomData.exitDirections[i] == EntranceDirection.BOTTOM) nextEntranceDirection = EntranceDirection.TOP;
+
                     // Return false if any children fail
-                    if (!generateRoom(node.children[i], exitPosition, regionIndex)) return false;
+                    if (!generateRoom(node.children[i], exitPosition, nextEntranceDirection, regionIndex))
+                    {
+                        //Debug.Log(node.type + " failed");
+                        return false;
+                    }
                 }
 
                 // All recursions successful, return true
                 return true;
             }
             return false; // Should never execute
+        }
+
+        private void deleteGeneratedRooms()
+        {
+            // Delete all generated room game objects
+            foreach (GameObject roomGameObject in generatedRoomGameObjects) Destroy(roomGameObject);
+
+            // Clear lists
+            generatedRooms.Clear();
+            generatedRoomGameObjects.Clear();
         }
     }
 }

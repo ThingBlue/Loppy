@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace Loppy.Level
 {
@@ -60,13 +61,13 @@ namespace Loppy.Level
 
         public int randomSeed;
 
-        private List<RoomData> generatedRooms;
+        private List<KeyValuePair<RoomData, Vector2>> generatedRooms;
         private List<GameObject> generatedRoomGameObjects;
 
         private void Start()
         {
             // Initialize generated room lists
-            generatedRooms = new List<RoomData>();
+            generatedRooms = new List<KeyValuePair<RoomData, Vector2>>();
             generatedRoomGameObjects = new List<GameObject>();
 
             // Generate test level
@@ -141,11 +142,23 @@ namespace Loppy.Level
                 RoomData roomData = roomRegions[regionIndex].types[typeIndex].rooms[randomIndex];
                 // Check if entrance direction matches exit direction of last room
                 if (roomData.entranceDirection != entranceDirection) continue;
+                // Check if room overlaps any previous rooms
+                Vector2 roomCenter = entrancePosition - roomData.entrance;
+                bool overlap = false;
+                foreach (KeyValuePair<RoomData, Vector2> existingRoom in generatedRooms)
+                {
+                    if (Mathf.Abs(roomCenter.x - existingRoom.Value.x) * 2 < (roomData.size.x + existingRoom.Key.size.x) &&
+                        Mathf.Abs(roomCenter.y - existingRoom.Value.y) * 2 < (roomData.size.y + existingRoom.Key.size.y))
+                    {
+                        overlap = true;
+                        break;
+                    }
+                }
+                if (overlap) continue;
 
                 // Room fits, generate it
-                Vector2 roomCenter = entrancePosition - roomData.entrance;
                 GameObject newRoomGameObject = GameObject.Instantiate(roomRegions[regionIndex].types[typeIndex].rooms[randomIndex].roomPrefab, roomCenter, Quaternion.identity);
-                generatedRooms.Add(roomData);
+                generatedRooms.Add(new KeyValuePair<RoomData, Vector2>(roomData, roomCenter));
                 generatedRoomGameObjects.Add(newRoomGameObject);
 
                 // Recurse
@@ -162,17 +175,15 @@ namespace Loppy.Level
                     if (roomData.exitDirections[i] == EntranceDirection.BOTTOM) nextEntranceDirection = EntranceDirection.TOP;
 
                     // Return false if any children fail
-                    if (!generateRoom(node.children[i], exitPosition, nextEntranceDirection, regionIndex))
-                    {
-                        //Debug.Log(node.type + " failed");
-                        return false;
-                    }
+                    if (!generateRoom(node.children[i], exitPosition, nextEntranceDirection, regionIndex)) return false;
                 }
 
                 // All recursions successful, return true
                 return true;
             }
-            return false; // Should never execute
+
+            // No suitable rooms found
+            return false;
         }
 
         private void deleteGeneratedRooms()

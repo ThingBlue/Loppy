@@ -144,6 +144,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5920931384760467263}
+  - component: {fileID: 9145175004696028462}
   m_Layer: 0
   m_Name: testEntrance
   m_TagString: Untagged
@@ -167,6 +168,29 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &9145175004696028462
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5920931384760467256}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f7cde38014e6a0439440d2741afd3a5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  region: test
+  type: entrance
+  name: 
+  roomPrefab: {fileID: 0}
+  size: {x: 1, y: 1}
+  entrance: {x: -0.5, y: 0}
+  entranceDirection: 1
+  exitCount: 0
+  exits:
+  - {x: 0.5, y: 0}
+  exitDirections: 02000000
 --- !u!1 &5920931384972105783
 GameObject:
   m_ObjectHideFlags: 0

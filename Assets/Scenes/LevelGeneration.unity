@@ -341,16 +341,24 @@ MonoBehaviour:
   levelGenerationData: {fileID: 11400000, guid: 3bd40300f558bf94089cf0ff0ffc45a0, type: 2}
   roomPrefabs:
   - {fileID: 1545915187575959443, guid: a653a51c61246d04e8a822266b490ed7, type: 3}
+  - {fileID: 1545915187575959443, guid: 596f264f50c465143822ab735d1ec428, type: 3}
+  - {fileID: 1545915187575959443, guid: 711cdc742f8b92547bec26d57bcd1a11, type: 3}
   - {fileID: 5139249586478869005, guid: ba0d9fd9ad10c0f4da3fc4c1eb9743b9, type: 3}
   - {fileID: 5139249586478869005, guid: 34691224b9237d74db597e5afb5e1186, type: 3}
   - {fileID: 4942241973497353112, guid: 1029c546051097a45b51da231f68b2f3, type: 3}
   - {fileID: 4942241973497353112, guid: b30601bab722bbf449ecf474dc750dfd, type: 3}
   - {fileID: 2852378099186052875, guid: c579fd71d707a004980799ea73f26194, type: 3}
+  - {fileID: 2852378099186052875, guid: 253cb20ac4dc78d4582f28726db70b3e, type: 3}
   - {fileID: 5920931384760467256, guid: 7ccdb5e7ab5a8db439c4d44649886250, type: 3}
   - {fileID: 5211390174303199085, guid: fc9a9f10b765d2843bb57a6520602147, type: 3}
   - {fileID: 9170282334753474944, guid: 26eef6e446fa9f54b9dabe77bedf2c4f, type: 3}
   - {fileID: 6498903313681426180, guid: ff53b1910afff8c459d87b8d9c34bcda, type: 3}
-  randomSeed: 42
+  - {fileID: 1545915187575959443, guid: 7e49dd4771d993f4a9298cc525a7234e, type: 3}
+  - {fileID: 1545915187575959443, guid: fc841dcec68006f41b8f0b4122c35a52, type: 3}
+  - {fileID: 9170282334753474944, guid: 3b0e866733c59b04ca2e1a39450ced7a, type: 3}
+  - {fileID: 6498903313681426180, guid: 842a52d0a3c742e4ebe9e048729e8c54, type: 3}
+  - {fileID: 5139249586478869005, guid: 6b62dfd2bc0d38f47a5527ed99ed7b37, type: 3}
+  randomSeed: 73468
 --- !u!4 &1644190204
 Transform:
   m_ObjectHideFlags: 0

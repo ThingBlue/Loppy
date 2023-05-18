@@ -27,7 +27,11 @@ MonoBehaviour:
           children:
           - type: junction
             children:
-            - type: exit
-              children: []
             - type: deadEnd
               children: []
+            - type: corridor
+              children:
+              - type: corridor
+                children:
+                - type: exit
+                  children: []

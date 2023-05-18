@@ -1,3 +1,4 @@
+using GluonGui.Dialog;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -40,9 +41,20 @@ namespace Loppy.Level
             if (!initializeRooms()) Debug.Log("Could not initialize rooms!");
 
             // Generate test level
-            if (!generateLevel(levelGenerationData.testLevel, "test"))
+            StartCoroutine(generateLevel(levelGenerationData.testLevel, "test"));
+        }
+
+        private void Update()
+        {
+            if (Input.GetKeyDown(KeyCode.J))
             {
-                Debug.Log("Failed to generate level");
+                Debug.Log("J DOWN");
+
+                StopAllCoroutines();
+                deleteGeneratedRooms(levelGenerationData.testLevel);
+
+                // Generate test level
+                StartCoroutine(generateLevel(levelGenerationData.testLevel, "test"));
             }
         }
 
@@ -68,27 +80,37 @@ namespace Loppy.Level
         // Repeatedly attempts to generate the level
         // Returns true if level generation successful
         // Returns false if level generation fails 10 times
-        public bool generateLevel(RoomDataNode root, string region)
+        public IEnumerator generateLevel(RoomDataNode root, string region)
         {
             int failureCount = 0;
 
-            // Try to generate level
             while (failureCount < 10)
             {
-                //if (generateRoom(levelData, Vector2.zero, EntranceDirection.LEFT, region)) return true;
-                if (generateRoom(root, Vector2.right * failureCount * 5, EntranceDirection.LEFT, region, root)) return true;
+                // Attempt to generate level
+                bool generationResult = false;
+                yield return generateRoom(root, Vector2.right * failureCount * 5, EntranceDirection.LEFT, region, root, (result) => generationResult = result);
 
-                //deleteGeneratedRooms();
+                // Success
+                if (generationResult)
+                {
+                    Debug.Log("Level successfully generated");
+                    yield break;
+                }
+
+                // Failure
                 failureCount++;
-                //randomSeed++;
             }
-            return false;
+            Debug.Log("Failed to generate level");
         }
 
         // Recursively generates rooms using the level data node given
-        private bool generateRoom(RoomDataNode node, Vector2 entrancePosition, EntranceDirection entranceDirection, string region, RoomDataNode root)
+        private IEnumerator generateRoom(RoomDataNode node, Vector2 entrancePosition, EntranceDirection entranceDirection, string region, RoomDataNode root, Action<bool> result)
         {
-            if (entranceDirection == EntranceDirection.NONE) return false;
+            if (entranceDirection == EntranceDirection.NONE)
+            {
+                result(false);
+                yield break;
+            }
 
             //UnityEngine.Random.InitState(randomSeed);
 
@@ -121,6 +143,8 @@ namespace Loppy.Level
                 node.roomData = roomData;
                 node.roomCenter = roomCenter;
 
+                //yield return new WaitForSeconds(0.2f);
+
                 // Recurse
                 bool childrenSuccess = true;
                 for (int i = 0; i < node.children.Count; i++)
@@ -136,7 +160,9 @@ namespace Loppy.Level
                     if (roomData.exitDirections[i] == EntranceDirection.BOTTOM) nextEntranceDirection = EntranceDirection.TOP;
 
                     // Return false if any children fail
-                    if (!generateRoom(node.children[i], exitPosition, nextEntranceDirection, region, root))
+                    bool childResult = false;
+                    yield return generateRoom(node.children[i], exitPosition, nextEntranceDirection, region, root, (result) => childResult = result);
+                    if (!childResult)
                     {
                         childrenSuccess = false;
                         break;
@@ -144,7 +170,11 @@ namespace Loppy.Level
                 }
 
                 // All recursions successful, return true
-                if (childrenSuccess) return true;
+                if (childrenSuccess)
+                {
+                    result(true);
+                    yield break;
+                }
 
                 // Try again if any children fail
                 deleteGeneratedRooms(node);
@@ -152,7 +182,7 @@ namespace Loppy.Level
             }
 
             // No suitable rooms found
-            return false;
+            result(false);
         }
 
         private bool checkRoomOverlap(RoomData roomData, Vector2 roomCenter, RoomDataNode node)

@@ -358,7 +358,7 @@ MonoBehaviour:
   - {fileID: 9170282334753474944, guid: 3b0e866733c59b04ca2e1a39450ced7a, type: 3}
   - {fileID: 6498903313681426180, guid: 842a52d0a3c742e4ebe9e048729e8c54, type: 3}
   - {fileID: 5139249586478869005, guid: 6b62dfd2bc0d38f47a5527ed99ed7b37, type: 3}
-  randomSeed: 73468
+  randomSeed: 42
 --- !u!4 &1644190204
 Transform:
   m_ObjectHideFlags: 0

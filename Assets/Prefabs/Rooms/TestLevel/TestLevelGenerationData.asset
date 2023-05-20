@@ -14,24 +14,62 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   testLevel:
     type: entrance
+    roomData: {fileID: 0}
+    roomCenter: {x: 0, y: 0}
+    gameObject: {fileID: 0}
     children:
     - type: corridor
+      roomData: {fileID: 0}
+      roomCenter: {x: 0, y: 0}
+      gameObject: {fileID: 0}
       children:
-      - type: junction
+      - type: corridor
+        roomData: {fileID: 0}
+        roomCenter: {x: 0, y: 0}
+        gameObject: {fileID: 0}
         children:
-        - type: corridor
+        - type: junction
+          roomData: {fileID: 0}
+          roomCenter: {x: 0, y: 0}
+          gameObject: {fileID: 0}
           children:
-          - type: deadEnd
-            children: []
-        - type: corridor
-          children:
-          - type: junction
+          - type: corridor
+            roomData: {fileID: 0}
+            roomCenter: {x: 0, y: 0}
+            gameObject: {fileID: 0}
             children:
             - type: deadEnd
+              roomData: {fileID: 0}
+              roomCenter: {x: 0, y: 0}
+              gameObject: {fileID: 0}
               children: []
-            - type: corridor
+          - type: corridor
+            roomData: {fileID: 0}
+            roomCenter: {x: 0, y: 0}
+            gameObject: {fileID: 0}
+            children:
+            - type: junction
+              roomData: {fileID: 0}
+              roomCenter: {x: 0, y: 0}
+              gameObject: {fileID: 0}
               children:
+              - type: deadEnd
+                roomData: {fileID: 0}
+                roomCenter: {x: 0, y: 0}
+                gameObject: {fileID: 0}
+                children: []
               - type: corridor
+                roomData: {fileID: 0}
+                roomCenter: {x: 0, y: 0}
+                gameObject: {fileID: 0}
                 children:
-                - type: exit
-                  children: []
+                - type: corridor
+                  roomData: {fileID: 0}
+                  roomCenter: {x: 0, y: 0}
+                  gameObject: {fileID: 0}
+                  children:
+                  - type: exit
+                    roomData: {fileID: 0}
+                    roomCenter: {x: 0, y: 0}
+                    gameObject: {fileID: 0}
+                    children: []

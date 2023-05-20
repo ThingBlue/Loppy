@@ -245,7 +245,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 5
+  orthographic size: 8
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -269,7 +269,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1432443716}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -10}
+  m_LocalPosition: {x: 4, y: -4, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -358,6 +358,23 @@ MonoBehaviour:
   - {fileID: 9170282334753474944, guid: 3b0e866733c59b04ca2e1a39450ced7a, type: 3}
   - {fileID: 6498903313681426180, guid: 842a52d0a3c742e4ebe9e048729e8c54, type: 3}
   - {fileID: 5139249586478869005, guid: 6b62dfd2bc0d38f47a5527ed99ed7b37, type: 3}
+  - {fileID: 5920931384760467256, guid: 408537ce33b85a54b86461cabe463b47, type: 3}
+  - {fileID: 5920931384760467256, guid: d277723366ef45448806a2512efbf2f5, type: 3}
+  - {fileID: 5920931384760467256, guid: df3a4f4328d2a3043b4f971e8f698f30, type: 3}
+  - {fileID: 5920931384760467256, guid: e4c4cd6e13a1d6a4383462bf0787c1fe, type: 3}
+  - {fileID: 5211390174303199085, guid: 6eb7663f6e727524bad42d1b302aea76, type: 3}
+  - {fileID: 5211390174303199085, guid: 54c02111cb946c74794d8ea1d85a666e, type: 3}
+  - {fileID: 5211390174303199085, guid: 66c2ad361896a024299b20afc45fc9ac, type: 3}
+  - {fileID: 9170282334753474944, guid: 03c30d1989e0f6b4582eb641bb931232, type: 3}
+  - {fileID: 9170282334753474944, guid: cd8c8ff678520604897e977d1125bb58, type: 3}
+  - {fileID: 9170282334753474944, guid: 21065bfef66f89343bc0e88ff8570dce, type: 3}
+  - {fileID: 9170282334753474944, guid: 6a5d4fe902a3bb54085f56cbeff8cae5, type: 3}
+  - {fileID: 4942241973497353112, guid: 320f0ac5b7ebf474d8587e7e88fecaa2, type: 3}
+  - {fileID: 4942241973497353112, guid: 8cdba5ec2fc148445b160a78ec6078e0, type: 3}
+  - {fileID: 1545915187575959443, guid: 6b016081da566744786d673ee499b45c, type: 3}
+  - {fileID: 1545915187575959443, guid: 2f7da8b7e17bd304e8dfb25f16d84e8b, type: 3}
+  - {fileID: 1545915187575959443, guid: 572d07acd1a435d4fb204e60583eec29, type: 3}
+  - {fileID: 1545915187575959443, guid: 9e7f54032ce3cc94da6089607c565b02, type: 3}
   randomSeed: 42
 --- !u!4 &1644190204
 Transform:

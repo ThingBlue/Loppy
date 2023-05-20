@@ -5882,6 +5882,7 @@ Transform:
   - {fileID: 2063465742}
   - {fileID: 837733345}
   - {fileID: 581952914}
+  - {fileID: 1021231299}
   m_Father: {fileID: 0}
   m_RootOrder: 11
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -6238,7 +6239,7 @@ PlatformEffector2D:
     m_Bits: 4294967295
   m_RotationalOffset: 0
   m_UseOneWay: 1
-  m_UseOneWayGrouping: 0
+  m_UseOneWayGrouping: 1
   m_SurfaceArc: 180
   m_UseSideFriction: 0
   m_UseSideBounce: 0
@@ -9249,7 +9250,7 @@ PlatformEffector2D:
     m_Bits: 4294967295
   m_RotationalOffset: 0
   m_UseOneWay: 1
-  m_UseOneWayGrouping: 0
+  m_UseOneWayGrouping: 1
   m_SurfaceArc: 180
   m_UseSideFriction: 0
   m_UseSideBounce: 0
@@ -11178,7 +11179,7 @@ PlatformEffector2D:
     m_Bits: 4294967295
   m_RotationalOffset: 0
   m_UseOneWay: 1
-  m_UseOneWayGrouping: 0
+  m_UseOneWayGrouping: 1
   m_SurfaceArc: 180
   m_UseSideFriction: 0
   m_UseSideBounce: 0
@@ -11273,8 +11274,8 @@ Transform:
   m_LocalScale: {x: 4, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
-  m_RootOrder: 23
+  m_Father: {fileID: 540258592}
+  m_RootOrder: 34
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1042161088
 GameObject:
@@ -12359,6 +12360,9 @@ MonoBehaviour:
   unpauseEvent:
     m_PersistentCalls:
       m_Calls: []
+  settingsMenuOpenedEvent:
+    m_PersistentCalls:
+      m_Calls: []
   debugMenuOpened:
     m_PersistentCalls:
       m_Calls: []
@@ -13377,7 +13381,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e26566c8223274940bf02f2d1f0c4783, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  settingsData: {fileID: 11400000, guid: 6740ad1efd4ed40478aa863c182fcac0, type: 2}
+  settingsData: {fileID: 11400000, guid: 62c2878d64e2a92469b879ef15e47fe2, type: 2}
+  defaultSettingsData: {fileID: 11400000, guid: 6740ad1efd4ed40478aa863c182fcac0, type: 2}
 --- !u!1 &1254402464
 GameObject:
   m_ObjectHideFlags: 0
@@ -15195,7 +15200,7 @@ MonoBehaviour:
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
   m_DynamicPixelsPerUnit: 1
-  m_PresetInfoIsWorld: 0
+  m_PresetInfoIsWorld: 1
 --- !u!223 &1383021377
 Canvas:
   m_ObjectHideFlags: 0
@@ -22955,7 +22960,7 @@ PlatformEffector2D:
     m_Bits: 4294967295
   m_RotationalOffset: 0
   m_UseOneWay: 1
-  m_UseOneWayGrouping: 0
+  m_UseOneWayGrouping: 1
   m_SurfaceArc: 180
   m_UseSideFriction: 0
   m_UseSideBounce: 0

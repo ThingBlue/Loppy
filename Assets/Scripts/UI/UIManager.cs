@@ -80,8 +80,8 @@ namespace Loppy.UI
             audioTabPanel.SetActive(false);
             controlsTabPanel.SetActive(false);
 
-            // Set display values for graphics tab
-            setGraphicsTabDisplayValues();
+            // Invoke event
+            EventManager.instance.settingsMenuOpenedEvent.Invoke();
         }
 
         public void onExitToMenuButtonPressed()

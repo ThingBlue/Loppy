@@ -26,6 +26,12 @@ namespace Loppy.GameCore
         public UnityEvent pauseEvent;
         public UnityEvent unpauseEvent;
 
+        #endregion
+
+        #region UI Events
+
+        public UnityEvent settingsMenuOpenedEvent;
+
         public UnityEvent debugMenuOpened;
 
         #endregion

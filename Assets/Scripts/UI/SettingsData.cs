@@ -1,6 +1,8 @@
 using Loppy.GameCore;
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 
 namespace Loppy.UI
@@ -8,6 +10,10 @@ namespace Loppy.UI
     [CreateAssetMenu]
     public class SettingsData : ScriptableObject
     {
+        [Header("FILE PATH")]
+        //public string settingsFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "My Games", "Loppy", "settings.json");
+        public string settingsFilePath;
+
         [Header("GRAPHICS")]
         public Vector2Int resolution = new(1920, 1080);
         public int refreshRate = 60;

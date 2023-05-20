@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 92b889ef36010874a88bcc180a278554, type: 3}
-  m_Name: SettingsData
+  m_Name: DefaultSettingsData
   m_EditorClassIdentifier: 
   settingsFilePath: C:/Users/ThingBlue/AppData/LocalLow/DefaultCompany/Loppy\settings.json
   resolution: {x: 1920, y: 1080}

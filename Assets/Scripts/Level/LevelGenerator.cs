@@ -1,11 +1,9 @@
-using GluonGui.Dialog;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
-using static Codice.Client.Common.Connection.AskCredentialsToUser;
 
 namespace Loppy.Level
 {
@@ -40,10 +38,12 @@ namespace Loppy.Level
             // Fetch and initialize rooms
             if (!initializeRooms()) Debug.Log("Could not initialize rooms!");
 
+            // DEBUG
             // Generate test level
             StartCoroutine(generateLevel(levelGenerationData.testLevel, "test"));
         }
 
+        // DEBUG
         private void Update()
         {
             if (Input.GetKeyDown(KeyCode.J))
@@ -106,16 +106,18 @@ namespace Loppy.Level
         // Recursively generates rooms using the level data node given
         private IEnumerator generateRoom(RoomDataNode node, Vector2 entrancePosition, EntranceDirection entranceDirection, string region, RoomDataNode root, Action<bool> result)
         {
+            // Check for room errors
             if (entranceDirection == EntranceDirection.NONE)
             {
                 result(false);
                 yield break;
             }
 
+            // Set seed for randomizer
             //UnityEngine.Random.InitState(randomSeed);
 
             // Randomly generate room
-            List<int> usedIndices = new List<int>();
+            List<int> usedIndices = new List<int>(); // List of indices for rooms we have already tried (Rooms that don't fit)
             while (usedIndices.Count < rooms[region][node.type].Count)
             {
                 // Generate new random index
@@ -185,6 +187,7 @@ namespace Loppy.Level
             result(false);
         }
 
+        // Returns true if given room (roomData and roomCenter) overlaps room stored in node or any of its children
         private bool checkRoomOverlap(RoomData roomData, Vector2 roomCenter, RoomDataNode node)
         {
             // Check if current node has no instantiated room
@@ -211,6 +214,7 @@ namespace Loppy.Level
             return childrenOverlap;
         }
 
+        // Delete room game object and data for given node and all children
         private void deleteGeneratedRooms(RoomDataNode node)
         {
             // End recursion if current node has no instantiated room

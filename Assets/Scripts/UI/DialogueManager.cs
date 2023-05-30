@@ -13,18 +13,15 @@ namespace Loppy.UI
     public class Monologue
     {
         public string name;
-
         [TextArea(3, 10)]
         public List<string> sentences;
-
         public List<DialogueOption> options;
     }
 
     [Serializable]
     public class DialogueOption
     {
-        public string option;
-
+        public string optionText;
         public List<Monologue> dialogue;
     }
 
@@ -34,9 +31,12 @@ namespace Loppy.UI
 
         #region Inspector members
 
+        public GameObject dialogueCanvas;
         public TMP_Text nameText;
         public TMP_Text dialogueText;
         public Image dialogueBox;
+
+        public GameObject dialogueOptionButtonPrefab;
 
         public float textOutputDelay = 0.01f;
         public float fadeSpeed = 0.1f;
@@ -47,9 +47,13 @@ namespace Loppy.UI
         private Queue<string> sentences;
         private Queue<char> currentSentence;
 
+        private List<DialogueOption> options;
+        private List<GameObject> optionButtons;
+
         public delegate void OutputCompleteDelegate();
         private OutputCompleteDelegate currentOutputCompleteCallback;
 
+        private bool inDialogue = false;
         private bool advanceDialogueKeyDown;
 
         private float textOutputTimer = 0;
@@ -70,6 +74,8 @@ namespace Loppy.UI
             monologues = new Queue<Monologue>();
             sentences = new Queue<string>();
             currentSentence = new Queue<char>();
+            options = new List<DialogueOption>();
+            optionButtons = new List<GameObject>();
         }
 
         private void Update()
@@ -82,12 +88,25 @@ namespace Loppy.UI
             {
                 advanceDialogueKeyDown = true;
             }
+
+            if (Input.GetKeyDown(KeyCode.V))
+            {
+                createOptionPrefab(0, "Option 1");
+            }
+            if (Input.GetKeyDown(KeyCode.B))
+            {
+                createOptionPrefab(1, "Option 2");
+            }
+            if (Input.GetKeyDown(KeyCode.N))
+            {
+                createOptionPrefab(2, "Option 3");
+            }
         }
 
         private void FixedUpdate()
         {
             // Check for input
-            if (advanceDialogueKeyDown)
+            if (advanceDialogueKeyDown && inDialogue)
             {
                 // Unfinished sentence
                 if (currentSentence.Count > 0)
@@ -157,6 +176,7 @@ namespace Loppy.UI
             currentOutputCompleteCallback = outputCompleteCallback;
 
             // Begin dialogue
+            inDialogue = true;
             nextMonologue();
         }
 
@@ -170,12 +190,14 @@ namespace Loppy.UI
             }
 
             // Clean and enqueue new monologue
-            sentences.Clear();
             Monologue monologue = monologues.Dequeue();
-            for (int i = 0; i < monologue.sentences.Count; i++)
+            sentences.Clear();
+            foreach (string sentence in monologue.sentences)
             {
-                sentences.Enqueue(monologue.sentences[i]);
+                sentences.Enqueue(sentence);
             }
+            options.Clear();
+            if (monologue.options.Count > 0) options = new List<DialogueOption>(monologue.options);
 
             // Begin monologue
             nameText.text = monologue.name;
@@ -207,6 +229,23 @@ namespace Loppy.UI
 
         public void endDialogue()
         {
+            inDialogue = false;
+
+            // Clear queues
+            monologues.Clear();
+            sentences.Clear();
+            currentSentence.Clear();
+
+            // Check for options
+            if (options.Count > 0)
+            {
+                for (int i = 0; i < options.Count; i++)
+                {
+                    createOptionPrefab(i, options[i].optionText);
+                }
+                return;
+            }
+
             // Reset dialogue target alpha
             targetAlpha = 0;
 
@@ -215,6 +254,36 @@ namespace Loppy.UI
             {
                 currentOutputCompleteCallback();
                 currentOutputCompleteCallback = null;
+            }
+        }
+
+        private void createOptionPrefab(int optionIndex, string optionText)
+        {
+            GameObject newOptionPrefab = Instantiate(dialogueOptionButtonPrefab, dialogueCanvas.transform);
+
+            // Set local position
+            newOptionPrefab.GetComponent<RectTransform>().anchoredPosition = new Vector2(200, optionIndex * -80);
+
+            // Set text
+            newOptionPrefab.GetComponentInChildren<TMP_Text>().text = optionText;
+
+            // Set on press callback
+            newOptionPrefab.GetComponent<Button>().onClick.AddListener(() => onDialogueOptionButtonPressed(optionIndex));
+        
+            // Add to list of buttons
+            optionButtons.Add(newOptionPrefab);
+        }
+
+        private void onDialogueOptionButtonPressed(int optionIndex)
+        {
+            // Begin new dialogue
+            triggerDialogue(options[optionIndex].dialogue, currentOutputCompleteCallback);
+
+            // Clear options
+            options.Clear();
+            foreach (GameObject optionButton in optionButtons)
+            {
+                Destroy(optionButton);
             }
         }
     }

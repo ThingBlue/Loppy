@@ -12368,7 +12368,10 @@ MonoBehaviour:
   debugMenuOpened:
     m_PersistentCalls:
       m_Calls: []
-  playerJumpEvent:
+  dialogueTriggered:
+    m_PersistentCalls:
+      m_Calls: []
+  dialogueOptionSelected:
     m_PersistentCalls:
       m_Calls: []
 --- !u!1 &1160246664

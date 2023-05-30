@@ -48,7 +48,6 @@ namespace Loppy.UI
         private Queue<char> currentSentence;
 
         private List<DialogueOption> options;
-        private List<GameObject> optionButtons;
 
         public delegate void OutputCompleteDelegate();
         private OutputCompleteDelegate currentOutputCompleteCallback;
@@ -75,7 +74,6 @@ namespace Loppy.UI
             sentences = new Queue<string>();
             currentSentence = new Queue<char>();
             options = new List<DialogueOption>();
-            optionButtons = new List<GameObject>();
         }
 
         private void Update()
@@ -175,6 +173,9 @@ namespace Loppy.UI
             // Set callback
             currentOutputCompleteCallback = outputCompleteCallback;
 
+            // Invoke event
+            EventManager.instance.dialogueTriggered.Invoke();
+
             // Begin dialogue
             inDialogue = true;
             nextMonologue();
@@ -239,6 +240,7 @@ namespace Loppy.UI
             // Check for options
             if (options.Count > 0)
             {
+                // Create new option button objects
                 for (int i = 0; i < options.Count; i++)
                 {
                     createOptionPrefab(i, options[i].optionText);
@@ -259,19 +261,11 @@ namespace Loppy.UI
 
         private void createOptionPrefab(int optionIndex, string optionText)
         {
+            // Initialize new button
             GameObject newOptionPrefab = Instantiate(dialogueOptionButtonPrefab, dialogueCanvas.transform);
-
-            // Set local position
             newOptionPrefab.GetComponent<RectTransform>().anchoredPosition = new Vector2(200, optionIndex * -80);
-
-            // Set text
             newOptionPrefab.GetComponentInChildren<TMP_Text>().text = optionText;
-
-            // Set on press callback
             newOptionPrefab.GetComponent<Button>().onClick.AddListener(() => onDialogueOptionButtonPressed(optionIndex));
-        
-            // Add to list of buttons
-            optionButtons.Add(newOptionPrefab);
         }
 
         private void onDialogueOptionButtonPressed(int optionIndex)
@@ -279,12 +273,11 @@ namespace Loppy.UI
             // Begin new dialogue
             triggerDialogue(options[optionIndex].dialogue, currentOutputCompleteCallback);
 
-            // Clear options
+            // Clear old options
             options.Clear();
-            foreach (GameObject optionButton in optionButtons)
-            {
-                Destroy(optionButton);
-            }
+
+            // Trigger event
+            EventManager.instance.dialogueOptionSelected.Invoke();
         }
     }
 }

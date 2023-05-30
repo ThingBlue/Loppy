@@ -38,7 +38,14 @@ namespace Loppy.GameCore
 
         #region Player events
 
-        public UnityEvent playerJumpEvent;
+        //public UnityEvent playerJumpEvent;
+
+        #endregion
+
+        #region Dialogue events
+
+        public UnityEvent dialogueTriggered;
+        public UnityEvent dialogueOptionSelected;
 
         #endregion
 
@@ -55,7 +62,11 @@ namespace Loppy.GameCore
             if (pauseEvent == null) pauseEvent = new UnityEvent();
             if (unpauseEvent == null) unpauseEvent = new UnityEvent();
 
+            if (settingsMenuOpenedEvent == null) settingsMenuOpenedEvent = new UnityEvent();
             if (debugMenuOpened == null) debugMenuOpened = new UnityEvent();
+
+            if (dialogueTriggered == null) dialogueTriggered = new UnityEvent();
+            if (dialogueOptionSelected == null) dialogueOptionSelected = new UnityEvent();
         }
     }
 }

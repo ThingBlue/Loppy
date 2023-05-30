@@ -147,6 +147,7 @@ GameObject:
   - component: {fileID: 7446483172147045564}
   - component: {fileID: 7446483172147045567}
   - component: {fileID: 7446483172147045566}
+  - component: {fileID: 8831718506481662531}
   m_Layer: 5
   m_Name: DialogueOptionButtonPrefab
   m_TagString: Untagged
@@ -257,3 +258,21 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &8831718506481662531
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7446483172147045552}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0d20f9794e1b11f4dbdd0d57040ee642, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  rectTransform: {fileID: 7446483172147045553}
+  image: {fileID: 7446483172147045567}
+  text: {fileID: 7446483171529250482}
+  positionMoveSpeed: 20
+  alphaMoveSpeed: 0.025
+  textAlphaMoveSpeed: 0.05

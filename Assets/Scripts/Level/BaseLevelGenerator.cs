@@ -15,7 +15,6 @@ namespace Loppy.Level
     public class RoomPatternRule
     {
         public string pattern;
-        public bool deadEnd;
         public RoomPatternNode result;
     }
 

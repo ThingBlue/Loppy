@@ -338,7 +338,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 892d90d19a2a22a499c731d33b177258, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  levelGenerationData: {fileID: 11400000, guid: 3bd40300f558bf94089cf0ff0ffc45a0, type: 2}
   roomPrefabs:
   - {fileID: 1545915187575959443, guid: a653a51c61246d04e8a822266b490ed7, type: 3}
   - {fileID: 1545915187575959443, guid: 596f264f50c465143822ab735d1ec428, type: 3}
@@ -375,6 +374,133 @@ MonoBehaviour:
   - {fileID: 1545915187575959443, guid: 2f7da8b7e17bd304e8dfb25f16d84e8b, type: 3}
   - {fileID: 1545915187575959443, guid: 572d07acd1a435d4fb204e60583eec29, type: 3}
   - {fileID: 1545915187575959443, guid: 9e7f54032ce3cc94da6089607c565b02, type: 3}
+  rulesList:
+  - pattern: test
+    result:
+      pattern: entrance
+      terminal: 1
+      maxChildren: 1
+      children:
+      - pattern: corridorPattern
+        terminal: 0
+        maxChildren: 1
+        children:
+        - pattern: junction
+          terminal: 1
+          maxChildren: 2
+          children:
+          - pattern: shopPattern
+            terminal: 0
+            maxChildren: 0
+            children: []
+          - pattern: corridorPattern
+            terminal: 0
+            maxChildren: 1
+            children:
+            - pattern: treasurePattern
+              terminal: 0
+              maxChildren: 1
+              children:
+              - pattern: junction
+                terminal: 1
+                maxChildren: 2
+                children:
+                - pattern: shopPattern
+                  terminal: 0
+                  maxChildren: 0
+                  children: []
+                - pattern: corridorPattern
+                  terminal: 0
+                  maxChildren: 1
+                  children:
+                  - pattern: exit
+                    terminal: 1
+                    maxChildren: 0
+                    children: []
+  - pattern: corridorPattern
+    result:
+      pattern: corridor
+      terminal: 1
+      maxChildren: 1
+      children:
+      - pattern: corridor
+        terminal: 1
+        maxChildren: 1
+        children:
+        - pattern: corridor
+          terminal: 1
+          maxChildren: 1
+          children: []
+  - pattern: corridorPattern
+    result:
+      pattern: corridor
+      terminal: 1
+      maxChildren: 1
+      children:
+      - pattern: corridor
+        terminal: 1
+        maxChildren: 1
+        children: []
+  - pattern: corridorPattern
+    result:
+      pattern: corridor
+      terminal: 1
+      maxChildren: 1
+      children: []
+  - pattern: shopPattern
+    result:
+      pattern: corridorPattern
+      terminal: 0
+      maxChildren: 1
+      children:
+      - pattern: deadEnd
+        terminal: 1
+        maxChildren: 0
+        children: []
+  - pattern: shopPattern
+    result:
+      pattern: deadEnd
+      terminal: 1
+      maxChildren: 0
+      children: []
+  - pattern: treasurePattern
+    result:
+      pattern: junction
+      terminal: 1
+      maxChildren: 2
+      children:
+      - pattern: shopPattern
+        terminal: 0
+        maxChildren: 0
+        children: []
+  - pattern: treasurePattern
+    result:
+      pattern: junction
+      terminal: 1
+      maxChildren: 2
+      children:
+      - pattern: corridor
+        terminal: 1
+        maxChildren: 0
+        children:
+        - pattern: deadEnd
+          terminal: 1
+          maxChildren: 0
+          children: []
+  - pattern: treasurePattern
+    result:
+      pattern: junction
+      terminal: 1
+      maxChildren: 2
+      children:
+      - pattern: corridorPattern
+        terminal: 0
+        maxChildren: 1
+        children:
+        - pattern: deadEnd
+          terminal: 1
+          maxChildren: 0
+          children: []
   randomSeed: 42
 --- !u!4 &1644190204
 Transform:

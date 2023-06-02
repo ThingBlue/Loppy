@@ -61,27 +61,27 @@ namespace Loppy.Level
     public class RoomDataNode
     {
         public string type;
+        public List<RoomDataNode> children;
         public RoomData roomData;
         public Vector2 roomCenter;
         public GameObject gameObject = null;
-        public List<RoomDataNode> children;
 
-        public RoomDataNode(string type, RoomData roomData, Vector2 roomCenter, GameObject gameObject, List<RoomDataNode> children)
+        public RoomDataNode(string type, List<RoomDataNode> children, RoomData roomData, Vector2 roomCenter, GameObject gameObject)
         {
             this.type = type;
+            this.children = children;
             this.roomData = roomData;
             this.roomCenter = roomCenter;
             this.gameObject = gameObject;
-            this.children = children;
         }
 
         public RoomDataNode(RoomDataNode other)
         {
             this.type = other.type;
+            this.children = new List<RoomDataNode>();
             this.roomData = other.roomData;
             this.roomCenter = other.roomCenter;
             this.gameObject = other.gameObject;
-            this.children = new List<RoomDataNode>();
 
             // Recursively initialize new children nodes
             foreach (RoomDataNode child in other.children)
@@ -235,7 +235,7 @@ namespace Loppy.Level
             if (node.terminal)
             {
                 // Create new node
-                RoomDataNode newNode = new RoomDataNode(node.pattern, null, Vector2.zero, null, new List<RoomDataNode>());
+                RoomDataNode newNode = new RoomDataNode(node.pattern, new List<RoomDataNode>(), null, Vector2.zero, null);
 
                 // If parent is null then current node is root node
                 if (parent == null) roomTree = newNode;

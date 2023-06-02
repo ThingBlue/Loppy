@@ -477,7 +477,7 @@ MonoBehaviour:
     result:
       pattern: junction
       terminal: 1
-      maxChildren: 0
+      maxChildren: 2
       children:
       - pattern: corridor
         terminal: 1

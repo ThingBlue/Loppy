@@ -205,12 +205,12 @@ namespace Loppy.Level
                 // Attempt to parse room pattern tree
                 if (!parsePattern(pickRandomPatternResult(region), null))
                 {
-                    Debug.Log("Could not parse pattern!");
+                    Debug.Log("Could not parse pattern");
                     failureCount++;
                     continue;
                 }
 
-                Debug.Log(roomTree.printTree(""));
+                //Debug.Log(roomTree.printTree(""));
 
                 // Attempt to generate level
                 bool generationResult = false;
@@ -219,7 +219,7 @@ namespace Loppy.Level
                 // Success
                 if (generationResult)
                 {
-                    Debug.Log("Level successfully generated");
+                    Debug.Log("Level successfully generated, attempts: " + (failureCount + 1));
                     yield break;
                 }
 
@@ -233,7 +233,7 @@ namespace Loppy.Level
         // Recursively parses room pattern rules using the node given
         private bool parsePattern(RoomPatternNode node, RoomDataNode parent)
         {
-            if (roomTree != null) Debug.Log(roomTree.printTree(""));
+            //if (roomTree != null) Debug.Log(roomTree.printTree(""));
 
             RoomDataNode nextParent = null;
 
@@ -259,8 +259,16 @@ namespace Loppy.Level
                     return false;
                 }
 
-                // Set next parent for recursion
-                nextParent = getFinalLeafNode(roomTree);
+                if (node.maxChildren > 0)
+                {
+                    // Set next parent for recursion
+                    nextParent = getNextParent(roomTree);
+                    if (nextParent == null)
+                    {
+                        Debug.Log("Failed to get next parent");
+                        return false;
+                    }
+                }
             }
 
             // Recurse on children
@@ -290,20 +298,21 @@ namespace Loppy.Level
             return rulesDictionary[pattern][randomIndex];
         }
 
-        private RoomDataNode getFinalLeafNode(RoomDataNode node)
+        private RoomDataNode getNextParent(RoomDataNode node)
         {
-            //Debug.Log("Node: " + node.type + ", children count: " + node.children.Count + ", max children: " + node.roomData.maxChildren);
-
-            // Leaf with missing child found
-            if (node.children.Count == 0 && node.maxChildren > 0) return node;
-
-            // Leaf but no missing child, must be a dead end
-            if (node.children.Count == 0) return null;
+            // Leaf
+            if (node.children.Count == 0)
+            {
+                // Leaf with missing child
+                if (node.maxChildren == 1) return node;
+                // Leaf but no missing child, must be a dead end
+                if (node.maxChildren == 0) return null;
+            }
 
             // Check if any children have leaf with missing child
             foreach (RoomDataNode child in node.children)
             {
-                RoomDataNode childResult = getFinalLeafNode(child);
+                RoomDataNode childResult = getNextParent(child);
                 if (childResult != null) return childResult;
             }
 

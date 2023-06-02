@@ -376,112 +376,130 @@ MonoBehaviour:
   - {fileID: 1545915187575959443, guid: 9e7f54032ce3cc94da6089607c565b02, type: 3}
   rulesList:
   - pattern: test
-    deadEnd: 1
     result:
       pattern: entrance
       terminal: 1
+      maxChildren: 1
       children:
       - pattern: corridorPattern
         terminal: 0
+        maxChildren: 1
         children:
         - pattern: junction
           terminal: 1
+          maxChildren: 2
           children:
           - pattern: shopPattern
             terminal: 0
+            maxChildren: 0
             children: []
           - pattern: corridorPattern
             terminal: 0
+            maxChildren: 1
             children:
             - pattern: treasurePattern
               terminal: 0
+              maxChildren: 1
               children:
               - pattern: junction
                 terminal: 1
+                maxChildren: 2
                 children:
                 - pattern: shopPattern
                   terminal: 0
+                  maxChildren: 0
                   children: []
                 - pattern: corridorPattern
                   terminal: 0
+                  maxChildren: 1
                   children:
                   - pattern: exit
                     terminal: 1
+                    maxChildren: 0
                     children: []
-  - pattern: corridorPatternx
-    deadEnd: 0
+  - pattern: corridorPattern
     result:
       pattern: corridor
       terminal: 1
+      maxChildren: 1
       children:
       - pattern: corridor
         terminal: 1
+        maxChildren: 1
         children:
         - pattern: corridor
           terminal: 1
+          maxChildren: 1
           children: []
   - pattern: corridorPattern
-    deadEnd: 0
     result:
       pattern: corridor
       terminal: 1
+      maxChildren: 1
       children:
       - pattern: corridor
         terminal: 1
+        maxChildren: 1
         children: []
-  - pattern: corridorPatternx
-    deadEnd: 0
+  - pattern: corridorPattern
     result:
       pattern: corridor
       terminal: 1
+      maxChildren: 1
       children: []
   - pattern: shopPattern
-    deadEnd: 1
     result:
       pattern: corridorPattern
       terminal: 0
+      maxChildren: 1
       children:
       - pattern: deadEnd
         terminal: 1
+        maxChildren: 0
         children: []
-  - pattern: shopPatternx
-    deadEnd: 1
+  - pattern: shopPattern
     result:
       pattern: deadEnd
       terminal: 1
+      maxChildren: 0
       children: []
   - pattern: treasurePattern
-    deadEnd: 0
     result:
       pattern: junction
       terminal: 1
+      maxChildren: 2
       children:
       - pattern: shopPattern
         terminal: 0
+        maxChildren: 0
         children: []
-  - pattern: treasurePatternx
-    deadEnd: 0
+  - pattern: treasurePattern
     result:
       pattern: junction
       terminal: 1
+      maxChildren: 0
       children:
       - pattern: corridor
         terminal: 1
+        maxChildren: 0
         children:
         - pattern: deadEnd
           terminal: 1
+          maxChildren: 0
           children: []
-  - pattern: treasurePatternx
-    deadEnd: 0
+  - pattern: treasurePattern
     result:
       pattern: junction
       terminal: 1
+      maxChildren: 2
       children:
       - pattern: corridorPattern
         terminal: 0
+        maxChildren: 1
         children:
         - pattern: deadEnd
           terminal: 1
+          maxChildren: 0
           children: []
   randomSeed: 42
 --- !u!4 &1644190204

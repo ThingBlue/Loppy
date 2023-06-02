@@ -23,12 +23,14 @@ namespace Loppy.Level
     {
         public string pattern;
         public bool terminal;
+        public int maxChildren;
         public List<RoomPatternNode> children;
 
         public RoomPatternNode(string pattern, bool terminal, List<RoomPatternNode> children)
         {
             this.pattern = pattern;
             this.terminal = terminal;
+            this.maxChildren = maxChildren;
             this.children = children;
         }
 
@@ -36,6 +38,7 @@ namespace Loppy.Level
         {
             this.pattern = other.pattern;
             this.terminal = other.terminal;
+            this.maxChildren = other.maxChildren;
             this.children = new List<RoomPatternNode>();
 
             // Recursively initialize new children nodes
@@ -61,14 +64,16 @@ namespace Loppy.Level
     public class RoomDataNode
     {
         public string type;
+        public int maxChildren;
         public List<RoomDataNode> children;
         public RoomData roomData;
         public Vector2 roomCenter;
         public GameObject gameObject = null;
 
-        public RoomDataNode(string type, List<RoomDataNode> children, RoomData roomData, Vector2 roomCenter, GameObject gameObject)
+        public RoomDataNode(string type, int maxChildren, List<RoomDataNode> children, RoomData roomData, Vector2 roomCenter, GameObject gameObject)
         {
             this.type = type;
+            this.maxChildren = maxChildren;
             this.children = children;
             this.roomData = roomData;
             this.roomCenter = roomCenter;
@@ -78,6 +83,7 @@ namespace Loppy.Level
         public RoomDataNode(RoomDataNode other)
         {
             this.type = other.type;
+            this.maxChildren = other.maxChildren;
             this.children = new List<RoomDataNode>();
             this.roomData = other.roomData;
             this.roomCenter = other.roomCenter;
@@ -235,7 +241,7 @@ namespace Loppy.Level
             if (node.terminal)
             {
                 // Create new node
-                RoomDataNode newNode = new RoomDataNode(node.pattern, new List<RoomDataNode>(), null, Vector2.zero, null);
+                RoomDataNode newNode = new RoomDataNode(node.pattern, node.maxChildren, new List<RoomDataNode>(), null, Vector2.zero, null);
 
                 // If parent is null then current node is root node
                 if (parent == null) roomTree = newNode;
@@ -269,54 +275,6 @@ namespace Loppy.Level
             }
             return childrenResult;
         }
-
-        /*
-        // Recursively parses room pattern rules using the node given
-        private bool parsePattern(RoomPatternNode node, RoomDataNode parent)
-        {
-            //if (roomTree != null) Debug.Log(roomTree.printTree(""));
-
-            RoomDataNode nextParent = null;
-
-            // Add to parse tree if terminal
-            if (node.terminal)
-            {
-                // Create new node
-                RoomDataNode newNode = new RoomDataNode(node.pattern, null, Vector2.zero, null, new List<RoomDataNode>());
-
-                // If parent is null then current node is root node
-                if (parent == null) roomTree = newNode;
-                // Parent exists, add new node as child of parent
-                else parent.children.Add(newNode);
-
-                // Set next parent for recursion
-                nextParent = newNode;
-            }
-            // Nonterminal, parse current node pattern
-            else
-            {
-                if (!parsePattern(pickRandomPatternResult(node.pattern), parent))
-                {
-                    return false;
-                }
-
-                // Set next parent for recursion
-                nextParent = getFinalLeafNode(roomTree);
-            }
-
-            // Recurse on children
-            bool childrenResult = true;
-            foreach (RoomPatternNode child in node.children)
-            {
-                if (!parsePattern(child, nextParent))
-                {
-                    childrenResult = false;
-                    break;
-                }
-            }
-            return childrenResult;
-        }
-        */
 
         private RoomPatternNode pickRandomPatternResult(string pattern)
         {
@@ -336,11 +294,24 @@ namespace Loppy.Level
         {
             //Debug.Log("Node: " + node.type + ", children count: " + node.children.Count + ", max children: " + node.roomData.maxChildren);
 
-            // Leaf
-            if (node.children.Count == 0) return node;
+            // Leaf with missing child found
+            if (node.children.Count == 0 && node.maxChildren > 0) return node;
 
-            // Not leaf, recurse on final child
-            return getFinalLeafNode(node.children[node.children.Count - 1]);
+            // Leaf but no missing child, must be a dead end
+            if (node.children.Count == 0) return null;
+
+            // Check if any children have leaf with missing child
+            foreach (RoomDataNode child in node.children)
+            {
+                RoomDataNode childResult = getFinalLeafNode(child);
+                if (childResult != null) return childResult;
+            }
+
+            // Check if current node is a junction with missing child
+            if (node.children.Count < node.maxChildren) return node;
+
+            // Not found
+            return null;
         }
 
         // Recursively generates rooms using the level data node given

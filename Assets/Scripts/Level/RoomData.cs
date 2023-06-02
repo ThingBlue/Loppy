@@ -22,9 +22,11 @@ namespace Loppy.Level
         public string name;
         public GameObject roomPrefab;
         public Vector2 size;
-        public Vector2 entrance;
-        public EntranceDirection entranceDirection;
-        public int exitCount;
+
+        public Vector2 entrance; // REMOVE
+        public EntranceDirection entranceDirection; // REMOVE
+
+        public int maxChildren;
         public List<Vector2> exits;
         public List<EntranceDirection> exitDirections;
     }

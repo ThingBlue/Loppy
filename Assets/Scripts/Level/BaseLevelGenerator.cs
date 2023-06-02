@@ -192,7 +192,7 @@ namespace Loppy.Level
             // Assert that region start exists within rules
             if (!rulesDictionary.ContainsKey(region))
             {
-                Debug.Log("Could not find specified level");
+                Debug.LogError("Could not find specified level");
                 yield break;
             }
 
@@ -205,7 +205,7 @@ namespace Loppy.Level
                 // Attempt to parse room pattern tree
                 if (!parsePattern(pickRandomPatternResult(region), null))
                 {
-                    Debug.Log("Could not parse pattern");
+                    Debug.LogWarning("Could not parse pattern");
                     failureCount++;
                     continue;
                 }
@@ -226,7 +226,7 @@ namespace Loppy.Level
                 // Failure
                 failureCount++;
             }
-            Debug.Log("Failed to generate level");
+            Debug.LogError("Failed to generate level");
         }
 
         
@@ -265,7 +265,7 @@ namespace Loppy.Level
                     nextParent = getNextParent(roomTree);
                     if (nextParent == null)
                     {
-                        Debug.Log("Failed to get next parent");
+                        Debug.LogWarning("Failed to get next parent");
                         return false;
                     }
                 }
@@ -289,7 +289,7 @@ namespace Loppy.Level
             // Check if dictionary contains pattern
             if (!rulesDictionary.ContainsKey(pattern))
             {
-                Debug.Log("Rule key " + pattern + " not found");
+                Debug.LogError("Rule key " + pattern + " not found");
                 return null;
             }
 

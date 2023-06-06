@@ -6,6 +6,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Security.Cryptography;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using UnityEditor.Networking.PlayerConnection;
@@ -224,6 +225,7 @@ namespace Loppy.Level
             while (failureCount < 10)
             {
                 // Reset parse graph and generated rooms
+                parseGraph = new List<NodeData>();
                 roomGraph = new List<NodeData>();
                 generatedRooms = new List<GameObject>();
 
@@ -232,8 +234,36 @@ namespace Loppy.Level
                 {
                     Debug.LogError("Could not parse pattern");
                     failureCount++;
+                    yield break;
                     continue;
                 }
+
+                // Debug output
+                string debugOutput = "Parse result:";
+                foreach (NodeData data in roomGraph)
+                {
+                    debugOutput += " [" + data.type + " " + data.id + "]";
+                }
+                Debug.Log(debugOutput);
+
+
+
+
+
+
+                // Collect all node data
+                PatternData newPatternData = new PatternData();
+                newPatternData.data = new List<NodeData>(roomGraph);
+                newPatternData.name = "roomGraph";
+                // Convert to json
+                string jsonString = JsonUtility.ToJson(newPatternData);
+                // Write to file
+                File.WriteAllText("C:\\Users\\ThingBlue\\Documents\\LoppyLevelPatterns\\roomGraph.json", jsonString);
+
+
+
+
+
 
                 /*
                 // Attempt to generate level from parsed pattern
@@ -263,14 +293,15 @@ namespace Loppy.Level
         {
             // Get random level pattern
             parseGraph = pickRandomPatternResult(level);
+            assignNewIds(parseGraph);
 
             // Find start node and add to graph
-            foreach (NodeData nodeData in parseGraph)
+            foreach (NodeData node in parseGraph)
             {
-                if (nodeData.type == "startNode")
+                if (node.type == "startNode")
                 {
-                    roomGraph.Add(nodeData);
-                    parseGraph.Remove(nodeData);
+                    roomGraph.Add(node);
+                    parseGraph.Remove(node);
                     break;
                 }
             }
@@ -279,6 +310,14 @@ namespace Loppy.Level
             {
                 if (!addConnectedNodes()) return false;
                 Debug.Log("Current pattern graph count: " + parseGraph.Count);
+
+                // Debug output
+                string debugOutput = "Current parse result:";
+                foreach (NodeData data in roomGraph)
+                {
+                    debugOutput += " [" + data.type + " " + data.id + "]";
+                }
+                Debug.Log(debugOutput);
             }
             return true;
         }
@@ -294,7 +333,7 @@ namespace Loppy.Level
                     NodeData connectedNode = findNodeWithId(connection, roomGraph);
                     if (connectedNode == null) continue;
 
-                    Debug.Log("Found connected node: " + node.type + " " + connectedNode.type);
+                    Debug.Log("Found connected node: [" + connectedNode.type + " " + connectedNode.id + "] -> [" + node.type + " " + node.id + "]");
 
                     if (node.terminal)
                     {
@@ -302,103 +341,69 @@ namespace Loppy.Level
                         roomGraph.Add(node);
                         parseGraph.Remove(node);
 
-                        Debug.Log("Added node " + node.type);
+                        Debug.Log("Added node: [" + node.type + " " + node.id + "]");
                     }
                     else
                     {
                         // Get random pattern result
                         List<NodeData> patternResult = pickRandomPatternResult(node.type);
+                        assignNewIds(patternResult);
+
+                        // Debug output
+                        string debugOutput = "Random pattern result: " + node.type + " :";
+                        foreach (NodeData debugNodeData in patternResult)
+                        {
+                            debugOutput += " [" + debugNodeData.type + " " + debugNodeData.id + "]";
+                        }
+                        Debug.Log(debugOutput);
 
                         // Find start and end nodes
-                        NodeData startNode = null;
-                        NodeData endNode = null;
-                        foreach (NodeData patternNode in patternResult)
-                        {
-                            if (patternNode.type == "startNode") startNode = patternNode;
-                            if (patternNode.type == "endNode") endNode = patternNode;
+                        NodeData startNode = findNodeWithType("startNode", patternResult);
+                        NodeData endNode = findNodeWithType("endNode", patternResult);
+                        if (startNode == null) { Debug.LogError("Failed to find startNode"); return false; }
+                        if (endNode == null && node.entranceCount > 1) { Debug.LogError("Failed to find endNode"); return false; }
+                        if (startNode.connections.Count != 1) { Debug.LogError("startNode has more than 1 connection"); return false; }
+                        if (endNode != null && endNode.connections.Count != 1) { Debug.LogError("endNode has more than 1 connection"); return false; }
 
-                            // Both nodes have been found if they exist
-                            if (startNode != null && (endNode != null || node.entranceCount == 1)) break;
-                        }
-                        if (startNode == null)
+                        // Remove nonterminal node and replace it with its result in parse graph
+                        if (!patternResult.Remove(startNode)) { Debug.LogError("Failed to remove startNode, startNode id: " + startNode.id); return false; }
+                        if (endNode != null)
                         {
-                            Debug.LogError("Failed to find startNode");
-                            return false;
+                            if (!patternResult.Remove(endNode)) { Debug.LogError("Failed to remove endNode, endNode id: " + endNode.id); return false; }
                         }
-                        if (endNode == null && node.entranceCount > 1)
-                        {
-                            Debug.LogError("Failed to find endNode");
-                            return false;
-                        }
-                        if (startNode.connections.Count != 1)
-                        {
-                            Debug.LogError("startNode has more than 1 connection");
-                            return false;
-                        }
-                        if (endNode != null && endNode.connections.Count != 1)
-                        {
-                            Debug.LogError("endNode has more than 1 connection");
-                            return false;
-                        }
+                        parseGraph.AddRange(patternResult);
+                        parseGraph.Remove(node);
 
-                        foreach (int startConnection in startNode.connections)
-                        {
-                            Debug.Log("StartConnection: " + startConnection);
-                        }
-
-                        // Reroute connections
-                        // Route first node
+                        // Find first node
                         NodeData firstNode = findNodeWithId(startNode.connections[0], parseGraph);
-                        if (firstNode == null)
-                        {
-                            Debug.LogError("Failed to find first node");
-                            return false;
-                        }
+                        if (firstNode == null) { Debug.LogError("Failed to find first node"); return false; }
+
+                        // Connect first node to previous node
                         connectedNode.connections.Add(firstNode.id);
                         firstNode.connections.Add(connectedNode.id);
                         connectedNode.connections.Remove(node.id);
-                        node.connections.Remove(connectedNode.id);
 
-                        // Route last node if it exists
+                        // Connect last node to next node if it exists
                         if (endNode != null)
                         {
-                            // Node should now only have 1 connection
-                            if (node.connections.Count != 1)
-                            {
-                                Debug.LogError("Node has more than 1 connection remaining after removing startNode");
-                                return false;
-                            }
-
                             // Find next node
-                            NodeData nextNode = findNodeWithId(node.connections[0], parseGraph);
-                            if (nextNode == null)
-                            {
-                                Debug.LogError("Failed to find next node");
-                                return false;
-                            }
+                            NodeData nextNode = findFirstConnectedNode(node.id, parseGraph);
+                            if (nextNode == null) { Debug.LogError("Failed to find next node"); return false; }
+
+                            NodeData lastNode = findNodeWithId(endNode.connections[0], parseGraph);
+                            if (lastNode == null) { Debug.LogError("Failed to find last node"); return false; }
 
                             // Link with last node
-                            NodeData lastNode = findNodeWithId(endNode.connections[0], parseGraph);
-                            if (lastNode == null)
-                            {
-                                Debug.LogError("Failed to find last node");
-                                return false;
-                            }
                             lastNode.connections.Add(nextNode.id);
                             nextNode.connections.Add(lastNode.id);
-                            node.connections.Remove(nextNode.id);
                             nextNode.connections.Remove(node.id);
                         }
 
-                        // Remove nonterminal node and replace it with its result
-                        roomGraph.AddRange(patternResult);
-                        parseGraph.Remove(node);
-
                         // Debug output
-                        string debugOutput = "Replaced node: " + node.type + " with:";
+                        debugOutput = "Replaced node: " + node.type + " with:";
                         foreach (NodeData debugNodeData in patternResult)
                         {
-                            debugOutput += " [" + debugNodeData.type + "]";
+                            debugOutput += " [" + debugNodeData.type + " " + debugNodeData.id + "]";
                         }
                         Debug.Log(debugOutput);
                     }
@@ -433,6 +438,25 @@ namespace Loppy.Level
             foreach (NodeData nodeData in nodeDataList)
             {
                 if (nodeData.id == id) return nodeData;
+            }
+            return null;
+        }
+
+        private NodeData findNodeWithType(string type, List<NodeData> nodeDataList)
+        {
+            foreach (NodeData nodeData in nodeDataList)
+            {
+                if (nodeData.type == type) return nodeData;
+            }
+            return null;
+        }
+
+        // Returns the first node in list that has the connection id
+        private NodeData findFirstConnectedNode(int id, List<NodeData> nodeDataList)
+        {
+            foreach (NodeData node in nodeDataList)
+            {
+                if (node.connections.Contains(id)) return node;
             }
             return null;
         }

@@ -12,6 +12,7 @@ using UnityEditor.Experimental.GraphView;
 using UnityEditor.Networking.PlayerConnection;
 using UnityEngine;
 using static Codice.Client.Common.Connection.AskCredentialsToUser;
+using static UnityEngine.EventSystems.EventTrigger;
 
 namespace Loppy.Level
 {
@@ -35,7 +36,7 @@ namespace Loppy.Level
             this.type = type;
             this.terminal = terminal;
             this.entranceCount = entranceCount;
-            this.connections = connections;
+            this.connections = new List<int>(connections);
             this.editorPosition = editorPosition;
         }
 
@@ -47,7 +48,7 @@ namespace Loppy.Level
             this.type = other.type;
             this.terminal = other.terminal;
             this.entranceCount = other.entranceCount;
-            this.connections = other.connections;
+            this.connections = new List<int>(other.connections);
             this.editorPosition = other.editorPosition;
         }
     }
@@ -117,23 +118,46 @@ namespace Loppy.Level
 
         private void assignNewIds(List<NodeData> pattern)
         {
-            foreach (NodeData nodeToReassign in pattern)
+            // Debug output
+            string debugOutput = "Before id assignment:";
+            foreach (NodeData data in pattern)
             {
-                // Assign new id to current node
-                int oldId = nodeToReassign.id;
-                nodeToReassign.id = nextId;
-                nextId++;
-
-                // Update connections to use the same new id
-                foreach (NodeData node in pattern)
+                debugOutput += " [" + data.type + " " + data.id + "]";
+                foreach (int connection in data.connections)
                 {
-                    if (node.connections.Contains(oldId))
-                    {
-                        node.connections.Remove(oldId);
-                        node.connections.Add(nodeToReassign.id);
-                    }
+                    debugOutput += " (" + connection + ")";
                 }
             }
+            Debug.Log(debugOutput);
+
+            foreach (NodeData node in pattern)
+            {
+                // Update connections to use the same new id
+                foreach (NodeData otherNode in pattern)
+                {
+                    if (otherNode.connections.Contains(node.id))
+                    {
+                        otherNode.connections.Remove(node.id);
+                        otherNode.connections.Add(nextId);
+                    }
+                }
+
+                // Assign new id to current node
+                node.id = nextId;
+                nextId++;
+            }
+
+            // Debug output
+            debugOutput = "After id assignment:";
+            foreach (NodeData data in pattern)
+            {
+                debugOutput += " [" + data.type + " " + data.id + "]";
+                foreach (int connection in data.connections)
+                {
+                    debugOutput += " (" + connection + ")";
+                }
+            }
+            Debug.Log(debugOutput);
         }
 
         private void readAllPatternJsonInDirectory(string path)
@@ -309,7 +333,6 @@ namespace Loppy.Level
             while (parseGraph.Count > 0)
             {
                 if (!addConnectedNodes()) return false;
-                Debug.Log("Current pattern graph count: " + parseGraph.Count);
 
                 // Debug output
                 string debugOutput = "Current parse result:";
@@ -345,7 +368,7 @@ namespace Loppy.Level
                     }
                     else
                     {
-                        // Get random pattern result
+                        // Get random pattern result as a NEW list of NEW nodes
                         List<NodeData> patternResult = pickRandomPatternResult(node.type);
                         assignNewIds(patternResult);
 
@@ -376,7 +399,7 @@ namespace Loppy.Level
 
                         // Find first node
                         NodeData firstNode = findNodeWithId(startNode.connections[0], parseGraph);
-                        if (firstNode == null) { Debug.LogError("Failed to find first node"); return false; }
+                        if (firstNode == null) { Debug.LogError("Failed to find first node with id: " + startNode.connections[0]); return false; }
 
                         // Connect first node to previous node
                         connectedNode.connections.Add(firstNode.id);
@@ -430,7 +453,10 @@ namespace Loppy.Level
 
             // Randomly pick pattern
             int randomIndex = UnityEngine.Random.Range(0, patternDictionary[pattern].Count);
-            return new List<NodeData>(patternDictionary[pattern][randomIndex]);
+
+            List<NodeData> result = new List<NodeData>();
+            foreach (NodeData node in patternDictionary[pattern][randomIndex]) result.Add(new NodeData(node));
+            return result;
         }
 
         private NodeData findNodeWithId(int id, List<NodeData> nodeDataList)

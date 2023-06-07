@@ -1,18 +1,9 @@
-using Codice.Client.Common.TreeGrouper;
-using JetBrains.Annotations;
-using log4net.Core;
-using PlasticPipe.PlasticProtocol.Messages;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Security.Cryptography;
 using UnityEditor;
-using UnityEditor.Experimental.GraphView;
-using UnityEditor.Networking.PlayerConnection;
 using UnityEngine;
-using static Codice.Client.Common.Connection.AskCredentialsToUser;
-using static UnityEngine.EventSystems.EventTrigger;
 
 namespace Loppy.Level
 {
@@ -68,7 +59,6 @@ namespace Loppy.Level
 
         public string editorDataPath;
 
-        //public LevelGenerationData levelGenerationData;
         public List<GameObject> roomPrefabs;
         public List<RoomPatternRule> rulesList;
 
@@ -101,6 +91,7 @@ namespace Loppy.Level
             roomGraph = new List<NodeData>();
             generatedRooms = new List<GameObject>();
 
+            StartCoroutine(initializeRooms());
             StartCoroutine(loadPatterns());
         }
 
@@ -116,81 +107,23 @@ namespace Loppy.Level
             }
         }
 
-        private void assignNewIds(List<NodeData> pattern)
+        private IEnumerator initializeRooms()
         {
-            // Debug output
-            string debugOutput = "Before id assignment:";
-            foreach (NodeData data in pattern)
+            foreach (GameObject roomPrefab in roomPrefabs)
             {
-                debugOutput += " [" + data.type + " " + data.id + "]";
-                foreach (int connection in data.connections)
-                {
-                    debugOutput += " (" + connection + ")";
-                }
-            }
-            Debug.Log(debugOutput);
+                RoomData prefabData = roomPrefab.GetComponent<RoomData>();
+                prefabData.name = roomPrefab.name;
+                prefabData.roomPrefab = roomPrefab;
 
-            foreach (NodeData node in pattern)
-            {
-                // Update connections to use the same new id
-                foreach (NodeData otherNode in pattern)
-                {
-                    if (otherNode.connections.Contains(node.id))
-                    {
-                        otherNode.connections.Remove(node.id);
-                        otherNode.connections.Add(nextId);
-                    }
-                }
+                // Create storage structures if they do not exist
+                if (!roomDictionary.ContainsKey(prefabData.region)) roomDictionary[prefabData.region] = new Dictionary<string, List<RoomData>>();
+                if (!roomDictionary[prefabData.region].ContainsKey(prefabData.type)) roomDictionary[prefabData.region][prefabData.type] = new List<RoomData>();
 
-                // Assign new id to current node
-                node.id = nextId;
-                nextId++;
+                // Add to dictionary
+                roomDictionary[prefabData.region][prefabData.type].Add(prefabData);
             }
 
-            // Debug output
-            debugOutput = "After id assignment:";
-            foreach (NodeData data in pattern)
-            {
-                debugOutput += " [" + data.type + " " + data.id + "]";
-                foreach (int connection in data.connections)
-                {
-                    debugOutput += " (" + connection + ")";
-                }
-            }
-            Debug.Log(debugOutput);
-        }
-
-        private void readAllPatternJsonInDirectory(string path)
-        {
-            string[] files = Directory.GetFiles(path, "*.json");
-            foreach (string file in files)
-            {
-                // Read json
-                string jsonString = File.ReadAllText(file);
-                PatternData newPatternData = new PatternData();
-                newPatternData = JsonUtility.FromJson<PatternData>(jsonString);
-
-                // Make sure the read data exists
-                if (newPatternData.data == null)
-                {
-                    Debug.Log("Failed to load json file: " + file);
-                    continue;
-                }
-                if (newPatternData.data.Count == 0)
-                {
-                    Debug.Log("Empty json file: " + file);
-                    continue;
-                }
-
-                // Create list if it does not exist
-                if (!patternDictionary.ContainsKey(newPatternData.name)) patternDictionary[newPatternData.name] = new List<List<NodeData>>();
-
-                // Update data with unique ids
-                assignNewIds(newPatternData.data);
-
-                // Add to pattern dictionary
-                patternDictionary[newPatternData.name].Add(newPatternData.data);
-            }
+            yield break;
         }
 
         // Read all json files and add them into pattern dictionary
@@ -235,6 +168,59 @@ namespace Loppy.Level
             yield break;
         }
 
+        private void readAllPatternJsonInDirectory(string path)
+        {
+            string[] files = Directory.GetFiles(path, "*.json");
+            foreach (string file in files)
+            {
+                // Read json
+                string jsonString = File.ReadAllText(file);
+                PatternData newPatternData = new PatternData();
+                newPatternData = JsonUtility.FromJson<PatternData>(jsonString);
+
+                // Make sure the read data exists
+                if (newPatternData.data == null)
+                {
+                    Debug.Log("Failed to load json file: " + file);
+                    continue;
+                }
+                if (newPatternData.data.Count == 0)
+                {
+                    Debug.Log("Empty json file: " + file);
+                    continue;
+                }
+
+                // Create list if it does not exist
+                if (!patternDictionary.ContainsKey(newPatternData.name)) patternDictionary[newPatternData.name] = new List<List<NodeData>>();
+
+                // Update data with unique ids
+                assignNewIds(newPatternData.data);
+
+                // Add to pattern dictionary
+                patternDictionary[newPatternData.name].Add(newPatternData.data);
+            }
+        }
+
+        private void assignNewIds(List<NodeData> pattern)
+        {
+            foreach (NodeData node in pattern)
+            {
+                // Update connections to use the same new id
+                foreach (NodeData otherNode in pattern)
+                {
+                    if (otherNode.connections.Contains(node.id))
+                    {
+                        otherNode.connections.Remove(node.id);
+                        otherNode.connections.Add(nextId);
+                    }
+                }
+
+                // Assign new id to current node
+                node.id = nextId;
+                nextId++;
+            }
+        }
+
         private IEnumerator generateLevel(string level)
         {
             int failureCount = 0;
@@ -258,10 +244,10 @@ namespace Loppy.Level
                 {
                     Debug.LogError("Could not parse pattern");
                     failureCount++;
-                    yield break;
                     continue;
                 }
 
+                /*
                 // Debug output
                 string debugOutput = "Parse result:";
                 foreach (NodeData data in roomGraph)
@@ -269,12 +255,12 @@ namespace Loppy.Level
                     debugOutput += " [" + data.type + " " + data.id + "]";
                 }
                 Debug.Log(debugOutput);
+                */
 
 
 
 
-
-
+                /*
                 // Collect all node data
                 PatternData newPatternData = new PatternData();
                 newPatternData.data = new List<NodeData>(roomGraph);
@@ -283,7 +269,7 @@ namespace Loppy.Level
                 string jsonString = JsonUtility.ToJson(newPatternData);
                 // Write to file
                 File.WriteAllText("C:\\Users\\ThingBlue\\Documents\\LoppyLevelPatterns\\roomGraph.json", jsonString);
-
+                */
 
 
 
@@ -313,6 +299,8 @@ namespace Loppy.Level
             yield break;
         }
 
+        #region Parsing
+
         private bool parseLevel(string level)
         {
             // Get random level pattern
@@ -334,6 +322,7 @@ namespace Loppy.Level
             {
                 if (!addConnectedNodes()) return false;
 
+                /*
                 // Debug output
                 string debugOutput = "Current parse result:";
                 foreach (NodeData data in roomGraph)
@@ -341,6 +330,7 @@ namespace Loppy.Level
                     debugOutput += " [" + data.type + " " + data.id + "]";
                 }
                 Debug.Log(debugOutput);
+                */
             }
             return true;
         }
@@ -356,29 +346,17 @@ namespace Loppy.Level
                     NodeData connectedNode = findNodeWithId(connection, roomGraph);
                     if (connectedNode == null) continue;
 
-                    Debug.Log("Found connected node: [" + connectedNode.type + " " + connectedNode.id + "] -> [" + node.type + " " + node.id + "]");
-
                     if (node.terminal)
                     {
                         // Add directly to parse graph
                         roomGraph.Add(node);
                         parseGraph.Remove(node);
-
-                        Debug.Log("Added node: [" + node.type + " " + node.id + "]");
                     }
                     else
                     {
                         // Get random pattern result as a NEW list of NEW nodes
                         List<NodeData> patternResult = pickRandomPatternResult(node.type);
                         assignNewIds(patternResult);
-
-                        // Debug output
-                        string debugOutput = "Random pattern result: " + node.type + " :";
-                        foreach (NodeData debugNodeData in patternResult)
-                        {
-                            debugOutput += " [" + debugNodeData.type + " " + debugNodeData.id + "]";
-                        }
-                        Debug.Log(debugOutput);
 
                         // Find start and end nodes
                         NodeData startNode = findNodeWithType("startNode", patternResult);
@@ -421,14 +399,6 @@ namespace Loppy.Level
                             nextNode.connections.Add(lastNode.id);
                             nextNode.connections.Remove(node.id);
                         }
-
-                        // Debug output
-                        debugOutput = "Replaced node: " + node.type + " with:";
-                        foreach (NodeData debugNodeData in patternResult)
-                        {
-                            debugOutput += " [" + debugNodeData.type + " " + debugNodeData.id + "]";
-                        }
-                        Debug.Log(debugOutput);
                     }
 
                     // Iterate again
@@ -486,6 +456,22 @@ namespace Loppy.Level
             }
             return null;
         }
+
+        #endregion
+
+        #region Generation
+
+        private bool generateLevel()
+        {
+            return true;
+        }
+
+        private bool generateRoom()
+        {
+            return true;
+        }
+
+        #endregion
 
     }
 }

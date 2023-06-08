@@ -187,8 +187,10 @@ MonoBehaviour:
   roomPrefab: {fileID: 5920931384760467256}
   size: {x: 1, y: 1}
   entrances:
-  - position: {x: 0, y: -0.5}
-    direction: 4
+  - position: {x: 0, y: 0.5}
+    direction: 3
+  - position: {x: 0.5, y: 0}
+    direction: 2
 --- !u!1 &5920931384972105783
 GameObject:
   m_ObjectHideFlags: 0

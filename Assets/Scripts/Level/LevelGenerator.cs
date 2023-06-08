@@ -595,6 +595,7 @@ namespace Loppy.Level
                 {
                     if (roomPrefabData.entrances[i].direction == entranceDirection) validEntrances.Add(roomPrefabData.entrances[i]);
                 }
+                if (validEntrances.Count == 0) { node.roomPrefabData = null; continue; }
 
                 // Randomly pick a valid entrance to position current room
                 List<int> usedEntranceIndices = new List<int>();

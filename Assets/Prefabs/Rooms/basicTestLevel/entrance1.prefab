@@ -189,6 +189,8 @@ MonoBehaviour:
   entrances:
   - position: {x: -0.5, y: 0}
     direction: 1
+  - position: {x: 0.5, y: 0}
+    direction: 2
 --- !u!1 &5920931384972105783
 GameObject:
   m_ObjectHideFlags: 0

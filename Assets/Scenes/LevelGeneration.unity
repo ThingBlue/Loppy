@@ -153,9 +153,44 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   editorDataPath: C:\Users\ThingBlue\Documents\LoppyLevelPatterns
-  roomPrefabs: []
-  rulesList: []
+  roomPrefabs:
+  - {fileID: 1545915187575959443, guid: fc841dcec68006f41b8f0b4122c35a52, type: 3}
+  - {fileID: 1545915187575959443, guid: a653a51c61246d04e8a822266b490ed7, type: 3}
+  - {fileID: 1545915187575959443, guid: 596f264f50c465143822ab735d1ec428, type: 3}
+  - {fileID: 1545915187575959443, guid: 7e49dd4771d993f4a9298cc525a7234e, type: 3}
+  - {fileID: 1545915187575959443, guid: 711cdc742f8b92547bec26d57bcd1a11, type: 3}
+  - {fileID: 5139249586478869005, guid: ba0d9fd9ad10c0f4da3fc4c1eb9743b9, type: 3}
+  - {fileID: 5139249586478869005, guid: 34691224b9237d74db597e5afb5e1186, type: 3}
+  - {fileID: 5139249586478869005, guid: 6b62dfd2bc0d38f47a5527ed99ed7b37, type: 3}
+  - {fileID: 1545915187575959443, guid: 6b016081da566744786d673ee499b45c, type: 3}
+  - {fileID: 1545915187575959443, guid: 2f7da8b7e17bd304e8dfb25f16d84e8b, type: 3}
+  - {fileID: 1545915187575959443, guid: 572d07acd1a435d4fb204e60583eec29, type: 3}
+  - {fileID: 1545915187575959443, guid: 9e7f54032ce3cc94da6089607c565b02, type: 3}
+  - {fileID: 4942241973497353112, guid: 1029c546051097a45b51da231f68b2f3, type: 3}
+  - {fileID: 4942241973497353112, guid: b30601bab722bbf449ecf474dc750dfd, type: 3}
+  - {fileID: 2852378099186052875, guid: c579fd71d707a004980799ea73f26194, type: 3}
+  - {fileID: 2852378099186052875, guid: 253cb20ac4dc78d4582f28726db70b3e, type: 3}
+  - {fileID: 4942241973497353112, guid: 320f0ac5b7ebf474d8587e7e88fecaa2, type: 3}
+  - {fileID: 4942241973497353112, guid: 8cdba5ec2fc148445b160a78ec6078e0, type: 3}
+  - {fileID: 5920931384760467256, guid: 7ccdb5e7ab5a8db439c4d44649886250, type: 3}
+  - {fileID: 5920931384760467256, guid: 408537ce33b85a54b86461cabe463b47, type: 3}
+  - {fileID: 5920931384760467256, guid: d277723366ef45448806a2512efbf2f5, type: 3}
+  - {fileID: 5920931384760467256, guid: df3a4f4328d2a3043b4f971e8f698f30, type: 3}
+  - {fileID: 5920931384760467256, guid: e4c4cd6e13a1d6a4383462bf0787c1fe, type: 3}
+  - {fileID: 5211390174303199085, guid: fc9a9f10b765d2843bb57a6520602147, type: 3}
+  - {fileID: 5211390174303199085, guid: 6eb7663f6e727524bad42d1b302aea76, type: 3}
+  - {fileID: 5211390174303199085, guid: 54c02111cb946c74794d8ea1d85a666e, type: 3}
+  - {fileID: 5211390174303199085, guid: 66c2ad361896a024299b20afc45fc9ac, type: 3}
+  - {fileID: 9170282334753474944, guid: 3b0e866733c59b04ca2e1a39450ced7a, type: 3}
+  - {fileID: 9170282334753474944, guid: 26eef6e446fa9f54b9dabe77bedf2c4f, type: 3}
+  - {fileID: 6498903313681426180, guid: 842a52d0a3c742e4ebe9e048729e8c54, type: 3}
+  - {fileID: 6498903313681426180, guid: ff53b1910afff8c459d87b8d9c34bcda, type: 3}
+  - {fileID: 9170282334753474944, guid: 03c30d1989e0f6b4582eb641bb931232, type: 3}
+  - {fileID: 9170282334753474944, guid: cd8c8ff678520604897e977d1125bb58, type: 3}
+  - {fileID: 9170282334753474944, guid: 21065bfef66f89343bc0e88ff8570dce, type: 3}
+  - {fileID: 9170282334753474944, guid: 6a5d4fe902a3bb54085f56cbeff8cae5, type: 3}
   randomSeed: 0
+  nextId: 0
 --- !u!4 &389017625
 Transform:
   m_ObjectHideFlags: 0
@@ -169,7 +204,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 3
+  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &501276273
 GameObject:
@@ -357,211 +392,3 @@ MonoBehaviour:
   m_RequiresDepthTexture: 0
   m_RequiresColorTexture: 0
   m_Version: 2
---- !u!1 &1644190202
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1644190204}
-  - component: {fileID: 1644190203}
-  m_Layer: 0
-  m_Name: BaseLevelGenerator
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 0
---- !u!114 &1644190203
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1644190202}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 892d90d19a2a22a499c731d33b177258, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  roomPrefabs:
-  - {fileID: 1545915187575959443, guid: a653a51c61246d04e8a822266b490ed7, type: 3}
-  - {fileID: 1545915187575959443, guid: 596f264f50c465143822ab735d1ec428, type: 3}
-  - {fileID: 1545915187575959443, guid: 711cdc742f8b92547bec26d57bcd1a11, type: 3}
-  - {fileID: 5139249586478869005, guid: ba0d9fd9ad10c0f4da3fc4c1eb9743b9, type: 3}
-  - {fileID: 5139249586478869005, guid: 34691224b9237d74db597e5afb5e1186, type: 3}
-  - {fileID: 4942241973497353112, guid: 1029c546051097a45b51da231f68b2f3, type: 3}
-  - {fileID: 4942241973497353112, guid: b30601bab722bbf449ecf474dc750dfd, type: 3}
-  - {fileID: 2852378099186052875, guid: c579fd71d707a004980799ea73f26194, type: 3}
-  - {fileID: 2852378099186052875, guid: 253cb20ac4dc78d4582f28726db70b3e, type: 3}
-  - {fileID: 5920931384760467256, guid: 7ccdb5e7ab5a8db439c4d44649886250, type: 3}
-  - {fileID: 5211390174303199085, guid: fc9a9f10b765d2843bb57a6520602147, type: 3}
-  - {fileID: 9170282334753474944, guid: 26eef6e446fa9f54b9dabe77bedf2c4f, type: 3}
-  - {fileID: 6498903313681426180, guid: ff53b1910afff8c459d87b8d9c34bcda, type: 3}
-  - {fileID: 1545915187575959443, guid: 7e49dd4771d993f4a9298cc525a7234e, type: 3}
-  - {fileID: 1545915187575959443, guid: fc841dcec68006f41b8f0b4122c35a52, type: 3}
-  - {fileID: 9170282334753474944, guid: 3b0e866733c59b04ca2e1a39450ced7a, type: 3}
-  - {fileID: 6498903313681426180, guid: 842a52d0a3c742e4ebe9e048729e8c54, type: 3}
-  - {fileID: 5139249586478869005, guid: 6b62dfd2bc0d38f47a5527ed99ed7b37, type: 3}
-  - {fileID: 5920931384760467256, guid: 408537ce33b85a54b86461cabe463b47, type: 3}
-  - {fileID: 5920931384760467256, guid: d277723366ef45448806a2512efbf2f5, type: 3}
-  - {fileID: 5920931384760467256, guid: df3a4f4328d2a3043b4f971e8f698f30, type: 3}
-  - {fileID: 5920931384760467256, guid: e4c4cd6e13a1d6a4383462bf0787c1fe, type: 3}
-  - {fileID: 5211390174303199085, guid: 6eb7663f6e727524bad42d1b302aea76, type: 3}
-  - {fileID: 5211390174303199085, guid: 54c02111cb946c74794d8ea1d85a666e, type: 3}
-  - {fileID: 5211390174303199085, guid: 66c2ad361896a024299b20afc45fc9ac, type: 3}
-  - {fileID: 9170282334753474944, guid: 03c30d1989e0f6b4582eb641bb931232, type: 3}
-  - {fileID: 9170282334753474944, guid: cd8c8ff678520604897e977d1125bb58, type: 3}
-  - {fileID: 9170282334753474944, guid: 21065bfef66f89343bc0e88ff8570dce, type: 3}
-  - {fileID: 9170282334753474944, guid: 6a5d4fe902a3bb54085f56cbeff8cae5, type: 3}
-  - {fileID: 4942241973497353112, guid: 320f0ac5b7ebf474d8587e7e88fecaa2, type: 3}
-  - {fileID: 4942241973497353112, guid: 8cdba5ec2fc148445b160a78ec6078e0, type: 3}
-  - {fileID: 1545915187575959443, guid: 6b016081da566744786d673ee499b45c, type: 3}
-  - {fileID: 1545915187575959443, guid: 2f7da8b7e17bd304e8dfb25f16d84e8b, type: 3}
-  - {fileID: 1545915187575959443, guid: 572d07acd1a435d4fb204e60583eec29, type: 3}
-  - {fileID: 1545915187575959443, guid: 9e7f54032ce3cc94da6089607c565b02, type: 3}
-  rulesList:
-  - pattern: test
-    result:
-      pattern: entrance
-      terminal: 1
-      maxChildren: 1
-      children:
-      - pattern: corridorPattern
-        terminal: 0
-        maxChildren: 1
-        children:
-        - pattern: junction
-          terminal: 1
-          maxChildren: 2
-          children:
-          - pattern: shopPattern
-            terminal: 0
-            maxChildren: 0
-            children: []
-          - pattern: corridorPattern
-            terminal: 0
-            maxChildren: 1
-            children:
-            - pattern: treasurePattern
-              terminal: 0
-              maxChildren: 1
-              children:
-              - pattern: junction
-                terminal: 1
-                maxChildren: 2
-                children:
-                - pattern: shopPattern
-                  terminal: 0
-                  maxChildren: 0
-                  children: []
-                - pattern: corridorPattern
-                  terminal: 0
-                  maxChildren: 1
-                  children:
-                  - pattern: exit
-                    terminal: 1
-                    maxChildren: 0
-                    children: []
-  - pattern: corridorPattern
-    result:
-      pattern: corridor
-      terminal: 1
-      maxChildren: 1
-      children:
-      - pattern: corridor
-        terminal: 1
-        maxChildren: 1
-        children:
-        - pattern: corridor
-          terminal: 1
-          maxChildren: 1
-          children: []
-  - pattern: corridorPattern
-    result:
-      pattern: corridor
-      terminal: 1
-      maxChildren: 1
-      children:
-      - pattern: corridor
-        terminal: 1
-        maxChildren: 1
-        children: []
-  - pattern: corridorPattern
-    result:
-      pattern: corridor
-      terminal: 1
-      maxChildren: 1
-      children: []
-  - pattern: shopPattern
-    result:
-      pattern: corridorPattern
-      terminal: 0
-      maxChildren: 1
-      children:
-      - pattern: deadEnd
-        terminal: 1
-        maxChildren: 0
-        children: []
-  - pattern: shopPattern
-    result:
-      pattern: deadEnd
-      terminal: 1
-      maxChildren: 0
-      children: []
-  - pattern: treasurePattern
-    result:
-      pattern: junction
-      terminal: 1
-      maxChildren: 2
-      children:
-      - pattern: shopPattern
-        terminal: 0
-        maxChildren: 0
-        children: []
-  - pattern: treasurePattern
-    result:
-      pattern: junction
-      terminal: 1
-      maxChildren: 2
-      children:
-      - pattern: corridor
-        terminal: 1
-        maxChildren: 0
-        children:
-        - pattern: deadEnd
-          terminal: 1
-          maxChildren: 0
-          children: []
-  - pattern: treasurePattern
-    result:
-      pattern: junction
-      terminal: 1
-      maxChildren: 2
-      children:
-      - pattern: corridorPattern
-        terminal: 0
-        maxChildren: 1
-        children:
-        - pattern: deadEnd
-          terminal: 1
-          maxChildren: 0
-          children: []
-  randomSeed: 42
---- !u!4 &1644190204
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1644190202}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_RootOrder: 2
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

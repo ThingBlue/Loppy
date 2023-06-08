@@ -1,14 +1,18 @@
+using Codice.Client.BaseCommands;
+using Codice.Client.Common;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
+using static Codice.Client.Common.Connection.AskCredentialsToUser;
 
 namespace Loppy.Level
 {
+    // Data for each pattern node imported from the editor
     [Serializable]
-    public class NodeData
+    public class DataNode
     {
         public int id;
         public string name;
@@ -19,7 +23,7 @@ namespace Loppy.Level
         public List<int> connections;
         public Vector2 editorPosition;
 
-        public NodeData(int id, string name, string region, string type, bool terminal, int entranceCount, List<int> connections, Vector2 editorPosition)
+        public DataNode(int id, string name, string region, string type, bool terminal, int entranceCount, List<int> connections, Vector2 editorPosition)
         {
             this.id = id;
             this.name = name;
@@ -31,7 +35,7 @@ namespace Loppy.Level
             this.editorPosition = editorPosition;
         }
 
-        public NodeData(NodeData other)
+        public DataNode(DataNode other)
         {
             this.id = other.id;
             this.name = other.name;
@@ -44,11 +48,69 @@ namespace Loppy.Level
         }
     }
 
+    // Data for the pattern dictionary
     [Serializable]
     public class PatternData
     {
         public string name;
-        public List<NodeData> data;
+        public List<DataNode> data;
+    }
+
+    // Data for each node in the final room graph,
+    //     including the generated gameObject
+    [Serializable]
+    public class RoomNode
+    {
+        public string type;
+        public int entranceCount;
+        public List<RoomNode> connectedNodes;
+
+        // Imported from DataNode
+        public int id;
+        public List<int> connections;
+
+        // Members that will be assigned after the best room to generate is determined
+        public bool generated = false;
+        public RoomPrefabData roomPrefabData = null;
+        public Vector2 roomCenter = Vector2.zero;
+        public GameObject gameObject = null;
+
+        // Temporary list of unused entrances to help with room generation
+        public List<RoomEntrance> openEntrances;
+
+        public RoomNode(string type, int entranceCount, List<RoomNode> connectedNodes, int id, List<int> connections, bool generated, RoomPrefabData roomData, Vector2 roomCenter, GameObject gameObject, List<RoomEntrance> openEntrances)
+        {
+            this.type = type;
+            this.entranceCount = entranceCount;
+            this.connectedNodes = new List<RoomNode>(connectedNodes);
+
+            this.id = id;
+            this.connections = new List<int>(connections);
+
+            this.generated = generated;
+            this.roomPrefabData = roomData;
+            this.roomCenter = roomCenter;
+            this.gameObject = gameObject;
+
+            this.openEntrances = new List<RoomEntrance>(openEntrances);
+        }
+
+        public RoomNode(RoomNode other)
+        {
+            this.type = other.type;
+            this.entranceCount = other.entranceCount;
+            this.connectedNodes = new List<RoomNode>(other.connectedNodes);
+
+            this.id = other.id;
+            this.connections = new List<int>(other.connections);
+
+            this.generated = other.generated;
+            this.roomPrefabData = other.roomPrefabData;
+            this.roomCenter = other.roomCenter;
+            this.gameObject = other.gameObject;
+
+            this.openEntrances = new List<RoomEntrance>(other.openEntrances);
+        }
     }
 
     public class LevelGenerator : MonoBehaviour
@@ -58,9 +120,7 @@ namespace Loppy.Level
         #region Inspector members
 
         public string editorDataPath;
-
         public List<GameObject> roomPrefabs;
-        public List<RoomPatternRule> rulesList;
 
         #endregion
 
@@ -68,12 +128,13 @@ namespace Loppy.Level
 
         public int nextId = 0;
 
-        private Dictionary<string, Dictionary<string, List<RoomData>>> roomDictionary;
-        private Dictionary<string, List<List<NodeData>>> patternDictionary;
+        private Dictionary<string, Dictionary<string, List<RoomPrefabData>>> roomDictionary;
+        private Dictionary<string, List<List<DataNode>>> patternDictionary;
 
-        private List<NodeData> parseGraph;
-        private List<NodeData> roomGraph;
-        private List<GameObject> generatedRooms;
+        private List<DataNode> parseInput;
+        private List<DataNode> parseStack;
+
+        private List<RoomNode> roomGraph;
 
         private void Awake()
         {
@@ -85,11 +146,11 @@ namespace Loppy.Level
         private void Start()
         {
             // Initialize storage
-            roomDictionary = new Dictionary<string, Dictionary<string, List<RoomData>>>();
-            patternDictionary = new Dictionary<string, List<List<NodeData>>>();
-            parseGraph = new List<NodeData>();
-            roomGraph = new List<NodeData>();
-            generatedRooms = new List<GameObject>();
+            roomDictionary = new Dictionary<string, Dictionary<string, List<RoomPrefabData>>>();
+            patternDictionary = new Dictionary<string, List<List<DataNode>>>();
+            parseInput = new List<DataNode>();
+            parseStack = new List<DataNode>();
+            roomGraph = new List<RoomNode>();
 
             StartCoroutine(initializeRooms());
             StartCoroutine(loadPatterns());
@@ -111,13 +172,13 @@ namespace Loppy.Level
         {
             foreach (GameObject roomPrefab in roomPrefabs)
             {
-                RoomData prefabData = roomPrefab.GetComponent<RoomData>();
+                RoomPrefabData prefabData = roomPrefab.GetComponent<RoomPrefabData>();
                 prefabData.name = roomPrefab.name;
                 prefabData.roomPrefab = roomPrefab;
 
                 // Create storage structures if they do not exist
-                if (!roomDictionary.ContainsKey(prefabData.region)) roomDictionary[prefabData.region] = new Dictionary<string, List<RoomData>>();
-                if (!roomDictionary[prefabData.region].ContainsKey(prefabData.type)) roomDictionary[prefabData.region][prefabData.type] = new List<RoomData>();
+                if (!roomDictionary.ContainsKey(prefabData.region)) roomDictionary[prefabData.region] = new Dictionary<string, List<RoomPrefabData>>();
+                if (!roomDictionary[prefabData.region].ContainsKey(prefabData.type)) roomDictionary[prefabData.region][prefabData.type] = new List<RoomPrefabData>();
 
                 // Add to dictionary
                 roomDictionary[prefabData.region][prefabData.type].Add(prefabData);
@@ -149,21 +210,21 @@ namespace Loppy.Level
                 }
             }
 
-            
+
             // Debug output
-            foreach (KeyValuePair<string, List<List<NodeData>>> entry in patternDictionary)
+            foreach (KeyValuePair<string, List<List<DataNode>>> entry in patternDictionary)
             {
                 string debugOutput = entry.Key;
-                foreach (List<NodeData> dataList in entry.Value)
+                foreach (List<DataNode> dataList in entry.Value)
                 {
-                    foreach (NodeData data in dataList)
+                    foreach (DataNode data in dataList)
                     {
                         debugOutput += " [" + data.name + " " + data.id + "]";
                     }
                 }
                 Debug.Log(debugOutput);
             }
-            
+
 
             yield break;
         }
@@ -191,7 +252,7 @@ namespace Loppy.Level
                 }
 
                 // Create list if it does not exist
-                if (!patternDictionary.ContainsKey(newPatternData.name)) patternDictionary[newPatternData.name] = new List<List<NodeData>>();
+                if (!patternDictionary.ContainsKey(newPatternData.name)) patternDictionary[newPatternData.name] = new List<List<DataNode>>();
 
                 // Update data with unique ids
                 assignNewIds(newPatternData.data);
@@ -201,12 +262,12 @@ namespace Loppy.Level
             }
         }
 
-        private void assignNewIds(List<NodeData> pattern)
+        private void assignNewIds(List<DataNode> pattern)
         {
-            foreach (NodeData node in pattern)
+            foreach (DataNode node in pattern)
             {
                 // Update connections to use the same new id
-                foreach (NodeData otherNode in pattern)
+                foreach (DataNode otherNode in pattern)
                 {
                     if (otherNode.connections.Contains(node.id))
                     {
@@ -218,6 +279,14 @@ namespace Loppy.Level
                 // Assign new id to current node
                 node.id = nextId;
                 nextId++;
+            }
+        }
+
+        private void destroyGeneratedRooms()
+        {
+            foreach (RoomNode node in roomGraph)
+            {
+                if (node.gameObject != null) Destroy(node.gameObject);
             }
         }
 
@@ -235,9 +304,10 @@ namespace Loppy.Level
             while (failureCount < 10)
             {
                 // Reset parse graph and generated rooms
-                parseGraph = new List<NodeData>();
-                roomGraph = new List<NodeData>();
-                generatedRooms = new List<GameObject>();
+                parseInput = new List<DataNode>();
+                parseStack = new List<DataNode>();
+                destroyGeneratedRooms();
+                roomGraph = new List<RoomNode>();
 
                 // Attempt to parse pattern
                 if (!parseLevel(level))
@@ -247,15 +317,16 @@ namespace Loppy.Level
                     continue;
                 }
 
-                /*
+
+                
                 // Debug output
                 string debugOutput = "Parse result:";
-                foreach (NodeData data in roomGraph)
+                foreach (DataNode data in parseStack)
                 {
                     debugOutput += " [" + data.type + " " + data.id + "]";
                 }
                 Debug.Log(debugOutput);
-                */
+                
 
 
 
@@ -272,16 +343,10 @@ namespace Loppy.Level
                 */
 
 
+                convertToRoomNodes();
 
-
-
-                /*
                 // Attempt to generate level from parsed pattern
-                bool generationResult = false;
-                yield return generateRoom(, Vector2.zero, EntranceDirection.LEFT, level, , (result) => generationResult = result);
-
-                // Success
-                if (generationResult)
+                if (generateRoom(findFirstRoomNode(), Vector2.zero, EntranceDirection.LEFT, level))
                 {
                     Debug.Log("Level successfully generated, attempts: " + (failureCount + 1));
                     yield break;
@@ -289,7 +354,6 @@ namespace Loppy.Level
 
                 // Failure
                 failureCount++;
-                */
 
                 yield break;
             }
@@ -304,21 +368,21 @@ namespace Loppy.Level
         private bool parseLevel(string level)
         {
             // Get random level pattern
-            parseGraph = pickRandomPatternResult(level);
-            assignNewIds(parseGraph);
+            parseInput = pickRandomPatternResult(level);
+            assignNewIds(parseInput);
 
             // Find start node and add to graph
-            foreach (NodeData node in parseGraph)
+            foreach (DataNode node in parseInput)
             {
                 if (node.type == "startNode")
                 {
-                    roomGraph.Add(node);
-                    parseGraph.Remove(node);
+                    parseStack.Add(node);
+                    parseInput.Remove(node);
                     break;
                 }
             }
 
-            while (parseGraph.Count > 0)
+            while (parseInput.Count > 0)
             {
                 if (!addConnectedNodes()) return false;
 
@@ -339,28 +403,28 @@ namespace Loppy.Level
         //     then adds them to room graph as well
         private bool addConnectedNodes()
         {
-            foreach (NodeData node in parseGraph)
+            foreach (DataNode node in parseInput)
             {
                 foreach (int connection in node.connections)
                 {
-                    NodeData connectedNode = findNodeWithId(connection, roomGraph);
+                    DataNode connectedNode = findNodeWithId(connection, parseStack);
                     if (connectedNode == null) continue;
 
                     if (node.terminal)
                     {
                         // Add directly to parse graph
-                        roomGraph.Add(node);
-                        parseGraph.Remove(node);
+                        parseStack.Add(node);
+                        parseInput.Remove(node);
                     }
                     else
                     {
                         // Get random pattern result as a NEW list of NEW nodes
-                        List<NodeData> patternResult = pickRandomPatternResult(node.type);
+                        List<DataNode> patternResult = pickRandomPatternResult(node.type);
                         assignNewIds(patternResult);
 
                         // Find start and end nodes
-                        NodeData startNode = findNodeWithType("startNode", patternResult);
-                        NodeData endNode = findNodeWithType("endNode", patternResult);
+                        DataNode startNode = findNodeWithType("startNode", patternResult);
+                        DataNode endNode = findNodeWithType("endNode", patternResult);
                         if (startNode == null) { Debug.LogError("Failed to find startNode"); return false; }
                         if (endNode == null && node.entranceCount > 1) { Debug.LogError("Failed to find endNode"); return false; }
                         if (startNode.connections.Count != 1) { Debug.LogError("startNode has more than 1 connection"); return false; }
@@ -372,11 +436,11 @@ namespace Loppy.Level
                         {
                             if (!patternResult.Remove(endNode)) { Debug.LogError("Failed to remove endNode, endNode id: " + endNode.id); return false; }
                         }
-                        parseGraph.AddRange(patternResult);
-                        parseGraph.Remove(node);
+                        parseInput.AddRange(patternResult);
+                        parseInput.Remove(node);
 
                         // Find first node
-                        NodeData firstNode = findNodeWithId(startNode.connections[0], parseGraph);
+                        DataNode firstNode = findNodeWithId(startNode.connections[0], parseInput);
                         if (firstNode == null) { Debug.LogError("Failed to find first node with id: " + startNode.connections[0]); return false; }
 
                         // Connect first node to previous node
@@ -388,10 +452,10 @@ namespace Loppy.Level
                         if (endNode != null)
                         {
                             // Find next node
-                            NodeData nextNode = findFirstConnectedNode(node.id, parseGraph);
+                            DataNode nextNode = findFirstConnectedNode(node.id, parseInput);
                             if (nextNode == null) { Debug.LogError("Failed to find next node"); return false; }
 
-                            NodeData lastNode = findNodeWithId(endNode.connections[0], parseGraph);
+                            DataNode lastNode = findNodeWithId(endNode.connections[0], parseInput);
                             if (lastNode == null) { Debug.LogError("Failed to find last node"); return false; }
 
                             // Link with last node
@@ -412,7 +476,7 @@ namespace Loppy.Level
         }
 
         // Returns a NEW list containing a random dictionary entry with given pattern as its key
-        private List<NodeData> pickRandomPatternResult(string pattern)
+        private List<DataNode> pickRandomPatternResult(string pattern)
         {
             // Check if dictionary contains pattern
             if (!patternDictionary.ContainsKey(pattern))
@@ -421,26 +485,29 @@ namespace Loppy.Level
                 return null;
             }
 
+            // Set seed for randomizer
+            //UnityEngine.Random.InitState(randomSeed);
+
             // Randomly pick pattern
             int randomIndex = UnityEngine.Random.Range(0, patternDictionary[pattern].Count);
 
-            List<NodeData> result = new List<NodeData>();
-            foreach (NodeData node in patternDictionary[pattern][randomIndex]) result.Add(new NodeData(node));
+            List<DataNode> result = new List<DataNode>();
+            foreach (DataNode node in patternDictionary[pattern][randomIndex]) result.Add(new DataNode(node));
             return result;
         }
 
-        private NodeData findNodeWithId(int id, List<NodeData> nodeDataList)
+        private DataNode findNodeWithId(int id, List<DataNode> nodeDataList)
         {
-            foreach (NodeData nodeData in nodeDataList)
+            foreach (DataNode nodeData in nodeDataList)
             {
                 if (nodeData.id == id) return nodeData;
             }
             return null;
         }
 
-        private NodeData findNodeWithType(string type, List<NodeData> nodeDataList)
+        private DataNode findNodeWithType(string type, List<DataNode> nodeDataList)
         {
-            foreach (NodeData nodeData in nodeDataList)
+            foreach (DataNode nodeData in nodeDataList)
             {
                 if (nodeData.type == type) return nodeData;
             }
@@ -448,9 +515,9 @@ namespace Loppy.Level
         }
 
         // Returns the first node in list that has the connection id
-        private NodeData findFirstConnectedNode(int id, List<NodeData> nodeDataList)
+        private DataNode findFirstConnectedNode(int id, List<DataNode> nodeDataList)
         {
-            foreach (NodeData node in nodeDataList)
+            foreach (DataNode node in nodeDataList)
             {
                 if (node.connections.Contains(id)) return node;
             }
@@ -461,16 +528,207 @@ namespace Loppy.Level
 
         #region Generation
 
-        private bool generateLevel()
+        private void convertToRoomNodes()
         {
-            return true;
+            // Convert all DataNodes to RoomNodes
+            foreach (DataNode dataNode in parseStack)
+            {
+                RoomNode newRoomNode = new RoomNode(dataNode.type, dataNode.entranceCount, new List<RoomNode>(), dataNode.id, dataNode.connections, false, null, Vector2.zero, null, new List<RoomEntrance>());
+                
+                // Mark to ignore start and end nodes
+                if (newRoomNode.type == "startNode" || newRoomNode.type == "endNode") newRoomNode.generated = true;
+                roomGraph.Add(newRoomNode);
+            }
+
+            // Connect all nodes
+            foreach (RoomNode node in roomGraph)
+            {
+                foreach (RoomNode otherNode in roomGraph)
+                {
+                    if (otherNode.connections.Contains(node.id))
+                    {
+                        otherNode.connections.Remove(node.id);
+                        node.connections.Remove(otherNode.id);
+                        otherNode.connectedNodes.Add(node);
+                        node.connectedNodes.Add(otherNode);
+                    }
+                }
+            }
         }
 
-        private bool generateRoom()
+        private RoomNode findFirstRoomNode()
         {
-            return true;
+            // Find start node and return its connection
+            foreach (RoomNode node in roomGraph)
+            {
+                if (node.type == "startNode") return node.connectedNodes[0];
+            }
+            return null;
         }
 
+        private bool generateRoom(RoomNode node, Vector2 previousRoomExitPosition, EntranceDirection entranceDirection, string region)
+        {
+            // Check for room errors
+            if (entranceDirection == EntranceDirection.NONE) { Debug.Log("Found room with no entrance direction"); return false; }
+
+            // Set seed for randomizer
+            //UnityEngine.Random.InitState(randomSeed);
+
+            // Randomly generate room
+            List<int> usedRoomIndices = new List<int>(); // List of indices for rooms we have already tried (Rooms that don't fit)
+            while (usedRoomIndices.Count < roomDictionary[region][node.type].Count)
+            {
+                // Generate new random index
+                int randomRoomIndex = UnityEngine.Random.Range(0, roomDictionary[region][node.type].Count);
+                // Check if index has already been used
+                if (usedRoomIndices.Contains(randomRoomIndex)) continue;
+
+                // Index has not been used yet, add it to used indices
+                usedRoomIndices.Add(randomRoomIndex);
+
+                // Get room prefab data
+                RoomPrefabData roomPrefabData = roomDictionary[region][node.type][randomRoomIndex];
+
+                // Get all entrances matching the exit direction of last room
+                List<RoomEntrance> validEntrances = new List<RoomEntrance>();
+                for (int i = 0; i < roomPrefabData.entrances.Count; i++)
+                {
+                    if (roomPrefabData.entrances[i].direction == entranceDirection) validEntrances.Add(roomPrefabData.entrances[i]);
+                }
+
+                // Randomly pick a valid entrance to position current room
+                List<int> usedEntranceIndices = new List<int>();
+                while (usedEntranceIndices.Count < validEntrances.Count)
+                {
+                    // Generate new random index
+                    int randomEntranceIndex = UnityEngine.Random.Range(0, validEntrances.Count);
+                    // Check if index has already been used
+                    if (usedEntranceIndices.Contains(randomEntranceIndex)) continue;
+
+                    // Index has not been used yet, add it to used indices
+                    usedEntranceIndices.Add(randomEntranceIndex);
+
+                    // Get entrance and room positioning data
+                    RoomEntrance entrance = validEntrances[randomEntranceIndex];
+                    Vector2 roomCenter = previousRoomExitPosition - entrance.position;
+
+                    // Validate room
+                    // Check if room overlaps any existing rooms
+                    if (checkRoomOverlap(roomPrefabData, roomCenter)) continue;
+
+                    // Room fits, generate it
+                    GameObject newRoomGameObject = Instantiate(roomDictionary[region][node.type][randomRoomIndex].roomPrefab, roomCenter, Quaternion.identity);
+                    node.generated = true;
+                    node.gameObject = newRoomGameObject;
+                    node.roomPrefabData = roomPrefabData;
+                    node.roomCenter = roomCenter;
+
+                    // Get open entrances (Remove used entrance and keep others)
+                    node.openEntrances = new List<RoomEntrance>(roomPrefabData.entrances);
+                    node.openEntrances.Remove(validEntrances[randomEntranceIndex]);
+
+                    // Recurse
+                    bool recursionResult = true;
+                    for (int i = 0; i < node.connectedNodes.Count; i++)
+                    {
+                        // Check that the room is not already generated
+                        if (node.connectedNodes[i].generated) continue;
+
+                        // Randomly pick an open entrance
+                        List<int> usedRecursionEntranceIndices = new List<int>();
+                        while (usedRecursionEntranceIndices.Count < node.openEntrances.Count)
+                        {
+                            // Generate new random index
+                            int randomRecursionEntranceIndex = UnityEngine.Random.Range(0, validEntrances.Count);
+                            // Check if index has already been used
+                            if (usedRecursionEntranceIndices.Contains(randomRecursionEntranceIndex)) continue;
+
+                            // Index has not been used yet, add it to used indices
+                            usedRecursionEntranceIndices.Add(randomRecursionEntranceIndex);
+
+                            // Calculate position of exit for current room
+                            Vector2 exitPosition = roomCenter + node.openEntrances[randomRecursionEntranceIndex].position;
+
+                            // Calculate entrance direction of next room
+                            EntranceDirection nextEntranceDirection = EntranceDirection.NONE;
+                            switch (node.openEntrances[randomRecursionEntranceIndex].direction)
+                            {
+                                case EntranceDirection.LEFT:
+                                    nextEntranceDirection = EntranceDirection.RIGHT;
+                                    break;
+                                case EntranceDirection.RIGHT:
+                                    nextEntranceDirection = EntranceDirection.LEFT;
+                                    break;
+                                case EntranceDirection.TOP:
+                                    nextEntranceDirection = EntranceDirection.BOTTOM;
+                                    break;
+                                case EntranceDirection.BOTTOM:
+                                    nextEntranceDirection = EntranceDirection.TOP;
+                                    break;
+                                default:
+                                    nextEntranceDirection = EntranceDirection.NONE;
+                                    break;
+                            }
+
+                            // Try to generate room at this entrance
+                            if (!generateRoom(node.connectedNodes[i], exitPosition, nextEntranceDirection, region))
+                            {
+                                // Generation at this entrance failed, try next open entrance
+                                continue;
+                            }
+
+                            // Successful, remove entrance from open entrances
+                            node.openEntrances.RemoveAt(randomRecursionEntranceIndex);
+                            break;
+                        }
+
+                        // Return false if any children fail
+                        recursionResult = false;
+                        break;
+                    }
+
+                    // All recursions successful
+                    if (recursionResult) return true;
+
+                    // Generation of connected nodes failed somehow, clean up and try next entrance
+                    node.generated = false;
+                    Destroy(node.gameObject);
+                    node.gameObject = null;
+                    node.roomPrefabData = null;
+                    node.roomCenter = Vector2.zero;
+                    node.openEntrances.Add(validEntrances[randomEntranceIndex]);
+                }
+
+                // No valid entrances, try next room
+                node.roomPrefabData = null;
+                node.openEntrances = new List<RoomEntrance>();
+            }
+
+            // No suitable rooms found
+            Debug.Log("No suitable rooms found on " + node.type);
+            return false;
+        }
+
+        // Returns true if given room (roomData and roomCenter) overlaps room stored in node or any of its children
+        private bool checkRoomOverlap(RoomPrefabData roomPrefabData, Vector2 roomCenter)
+        {
+            // Check if current node has no instantiated room
+            if (roomPrefabData == null) return false;
+
+            foreach (RoomNode otherNode in roomGraph)
+            {
+                // Check if other node has no instantiated room
+                if (!otherNode.generated || !otherNode.gameObject) return false;
+
+                // Check for overlap with current room node
+                if (Mathf.Abs(roomCenter.x - otherNode.roomCenter.x) * 2 < (roomPrefabData.size.x + otherNode.roomPrefabData.size.x) &&
+                    Mathf.Abs(roomCenter.y - otherNode.roomCenter.y) * 2 < (roomPrefabData.size.y + otherNode.roomPrefabData.size.y))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
         #endregion
 
     }

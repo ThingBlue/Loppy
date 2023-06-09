@@ -607,16 +607,19 @@ namespace Loppy.Level
                     // Check if room overlaps any existing rooms
                     if (checkRoomOverlap(randomRoom, roomCenter)) continue;
 
+                    // Get open entrances (Remove used entrance and keep others)
+                    node.openExits = new List<RoomEntrance>(randomRoom.entrances);
+                    node.openExits.Remove(randomEntrance);
+
+                    // Check if any open exits are blocked by an already existing room
+                    if (checkExitsBlocked(node.openExits, roomCenter)) continue;
+
                     // Room fits, generate it
                     GameObject newRoomGameObject = Instantiate(randomRoom.roomPrefab, roomCenter, Quaternion.identity);
                     node.generated = true;
                     node.roomGameObject = newRoomGameObject;
                     node.roomPrefabData = randomRoom;
                     node.roomCenter = roomCenter;
-
-                    // Get open entrances (Remove used entrance and keep others)
-                    node.openExits = new List<RoomEntrance>(randomRoom.entrances);
-                    node.openExits.Remove(randomEntrance);
 
                     // Recurse
                     bool childrenResult = true;
@@ -730,6 +733,54 @@ namespace Loppy.Level
             }
             return false;
         }
+
+        // Returns true f any exit is blocked
+        private bool checkExitsBlocked(List<RoomEntrance> exits, Vector2 roomCenter)
+        {
+            foreach (RoomEntrance exit in exits)
+            {
+                Vector2 checkPosition = exit.position + roomCenter;
+                switch (exit.direction)
+                {
+                    case EntranceDirection.LEFT:
+                        checkPosition.x -= 0.1f;
+                        break;
+                    case EntranceDirection.RIGHT:
+                        checkPosition.x += 0.1f;
+                        break;
+                    case EntranceDirection.TOP:
+                        checkPosition.y += 0.1f;
+                        break;
+                    case EntranceDirection.BOTTOM:
+                        checkPosition.y -= 0.1f;
+                        break;
+                    default:
+                        // Undefined exit error
+                        Debug.Log("Checking exit with undefined direction");
+                        return true;
+                }
+
+                foreach (RoomNode room in roomGraph)
+                {
+                    // Check if other node has no instantiated room
+                    if (!room.generated || !room.roomGameObject || !room.roomPrefabData) continue;
+
+                    float roomLeft = room.roomCenter.x - room.roomPrefabData.size.x / 2;
+                    float roomRight = room.roomCenter.x + room.roomPrefabData.size.x / 2;
+                    float roomTop = room.roomCenter.y + room.roomPrefabData.size.y / 2;
+                    float roomBottom = room.roomCenter.y - room.roomPrefabData.size.y / 2;
+
+                    // Check for overlap with current room node
+                    if (roomLeft <= checkPosition.x && checkPosition.x <= roomRight &&
+                        roomBottom <= checkPosition.y && checkPosition.y <= roomTop)
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
         #endregion
 
     }

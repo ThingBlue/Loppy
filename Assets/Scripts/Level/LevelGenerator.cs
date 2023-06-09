@@ -59,7 +59,7 @@ namespace Loppy.Level
     // Data for each node in the final room graph,
     //     including the generated gameObject
     [Serializable]
-    public class RoomNode
+    public class RoomNode : MonoBehaviour
     {
         public string type;
         public int entranceCount;
@@ -73,43 +73,43 @@ namespace Loppy.Level
         public bool generated = false;
         public RoomPrefabData roomPrefabData = null;
         public Vector2 roomCenter = Vector2.zero;
-        public GameObject gameObject = null;
+        public GameObject roomGameObject = null;
 
         // Temporary list of unused entrances to help with room generation
         public List<RoomEntrance> openExits;
+        public List<RoomNode> childrenNodes;
 
-        public RoomNode(string type, int entranceCount, List<RoomNode> connectedNodes, int id, List<int> connections, bool generated, RoomPrefabData roomData, Vector2 roomCenter, GameObject gameObject, List<RoomEntrance> openEntrances)
+        public RoomNode(string type, int entranceCount, int id, List<int> connections)
         {
             this.type = type;
             this.entranceCount = entranceCount;
-            this.connectedNodes = new List<RoomNode>(connectedNodes);
+            this.connectedNodes = new List<RoomNode>();
 
             this.id = id;
             this.connections = new List<int>(connections);
 
-            this.generated = generated;
-            this.roomPrefabData = roomData;
-            this.roomCenter = roomCenter;
-            this.gameObject = gameObject;
+            this.generated = false;
+            this.roomPrefabData = null;
+            this.roomCenter = Vector2.zero;
+            this.roomGameObject = null;
 
-            this.openExits = new List<RoomEntrance>(openEntrances);
+            this.openExits = new List<RoomEntrance>();
+            this.childrenNodes = new List<RoomNode>();
         }
 
-        public RoomNode(RoomNode other)
+        public void clean()
         {
-            this.type = other.type;
-            this.entranceCount = other.entranceCount;
-            this.connectedNodes = new List<RoomNode>(other.connectedNodes);
+            generated = false;
+            roomPrefabData = null;
+            roomCenter = Vector2.zero;
+            Destroy(roomGameObject);
+            roomGameObject = null;
+            openExits = new List<RoomEntrance>();
 
-            this.id = other.id;
-            this.connections = new List<int>(other.connections);
+            // Recursively destroy children nodes
+            foreach (RoomNode room in childrenNodes) room.clean();
 
-            this.generated = other.generated;
-            this.roomPrefabData = other.roomPrefabData;
-            this.roomCenter = other.roomCenter;
-            this.gameObject = other.gameObject;
-
-            this.openExits = new List<RoomEntrance>(other.openExits);
+            childrenNodes = new List<RoomNode>();
         }
     }
 
@@ -286,7 +286,7 @@ namespace Loppy.Level
         {
             foreach (RoomNode node in roomGraph)
             {
-                if (node.gameObject != null) Destroy(node.gameObject);
+                if (node.roomGameObject != null) Destroy(node.roomGameObject);
             }
         }
 
@@ -535,7 +535,7 @@ namespace Loppy.Level
             // Convert all DataNodes to RoomNodes
             foreach (DataNode dataNode in parseStack)
             {
-                RoomNode newRoomNode = new RoomNode(dataNode.type, dataNode.entranceCount, new List<RoomNode>(), dataNode.id, dataNode.connections, false, null, Vector2.zero, null, new List<RoomEntrance>());
+                RoomNode newRoomNode = new RoomNode(dataNode.type, dataNode.entranceCount, dataNode.id, dataNode.connections);
                 
                 // Mark to ignore start and end nodes
                 if (newRoomNode.type == "startNode" || newRoomNode.type == "endNode") newRoomNode.generated = true;
@@ -586,7 +586,7 @@ namespace Loppy.Level
             while (validRooms.Count > 0)
             {
                 // Get new random room prefab data
-                RoomPrefabData randomRoom = popRandom<RoomPrefabData>(validRooms);
+                RoomPrefabData randomRoom = popRandom(validRooms);
 
                 // Get all entrances matching the exit direction of last room
                 List<RoomEntrance> validEntrances = new List<RoomEntrance>();
@@ -600,7 +600,7 @@ namespace Loppy.Level
                 while (validEntrances.Count > 0)
                 {
                     // Get entrance and room positioning data
-                    RoomEntrance randomEntrance = popRandom<RoomEntrance>(validEntrances);
+                    RoomEntrance randomEntrance = popRandom(validEntrances);
                     Vector2 roomCenter = previousRoomExitPosition - randomEntrance.position;
 
                     // Validate room
@@ -610,7 +610,7 @@ namespace Loppy.Level
                     // Room fits, generate it
                     GameObject newRoomGameObject = Instantiate(randomRoom.roomPrefab, roomCenter, Quaternion.identity);
                     node.generated = true;
-                    node.gameObject = newRoomGameObject;
+                    node.roomGameObject = newRoomGameObject;
                     node.roomPrefabData = randomRoom;
                     node.roomCenter = roomCenter;
 
@@ -625,13 +625,16 @@ namespace Loppy.Level
                         // Check that the room is not already generated
                         if (node.connectedNodes[i].generated) continue;
 
+                        // Add to list of children nodes
+                        node.childrenNodes.Add(node.connectedNodes[i]);
+
                         // Randomly pick an open exit
                         bool childResult = false;
                         List<RoomEntrance> validExits = new List<RoomEntrance>(node.openExits);
                         while (validExits.Count > 0)
                         {
                             // Get random exit
-                            RoomEntrance randomExit = popRandom<RoomEntrance>(validExits);
+                            RoomEntrance randomExit = popRandom(validExits);
 
                             // Remove this exit from list of open exits
                             node.openExits.Remove(randomExit);
@@ -685,12 +688,7 @@ namespace Loppy.Level
                     }
 
                     // Generation of connected nodes failed somehow, clean up and try next entrance
-                    node.generated = false;
-                    Destroy(node.gameObject);
-                    node.gameObject = null;
-                    node.roomPrefabData = null;
-                    node.roomCenter = Vector2.zero;
-                    node.openExits.Add(randomEntrance);
+                    node.clean();
                 }
 
                 // No valid entrances, try next room
@@ -721,7 +719,7 @@ namespace Loppy.Level
             foreach (RoomNode otherNode in roomGraph)
             {
                 // Check if other node has no instantiated room
-                if (!otherNode.generated || !otherNode.gameObject || !otherNode.roomPrefabData) continue;
+                if (!otherNode.generated || !otherNode.roomGameObject || !otherNode.roomPrefabData) continue;
 
                 // Check for overlap with current room node
                 if (Mathf.Abs(roomCenter.x - otherNode.roomCenter.x) * 2 < (roomPrefabData.size.x + otherNode.roomPrefabData.size.x) &&

@@ -76,7 +76,7 @@ namespace Loppy.Level
         public GameObject gameObject = null;
 
         // Temporary list of unused entrances to help with room generation
-        public List<RoomEntrance> openEntrances;
+        public List<RoomEntrance> openExits;
 
         public RoomNode(string type, int entranceCount, List<RoomNode> connectedNodes, int id, List<int> connections, bool generated, RoomPrefabData roomData, Vector2 roomCenter, GameObject gameObject, List<RoomEntrance> openEntrances)
         {
@@ -92,7 +92,7 @@ namespace Loppy.Level
             this.roomCenter = roomCenter;
             this.gameObject = gameObject;
 
-            this.openEntrances = new List<RoomEntrance>(openEntrances);
+            this.openExits = new List<RoomEntrance>(openEntrances);
         }
 
         public RoomNode(RoomNode other)
@@ -109,7 +109,7 @@ namespace Loppy.Level
             this.roomCenter = other.roomCenter;
             this.gameObject = other.gameObject;
 
-            this.openEntrances = new List<RoomEntrance>(other.openEntrances);
+            this.openExits = new List<RoomEntrance>(other.openExits);
         }
     }
 
@@ -346,7 +346,9 @@ namespace Loppy.Level
                 convertToRoomNodes();
 
                 // Attempt to generate level from parsed pattern
-                if (generateRoom(findFirstRoomNode(), Vector2.zero, EntranceDirection.LEFT, level))
+                bool generationResult = false;
+                yield return generateRoom(findFirstRoomNode(), Vector2.zero, EntranceDirection.LEFT, level, (result) => generationResult = result);
+                if (generationResult)
                 {
                     Debug.Log("Level successfully generated, attempts: " + (failureCount + 1));
                     yield break;
@@ -566,101 +568,80 @@ namespace Loppy.Level
             return null;
         }
 
-        private bool generateRoom(RoomNode node, Vector2 previousRoomExitPosition, EntranceDirection entranceDirection, string region)
+        private IEnumerator generateRoom(RoomNode node, Vector2 previousRoomExitPosition, EntranceDirection entranceDirection, string region, Action<bool> result)
         {
             // Check for room errors
-            if (entranceDirection == EntranceDirection.NONE) { Debug.Log("Found room with no entrance direction"); return false; }
+            if (entranceDirection == EntranceDirection.NONE)
+            {
+                Debug.Log("Found room with no entrance direction");
+                result(false);
+                yield break;
+            }
 
             // Set seed for randomizer
             //UnityEngine.Random.InitState(randomSeed);
 
             // Randomly generate room
-            List<int> usedRoomIndices = new List<int>(); // List of indices for rooms we have already tried (Rooms that don't fit)
-            while (usedRoomIndices.Count < roomDictionary[region][node.type].Count)
+            List<RoomPrefabData> validRooms = new List<RoomPrefabData>(roomDictionary[region][node.type]);
+            while (validRooms.Count > 0)
             {
-                Debug.Log("room loop");
-
-                // Generate new random index
-                int randomRoomIndex = UnityEngine.Random.Range(0, roomDictionary[region][node.type].Count);
-                // Check if index has already been used
-                if (usedRoomIndices.Contains(randomRoomIndex)) continue;
-
-                // Index has not been used yet, add it to used indices
-                usedRoomIndices.Add(randomRoomIndex);
-
-                // Get room prefab data
-                RoomPrefabData roomPrefabData = roomDictionary[region][node.type][randomRoomIndex];
+                // Get new random room prefab data
+                RoomPrefabData randomRoom = popRandom<RoomPrefabData>(validRooms);
 
                 // Get all entrances matching the exit direction of last room
                 List<RoomEntrance> validEntrances = new List<RoomEntrance>();
-                for (int i = 0; i < roomPrefabData.entrances.Count; i++)
+                for (int i = 0; i < randomRoom.entrances.Count; i++)
                 {
-                    if (roomPrefabData.entrances[i].direction == entranceDirection) validEntrances.Add(roomPrefabData.entrances[i]);
+                    if (randomRoom.entrances[i].direction == entranceDirection) validEntrances.Add(randomRoom.entrances[i]);
                 }
                 if (validEntrances.Count == 0) { node.roomPrefabData = null; continue; }
 
                 // Randomly pick a valid entrance to position current room
-                List<int> usedEntranceIndices = new List<int>();
-                while (usedEntranceIndices.Count < validEntrances.Count)
+                while (validEntrances.Count > 0)
                 {
-                    Debug.Log("entrance loop");
-
-                    // Generate new random index
-                    int randomEntranceIndex = UnityEngine.Random.Range(0, validEntrances.Count);
-                    // Check if index has already been used
-                    if (usedEntranceIndices.Contains(randomEntranceIndex)) continue;
-
-                    // Index has not been used yet, add it to used indices
-                    usedEntranceIndices.Add(randomEntranceIndex);
-
                     // Get entrance and room positioning data
-                    RoomEntrance entrance = validEntrances[randomEntranceIndex];
-                    Vector2 roomCenter = previousRoomExitPosition - entrance.position;
+                    RoomEntrance randomEntrance = popRandom<RoomEntrance>(validEntrances);
+                    Vector2 roomCenter = previousRoomExitPosition - randomEntrance.position;
 
                     // Validate room
                     // Check if room overlaps any existing rooms
-                    if (checkRoomOverlap(roomPrefabData, roomCenter)) continue;
+                    if (checkRoomOverlap(randomRoom, roomCenter)) continue;
 
                     // Room fits, generate it
-                    GameObject newRoomGameObject = Instantiate(roomDictionary[region][node.type][randomRoomIndex].roomPrefab, roomCenter, Quaternion.identity);
+                    GameObject newRoomGameObject = Instantiate(randomRoom.roomPrefab, roomCenter, Quaternion.identity);
                     node.generated = true;
                     node.gameObject = newRoomGameObject;
-                    node.roomPrefabData = roomPrefabData;
+                    node.roomPrefabData = randomRoom;
                     node.roomCenter = roomCenter;
 
                     // Get open entrances (Remove used entrance and keep others)
-                    node.openEntrances = new List<RoomEntrance>(roomPrefabData.entrances);
-                    node.openEntrances.Remove(validEntrances[randomEntranceIndex]);
+                    node.openExits = new List<RoomEntrance>(randomRoom.entrances);
+                    node.openExits.Remove(randomEntrance);
 
                     // Recurse
-                    bool recursionResult = true;
+                    bool childrenResult = true;
                     for (int i = 0; i < node.connectedNodes.Count; i++)
                     {
-                        Debug.Log("recursion loop");
-
                         // Check that the room is not already generated
                         if (node.connectedNodes[i].generated) continue;
 
-                        // Randomly pick an open entrance
-                        List<int> usedRecursionEntranceIndices = new List<int>();
-                        while (usedRecursionEntranceIndices.Count < node.openEntrances.Count)
+                        // Randomly pick an open exit
+                        bool childResult = false;
+                        List<RoomEntrance> validExits = new List<RoomEntrance>(node.openExits);
+                        while (validExits.Count > 0)
                         {
-                            Debug.Log("open entrance loop");
+                            // Get random exit
+                            RoomEntrance randomExit = popRandom<RoomEntrance>(validExits);
 
-                            // Generate new random index
-                            int randomRecursionEntranceIndex = UnityEngine.Random.Range(0, validEntrances.Count);
-                            // Check if index has already been used
-                            if (usedRecursionEntranceIndices.Contains(randomRecursionEntranceIndex)) continue;
+                            // Remove this exit from list of open exits
+                            node.openExits.Remove(randomExit);
 
-                            // Index has not been used yet, add it to used indices
-                            usedRecursionEntranceIndices.Add(randomRecursionEntranceIndex);
-
-                            // Calculate position of exit for current room
-                            Vector2 exitPosition = roomCenter + node.openEntrances[randomRecursionEntranceIndex].position;
+                            // Calculate world position of exit for current room
+                            Vector2 exitPosition = roomCenter + randomExit.position;
 
                             // Calculate entrance direction of next room
                             EntranceDirection nextEntranceDirection = EntranceDirection.NONE;
-                            switch (node.openEntrances[randomRecursionEntranceIndex].direction)
+                            switch (randomExit.direction)
                             {
                                 case EntranceDirection.LEFT:
                                     nextEntranceDirection = EntranceDirection.RIGHT;
@@ -679,25 +660,29 @@ namespace Loppy.Level
                                     break;
                             }
 
-                            // Try to generate room at this entrance
-                            if (!generateRoom(node.connectedNodes[i], exitPosition, nextEntranceDirection, region))
-                            {
-                                // Generation at this entrance failed, try next open entrance
-                                continue;
-                            }
+                            yield return new WaitForSeconds(0.1f);
 
-                            // Successful, remove entrance from open entrances
-                            node.openEntrances.RemoveAt(randomRecursionEntranceIndex);
-                            break;
+                            // Try to generate room at this exit
+                            yield return generateRoom(node.connectedNodes[i], exitPosition, nextEntranceDirection, region, (result) => childResult = result);
+                            // Generation successful
+                            if (childResult) break;
+                            // Generation at this exit failed, try next open exit
+                            node.openExits.Add(randomExit);
                         }
 
+                        if (childResult) continue;
+
                         // Return false if any children fail
-                        recursionResult = false;
+                        childrenResult = false;
                         break;
                     }
 
                     // All recursions successful
-                    if (recursionResult) return true;
+                    if (childrenResult)
+                    {
+                        result(true);
+                        yield break;
+                    }
 
                     // Generation of connected nodes failed somehow, clean up and try next entrance
                     node.generated = false;
@@ -705,17 +690,26 @@ namespace Loppy.Level
                     node.gameObject = null;
                     node.roomPrefabData = null;
                     node.roomCenter = Vector2.zero;
-                    node.openEntrances.Add(validEntrances[randomEntranceIndex]);
+                    node.openExits.Add(randomEntrance);
                 }
 
                 // No valid entrances, try next room
                 node.roomPrefabData = null;
-                node.openEntrances = new List<RoomEntrance>();
+                node.openExits = new List<RoomEntrance>();
             }
 
             // No suitable rooms found
             Debug.Log("No suitable rooms found on " + node.type);
-            return false;
+            result(false);
+            yield break;
+        }
+
+        private T popRandom<T>(List<T> possibilities)
+        {
+            int randomIndex = UnityEngine.Random.Range(0, possibilities.Count);
+            T result = possibilities[randomIndex];
+            possibilities.RemoveAt(randomIndex);
+            return result;
         }
 
         // Returns true if given room (roomData and roomCenter) overlaps room stored in node or any of its children
@@ -727,7 +721,7 @@ namespace Loppy.Level
             foreach (RoomNode otherNode in roomGraph)
             {
                 // Check if other node has no instantiated room
-                if (!otherNode.generated || !otherNode.gameObject) continue;
+                if (!otherNode.generated || !otherNode.gameObject || !otherNode.roomPrefabData) continue;
 
                 // Check for overlap with current room node
                 if (Mathf.Abs(roomCenter.x - otherNode.roomCenter.x) * 2 < (roomPrefabData.size.x + otherNode.roomPrefabData.size.x) &&

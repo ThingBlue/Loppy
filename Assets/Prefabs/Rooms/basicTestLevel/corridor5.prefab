@@ -156,7 +156,7 @@ MonoBehaviour:
   - position: {x: -0.5, y: 1}
     direction: 3
   - position: {x: 0.5, y: 1}
-    direction: 4
+    direction: 3
 --- !u!1 &8030564402588343799
 GameObject:
   m_ObjectHideFlags: 0

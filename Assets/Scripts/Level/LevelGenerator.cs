@@ -578,6 +578,8 @@ namespace Loppy.Level
             List<int> usedRoomIndices = new List<int>(); // List of indices for rooms we have already tried (Rooms that don't fit)
             while (usedRoomIndices.Count < roomDictionary[region][node.type].Count)
             {
+                Debug.Log("room loop");
+
                 // Generate new random index
                 int randomRoomIndex = UnityEngine.Random.Range(0, roomDictionary[region][node.type].Count);
                 // Check if index has already been used
@@ -601,6 +603,8 @@ namespace Loppy.Level
                 List<int> usedEntranceIndices = new List<int>();
                 while (usedEntranceIndices.Count < validEntrances.Count)
                 {
+                    Debug.Log("entrance loop");
+
                     // Generate new random index
                     int randomEntranceIndex = UnityEngine.Random.Range(0, validEntrances.Count);
                     // Check if index has already been used
@@ -632,6 +636,8 @@ namespace Loppy.Level
                     bool recursionResult = true;
                     for (int i = 0; i < node.connectedNodes.Count; i++)
                     {
+                        Debug.Log("recursion loop");
+
                         // Check that the room is not already generated
                         if (node.connectedNodes[i].generated) continue;
 
@@ -639,6 +645,8 @@ namespace Loppy.Level
                         List<int> usedRecursionEntranceIndices = new List<int>();
                         while (usedRecursionEntranceIndices.Count < node.openEntrances.Count)
                         {
+                            Debug.Log("open entrance loop");
+
                             // Generate new random index
                             int randomRecursionEntranceIndex = UnityEngine.Random.Range(0, validEntrances.Count);
                             // Check if index has already been used
@@ -719,7 +727,7 @@ namespace Loppy.Level
             foreach (RoomNode otherNode in roomGraph)
             {
                 // Check if other node has no instantiated room
-                if (!otherNode.generated || !otherNode.gameObject) return false;
+                if (!otherNode.generated || !otherNode.gameObject) continue;
 
                 // Check for overlap with current room node
                 if (Mathf.Abs(roomCenter.x - otherNode.roomCenter.x) * 2 < (roomPrefabData.size.x + otherNode.roomPrefabData.size.x) &&

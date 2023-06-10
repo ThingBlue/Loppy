@@ -63,7 +63,7 @@ namespace Loppy.Level
     {
         public string type;
         public int entranceCount;
-        public List<RoomNode> connectedNodes;
+        public List<RoomNode> connectedRooms;
 
         // Imported from DataNode
         public int id;
@@ -83,7 +83,7 @@ namespace Loppy.Level
         {
             this.type = type;
             this.entranceCount = entranceCount;
-            this.connectedNodes = new List<RoomNode>();
+            this.connectedRooms = new List<RoomNode>();
 
             this.id = id;
             this.connections = new List<int>(connections);
@@ -536,8 +536,8 @@ namespace Loppy.Level
                     {
                         otherNode.connections.Remove(node.id);
                         node.connections.Remove(otherNode.id);
-                        otherNode.connectedNodes.Add(node);
-                        node.connectedNodes.Add(otherNode);
+                        otherNode.connectedRooms.Add(node);
+                        node.connectedRooms.Add(otherNode);
                     }
                 }
             }
@@ -548,7 +548,7 @@ namespace Loppy.Level
             // Find start node and return its connection
             foreach (RoomNode node in roomGraph)
             {
-                if (node.type == "startNode") return node.connectedNodes[0];
+                if (node.type == "startNode") return node.connectedRooms[0];
             }
             return null;
         }
@@ -599,10 +599,14 @@ namespace Loppy.Level
                     node.openExits.Remove(randomEntrance);
 
                     // Check if any open exits are blocked by an already existing room
-                    if (checkExitsBlocked(node.openExits, roomCenter)) continue;
+                    if (checkExitsBlocked(node)) continue;
 
                     // Check if new room will block an open exit of any other room
                     if (checkBlockingOtherExits(node)) continue;
+
+                    // Check if room is connected to every generated connected room that it should be connected to
+                    //     (FOR GENERATION OF LOOPS)
+                    if (!checkConnected(node)) continue;
 
                     // Room fits, generate it
                     GameObject newRoomGameObject = Instantiate(randomRoom.roomPrefab, roomCenter, Quaternion.identity);
@@ -611,13 +615,14 @@ namespace Loppy.Level
 
                     // Recurse
                     bool childrenResult = true;
-                    for (int i = 0; i < node.connectedNodes.Count; i++)
+                    for (int i = 0; i < node.connectedRooms.Count; i++)
                     {
                         // Check that the room is not already generated
-                        if (node.connectedNodes[i].generated) continue;
+                        //     (FOR GENERATION OF LOOPS)
+                        if (node.connectedRooms[i].generated) continue;
 
                         // Add to list of children nodes
-                        node.childrenNodes.Add(node.connectedNodes[i]);
+                        node.childrenNodes.Add(node.connectedRooms[i]);
 
                         // Randomly pick an open exit
                         bool childResult = false;
@@ -654,10 +659,10 @@ namespace Loppy.Level
                                     break;
                             }
 
-                            yield return new WaitForSeconds(0.1f);
+                            //yield return new WaitForSeconds(0.0001f);
 
                             // Try to generate room at this exit
-                            yield return generateRoom(node.connectedNodes[i], exitPosition, nextEntranceDirection, region, (result) => childResult = result);
+                            yield return generateRoom(node.connectedRooms[i], exitPosition, nextEntranceDirection, region, (result) => childResult = result);
                             // Generation successful
                             if (childResult) break;
                             // Generation at this exit failed, try next open exit
@@ -688,7 +693,7 @@ namespace Loppy.Level
             }
 
             // No suitable rooms found
-            Debug.Log("No suitable rooms found on " + node.type);
+            //Debug.Log("No suitable rooms found on " + node.type);
             result(false);
             yield break;
         }
@@ -723,11 +728,12 @@ namespace Loppy.Level
         }
 
         // Returns true if any exit is blocked
-        private bool checkExitsBlocked(List<RoomEntrance> exits, Vector2 roomCenter)
+        private bool checkExitsBlocked(RoomNode room)
         {
+            List<RoomEntrance> exits = room.openExits;
             foreach (RoomEntrance exit in exits)
             {
-                Vector2 checkPosition = exit.position + roomCenter;
+                Vector2 checkPosition = exit.position + room.roomCenter;
                 switch (exit.direction)
                 {
                     case EntranceDirection.LEFT:
@@ -748,19 +754,22 @@ namespace Loppy.Level
                         return true;
                 }
 
-                foreach (RoomNode room in roomGraph)
+                foreach (RoomNode otherRoom in roomGraph)
                 {
                     // Check if other node has no instantiated room
-                    if (!room.generated || !room.roomGameObject || !room.roomPrefabData) continue;
+                    if (!otherRoom.generated || !otherRoom.roomGameObject || !otherRoom.roomPrefabData) continue;
 
-                    float roomLeft = room.roomCenter.x - room.roomPrefabData.size.x / 2;
-                    float roomRight = room.roomCenter.x + room.roomPrefabData.size.x / 2;
-                    float roomTop = room.roomCenter.y + room.roomPrefabData.size.y / 2;
-                    float roomBottom = room.roomCenter.y - room.roomPrefabData.size.y / 2;
+                    // Check if the room should be connected anyways
+                    if (otherRoom.connectedRooms.Contains(room)) continue;
+
+                    float otherRoomLeft = otherRoom.roomCenter.x - otherRoom.roomPrefabData.size.x / 2;
+                    float otherRoomRight = otherRoom.roomCenter.x + otherRoom.roomPrefabData.size.x / 2;
+                    float otherRoomTop = otherRoom.roomCenter.y + otherRoom.roomPrefabData.size.y / 2;
+                    float otherRoomBottom = otherRoom.roomCenter.y - otherRoom.roomPrefabData.size.y / 2;
 
                     // Check for overlap with current room node
-                    if (roomLeft <= checkPosition.x && checkPosition.x <= roomRight &&
-                        roomBottom <= checkPosition.y && checkPosition.y <= roomTop)
+                    if (otherRoomLeft <= checkPosition.x && checkPosition.x <= otherRoomRight &&
+                        otherRoomBottom <= checkPosition.y && checkPosition.y <= otherRoomTop)
                     {
                         return true;
                     }
@@ -783,7 +792,7 @@ namespace Loppy.Level
                 if (!otherRoom.generated || !otherRoom.roomGameObject || !otherRoom.roomPrefabData) continue;
 
                 // Check if other room should be connected to current room anyways
-                if (otherRoom.connectedNodes.Contains(room)) continue;
+                if (otherRoom.connectedRooms.Contains(room)) continue;
 
                 //if (otherRoom.type == "basicTestJunction") Debug.Log("JUNCTION WITH " + otherRoom.openExits.Count + " OPEN EXITS");
 
@@ -819,6 +828,35 @@ namespace Loppy.Level
                 }
             }
             return false;
+        }
+
+        private bool checkConnected(RoomNode room)
+        {
+            if (!room.roomPrefabData) return false;
+
+            foreach (RoomNode connectedRoom in room.connectedRooms)
+            {
+                if (!connectedRoom.generated || !connectedRoom.roomPrefabData) continue;
+
+                // Check if any entrances match
+                bool isConnected = false;
+                foreach (RoomEntrance entrance in room.roomPrefabData.entrances)
+                {
+                    foreach (RoomEntrance connectedEntrance in connectedRoom.roomPrefabData.entrances)
+                    {
+                        if (entrance.position + room.roomCenter == connectedEntrance.position + connectedRoom.roomCenter)
+                        {
+                            isConnected = true;
+                            break;
+                        }
+                    }
+                    if (isConnected) break;
+                }
+                if (!isConnected) return false;
+            }
+
+            // All rooms connected
+            return true;
         }
 
         public void resetRoom(RoomNode room)

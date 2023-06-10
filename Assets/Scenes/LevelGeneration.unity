@@ -392,3 +392,70 @@ MonoBehaviour:
   m_RequiresDepthTexture: 0
   m_RequiresColorTexture: 0
   m_Version: 2
+--- !u!1 &1737311852
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1737311854}
+  - component: {fileID: 1737311853}
+  m_Layer: 0
+  m_Name: LevelGenerator (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!114 &1737311853
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1737311852}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b04c60d193344e24f8290a79a1cc3424, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  editorDataPath: C:\Users\ThingBlue\Documents\LoppyLevelPatterns
+  roomPrefabs:
+  - {fileID: 5920931384760467256, guid: e4c4cd6e13a1d6a4383462bf0787c1fe, type: 3}
+  - {fileID: 9170282334753474944, guid: 3b0e866733c59b04ca2e1a39450ced7a, type: 3}
+  - {fileID: 1545915187575959443, guid: 9e7f54032ce3cc94da6089607c565b02, type: 3}
+  - {fileID: 1545915187575959443, guid: 6b016081da566744786d673ee499b45c, type: 3}
+  - {fileID: 5211390174303199085, guid: fc9a9f10b765d2843bb57a6520602147, type: 3}
+  - {fileID: 1545915187575959443, guid: a653a51c61246d04e8a822266b490ed7, type: 3}
+  - {fileID: 4942241973497353112, guid: 1029c546051097a45b51da231f68b2f3, type: 3}
+  - {fileID: 5139249586478869005, guid: ba0d9fd9ad10c0f4da3fc4c1eb9743b9, type: 3}
+  - {fileID: 9170282334753474944, guid: 03c30d1989e0f6b4582eb641bb931232, type: 3}
+  - {fileID: 1545915187575959443, guid: fc841dcec68006f41b8f0b4122c35a52, type: 3}
+  - {fileID: 1545915187575959443, guid: a653a51c61246d04e8a822266b490ed7, type: 3}
+  - {fileID: 1545915187575959443, guid: 596f264f50c465143822ab735d1ec428, type: 3}
+  - {fileID: 1545915187575959443, guid: 7e49dd4771d993f4a9298cc525a7234e, type: 3}
+  - {fileID: 1545915187575959443, guid: 711cdc742f8b92547bec26d57bcd1a11, type: 3}
+  - {fileID: 5139249586478869005, guid: ba0d9fd9ad10c0f4da3fc4c1eb9743b9, type: 3}
+  - {fileID: 5139249586478869005, guid: ba0d9fd9ad10c0f4da3fc4c1eb9743b9, type: 3}
+  - {fileID: 5139249586478869005, guid: ba0d9fd9ad10c0f4da3fc4c1eb9743b9, type: 3}
+  - {fileID: 5139249586478869005, guid: ba0d9fd9ad10c0f4da3fc4c1eb9743b9, type: 3}
+  - {fileID: 5139249586478869005, guid: ba0d9fd9ad10c0f4da3fc4c1eb9743b9, type: 3}
+  randomSeed: 0
+  nextId: 0
+--- !u!4 &1737311854
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1737311852}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 3
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

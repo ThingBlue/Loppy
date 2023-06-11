@@ -153,6 +153,8 @@ namespace Loppy.Level
             }
         }
 
+        #region Initialization
+
         private IEnumerator initializeRooms()
         {
             foreach (GameObject roomPrefab in roomPrefabs)
@@ -247,6 +249,8 @@ namespace Loppy.Level
             }
         }
 
+        #endregion
+
         private void assignNewIds(List<DataNode> pattern)
         {
             foreach (DataNode node in pattern)
@@ -333,14 +337,16 @@ namespace Loppy.Level
                 // Attempt to generate level from parsed pattern
                 bool generationResult = false;
                 yield return generateRoom(findFirstRoomNode(), Vector2.zero, EntranceDirection.LEFT, level, (result) => generationResult = result);
-                if (generationResult)
+                if (!generationResult)
                 {
-                    Debug.Log("Level successfully generated, attempts: " + (failureCount + 1));
-                    yield break;
+                    // Failure
+                    failureCount++;
+                    continue;
                 }
 
-                // Failure
-                failureCount++;
+                // Success
+                createRoomGameObjects();
+                Debug.Log("Level successfully generated, attempts: " + (failureCount + 1));
 
                 yield break;
             }
@@ -609,9 +615,7 @@ namespace Loppy.Level
                     if (!checkConnected(node)) continue;
 
                     // Room fits, generate it
-                    GameObject newRoomGameObject = Instantiate(randomRoom.roomPrefab, roomCenter, Quaternion.identity);
                     node.generated = true;
-                    node.roomGameObject = newRoomGameObject;
 
                     // Recurse
                     bool childrenResult = true;
@@ -715,7 +719,7 @@ namespace Loppy.Level
             foreach (RoomNode otherRoom in roomGraph)
             {
                 // Check if other node has no instantiated room
-                if (!otherRoom.generated || !otherRoom.roomGameObject || !otherRoom.roomPrefabData) continue;
+                if (!otherRoom.generated || !otherRoom.roomPrefabData) continue;
 
                 // Check for overlap with current room node
                 if (Mathf.Abs(roomCenter.x - otherRoom.roomCenter.x) * 2 < (roomPrefabData.size.x + otherRoom.roomPrefabData.size.x) &&
@@ -757,7 +761,7 @@ namespace Loppy.Level
                 foreach (RoomNode otherRoom in roomGraph)
                 {
                     // Check if other node has no instantiated room
-                    if (!otherRoom.generated || !otherRoom.roomGameObject || !otherRoom.roomPrefabData) continue;
+                    if (!otherRoom.generated || !otherRoom.roomPrefabData) continue;
 
                     // Check if the room should be connected anyways
                     if (otherRoom.connectedRooms.Contains(room)) continue;
@@ -789,7 +793,7 @@ namespace Loppy.Level
             foreach (RoomNode otherRoom in roomGraph)
             {
                 // Check if other node has no instantiated room
-                if (!otherRoom.generated || !otherRoom.roomGameObject || !otherRoom.roomPrefabData) continue;
+                if (!otherRoom.generated || !otherRoom.roomPrefabData) continue;
 
                 // Check if other room should be connected to current room anyways
                 if (otherRoom.connectedRooms.Contains(room)) continue;
@@ -862,14 +866,26 @@ namespace Loppy.Level
         public void resetRoom(RoomNode room)
         {
             room.generated = false;
-            Destroy(room.roomGameObject);
-            room.roomGameObject = null;
             room.openExits = new List<RoomEntrance>();
 
             // Recursively destroy children nodes
             foreach (RoomNode childRoom in room.childrenNodes) resetRoom(childRoom);
 
             room.childrenNodes = new List<RoomNode>();
+        }
+
+        private void createRoomGameObjects()
+        {
+            foreach (RoomNode room in roomGraph)
+            {
+                if (room.type == "startNode" || room.type == "endNode") continue;
+
+                if (!room.roomPrefabData) Debug.Log("NO ROOM PREFAB DATA");
+                if (!room.roomPrefabData.roomPrefab) Debug.Log("NO ROOM PREFAB OBJECT");
+                // Room fits, generate it
+                GameObject newRoomGameObject = Instantiate(room.roomPrefabData.roomPrefab, room.roomCenter, Quaternion.identity);
+                room.roomGameObject = newRoomGameObject;
+            }
         }
 
         #endregion

@@ -98,13 +98,12 @@ namespace Loppy.Level
 
         // Parsing
         public bool visited = false;
-        public bool generated = false;
         public RoomPrefabData roomPrefabData = null;
         public Vector2 roomCenter = Vector2.zero;
         public GameObject roomGameObject = null;
 
         // Decision tree
-        public DecisionType decisionType = DecisionType.NONE;
+        //public DecisionType decisionType = DecisionType.NONE;
         public int parentId;
         public RoomEntrance parentExit = null;
         public RoomEntrance entrance = null;
@@ -124,12 +123,11 @@ namespace Loppy.Level
             this.terminal = terminal;
 
             this.visited = false;
-            this.generated = false;
             this.roomPrefabData = null;
             this.roomCenter = Vector2.zero;
             this.roomGameObject = null;
 
-            this.decisionType = DecisionType.NONE;
+            //this.decisionType = DecisionType.NONE;
             this.parentId = 0;
             this.parentExit = null;
             this.entrance = null;
@@ -147,12 +145,11 @@ namespace Loppy.Level
             this.terminal = other.terminal;
 
             this.visited = other.visited;
-            this.generated = other.generated;
             this.roomPrefabData = other.roomPrefabData;
             this.roomCenter = other.roomCenter;
             this.roomGameObject = null;
 
-            this.decisionType = other.decisionType;
+            //this.decisionType = other.decisionType;
             this.parentId = other.parentId;
             this.parentExit = other.parentExit == null ? null : new RoomEntrance(other.parentExit);
             this.entrance = other.entrance == null ? null : new RoomEntrance(other.entrance);

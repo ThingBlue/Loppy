@@ -15,7 +15,8 @@ namespace Loppy.Level
         #region Inspector members
 
         public string editorDataPath;
-        public uint maxConcurrentCoroutines;
+        public uint maxPatternParseCoroutines;
+        public uint maxRoomParseCoroutines;
         //public uint maxParseQueueCount;
         public List<GameObject> roomPrefabs;
 
@@ -30,7 +31,6 @@ namespace Loppy.Level
 
         private Queue<List<RoomNode>> patternParseQueue;
         private uint runningPatternParseCoroutines = 0;
-        private List<List<RoomNode>> patternParseResults;
 
         private Queue<List<RoomNode>> roomParseQueue;
         private uint runningRoomParseCoroutines = 0;
@@ -51,7 +51,6 @@ namespace Loppy.Level
             roomDictionary = new Dictionary<string, List<RoomPrefabData>>();
             patternDictionary = new Dictionary<string, List<List<RoomNode>>>();
             patternParseQueue = new Queue<List<RoomNode>>();
-            patternParseResults = new List<List<RoomNode>>();
             roomParseQueue = new Queue<List<RoomNode>>();
             roomGraph = new List<RoomNode>();
 
@@ -186,14 +185,26 @@ namespace Loppy.Level
             }
 
             // Reset parse graph and generated rooms
-            destroyGeneratedRooms();
+            destroyGeneratedRooms(roomGraph);
 
             // Initialize room graph
             roomGraph = pickRandomPatternResult(level);
 
             // Parse patterns
+            StartCoroutine(startPatternParse());
+
+            // Generate rooms
+            StartCoroutine(startRoomParse());
+
+            yield break;
+        }
+
+        #region Pattern parsing
+
+        private IEnumerator startPatternParse()
+        {
             patternParseQueue.Clear();
-            patternParseResults.Clear();
+            roomParseQueue.Clear();
             patternParseQueue.Enqueue(roomGraph);
             while (patternParseQueue.Count > 0 || runningPatternParseCoroutines > 0)
             {
@@ -201,10 +212,15 @@ namespace Loppy.Level
                 runningPatternParseCoroutines++;
                 StartCoroutine(parsePatterns(cloneToParse));
 
-                yield return new WaitUntil(() => patternParseQueue.Count > 0 || runningPatternParseCoroutines == 0);
+                if (patternParseQueue.Count == 0 ||
+                    runningPatternParseCoroutines >= maxPatternParseCoroutines)
+                {
+                    yield return new WaitUntil(() => (patternParseQueue.Count > 0 && runningPatternParseCoroutines < maxPatternParseCoroutines) ||
+                                                     runningPatternParseCoroutines == 0);
+                }
             }
 
-            foreach (List<RoomNode> patternParseResultClone in patternParseResults)
+            foreach (List<RoomNode> patternParseResultClone in roomParseQueue)
             {
                 string patternDebugString = "Clone: ";
                 foreach (RoomNode node in patternParseResultClone)
@@ -213,36 +229,8 @@ namespace Loppy.Level
                 }
                 Debug.Log(patternDebugString);
             }
-            Debug.Log("Total patterns: " + patternParseResults.Count);
-
-            /*
-            // Enqueue start state
-            parseQueue.Clear();
-            parseQueue.Enqueue(roomGraph);
-
-            // Start parsing
-            while (!success)
-            {
-                // Wait for enqueue if empty
-                if (parseQueue.Count == 0 || runningCoroutines >= maxConcurrentCoroutines)
-                {
-                    yield return new WaitUntil(() => parseQueue.Count > 0 && runningCoroutines < maxConcurrentCoroutines);
-                }
-
-                // Parse next clone
-                List<RoomNode> clone = parseQueue.Dequeue();
-                runningCoroutines++;
-                StartCoroutine(parseGraph(clone, parseSuccessCallback));
-            }
-
-            */
-
-            // Clean up
-            roomParseQueue.Clear();
-            yield break;
+            Debug.Log("Total patterns: " + roomParseQueue.Count);
         }
-
-        #region Pattern parsing
 
         private IEnumerator parsePatterns(List<RoomNode> graph)
         {
@@ -250,7 +238,6 @@ namespace Loppy.Level
             RoomNode patternNode = null;
             Queue<RoomNode> nodesToVisit = new Queue<RoomNode>();
             nodesToVisit.Enqueue(findRoomByType("startNode", graph));
-            //nodesToVisit.Enqueue(findRoomById(startId, graph));
             while (nodesToVisit.Count > 0)
             {
                 RoomNode node = nodesToVisit.Dequeue();
@@ -280,7 +267,8 @@ namespace Loppy.Level
             // Check if all nodes are terminal
             if (patternNode == null)
             {
-                patternParseResults.Add(graph);
+                foreach (RoomNode node in graph) node.visited = node.type == "startNode";
+                roomParseQueue.Enqueue(graph);
                 runningPatternParseCoroutines--;
                 yield break;
             }
@@ -298,64 +286,9 @@ namespace Loppy.Level
                 }
 
                 // Replace pattern with new pattern
-                List<RoomNode> patternResult = new List<RoomNode>();
-                foreach (RoomNode patternResultNode in patternDictionary[patternNode.type][i]) patternResult.Add(new RoomNode(patternResultNode));
-                assignNewIds(patternResult);
-
-                // Find start and end nodes
-                RoomNode startNode = findRoomByType("startNode", patternResult);
-                RoomNode endNode = findRoomByType("endNode", patternResult);
-
-                // Remove nonterminal node and replace it with its result in parse graph
-                patternResult.Remove(startNode);
-                if (endNode != null) patternResult.Remove(endNode);
-                clone.AddRange(patternResult);
-                removeById(patternNode.id, clone);
-
-                // Find first, last, next, and previous nodes
-                RoomNode firstNode = null;
-                RoomNode previousNode = null;
-                RoomNode lastNode = null;
-                RoomNode nextNode = null;
-                foreach (RoomNode node in clone)
-                {
-                    if (node.id == startNode.connections[0]) firstNode = node;
-                    if (node.id == patternNode.parentId) previousNode = node;
-                    if (endNode != null)
-                    {
-                        if (node.id == endNode.connections[0]) lastNode = node;
-                        if (node.parentId == patternNode.id) nextNode = node;
-                    }
-                }
-
-                // Connect first node to previous node
-                previousNode.connections.Add(firstNode.id);
-                firstNode.connections.Add(previousNode.id);
-                previousNode.connections.Remove(patternNode.id);
-                // Remove start node from first node
-                firstNode.connections.Remove(startNode.id);
-
-                // Connect last node to next node if it exists
-                if (endNode != null)
-                {
-                    // Link with last node
-                    lastNode.connections.Add(nextNode.id);
-                    nextNode.connections.Add(lastNode.id);
-                    nextNode.connections.Remove(patternNode.id);
-                    // Remove end node from last node
-                    lastNode.connections.Remove(endNode.id);
-
-                    // Clean up
-                    endNode.Dispose();
-                }
-
-                // Clean up
-                startNode.Dispose();
-                patternResult.Clear();
+                replacePattern(patternNode, i, clone);
 
                 // Push clone to queue
-                //runningPatternParseCoroutines++;
-                //StartCoroutine(parsePatterns(clone));
                 patternParseQueue.Enqueue(clone);
             }
 
@@ -367,17 +300,210 @@ namespace Loppy.Level
             yield break;
         }
 
+        private void replacePattern(RoomNode patternNode, int resultIndex, List<RoomNode> graph)
+        {
+            // Replace pattern with new pattern
+            List<RoomNode> patternResult = new List<RoomNode>();
+            foreach (RoomNode patternResultNode in patternDictionary[patternNode.type][resultIndex]) patternResult.Add(new RoomNode(patternResultNode));
+            assignNewIds(patternResult);
+
+            // Find start and end nodes
+            RoomNode startNode = findRoomByType("startNode", patternResult);
+            RoomNode endNode = findRoomByType("endNode", patternResult);
+
+            // Remove nonterminal node and replace it with its result in parse graph
+            patternResult.Remove(startNode);
+            if (endNode != null) patternResult.Remove(endNode);
+            graph.AddRange(patternResult);
+            removeById(patternNode.id, graph);
+
+            // Find first, last, next, and previous nodes
+            RoomNode firstNode = null;
+            RoomNode previousNode = null;
+            RoomNode lastNode = null;
+            RoomNode nextNode = null;
+            foreach (RoomNode node in graph)
+            {
+                if (node.id == startNode.connections[0]) firstNode = node;
+                if (node.id == patternNode.parentId) previousNode = node;
+                if (endNode != null)
+                {
+                    if (node.id == endNode.connections[0]) lastNode = node;
+                    if (node.parentId == patternNode.id) nextNode = node;
+                }
+            }
+
+            // Connect first node to previous node
+            previousNode.connections.Add(firstNode.id);
+            firstNode.connections.Add(previousNode.id);
+            previousNode.connections.Remove(patternNode.id);
+            // Remove start node from first node
+            firstNode.connections.Remove(startNode.id);
+
+            // Connect last node to next node if it exists
+            if (endNode != null)
+            {
+                // Link with last node
+                lastNode.connections.Add(nextNode.id);
+                nextNode.connections.Add(lastNode.id);
+                nextNode.connections.Remove(patternNode.id);
+                // Remove end node from last node
+                lastNode.connections.Remove(endNode.id);
+
+                // Clean up
+                endNode.Dispose();
+            }
+
+            // Clean up
+            startNode.Dispose();
+            patternResult.Clear();
+        }
+
         #endregion
 
         #region Room graph parsing
 
-        private IEnumerator parseGraph(List<RoomNode> graph, Action<List<RoomNode>> successCallback)
+        private IEnumerator startRoomParse()
         {
+            // Wait until pattern parse yields enough results to begin new coroutine
+            if (roomParseQueue.Count == 0) yield return new WaitUntil(() => roomParseQueue.Count > 0);
+
+            Debug.Log("Started room parsing");
+
+            // Start parse
+            while (roomParseQueue.Count > 0 || runningRoomParseCoroutines > 0)
+            {
+                List<RoomNode> cloneToParse = roomParseQueue.Dequeue();
+                RoomNode startNode = findRoomByType("startNode", cloneToParse);
+                startNode.visited = true;
+                RoomNode firstNode = findRoomById(startNode.connections[0], cloneToParse);
+                firstNode.parentExit = new RoomEntrance(Vector2.zero, EntranceDirection.NONE);
+                runningRoomParseCoroutines++;
+                StartCoroutine(parseRoom(firstNode, cloneToParse, (result) => roomParseSuccessCallback(cloneToParse, result)));
+
+                if (roomParseQueue.Count == 0 ||
+                    runningRoomParseCoroutines >= maxRoomParseCoroutines)
+                {
+                    yield return new WaitUntil(() => (roomParseQueue.Count > 0 && runningRoomParseCoroutines < maxRoomParseCoroutines) ||
+                                                     runningRoomParseCoroutines == 0);
+                }
+            }
+        }
+
+        private IEnumerator parseRoom(RoomNode node, List<RoomNode> graph, Action<bool> result)
+        {
+            if (node.type == "endNode")
+            {
+                result(true);
+                yield break;
+            }
+
+            List<RoomPrefabData> validRooms = new List<RoomPrefabData>(roomDictionary[node.type]);
+            // Randomly generate room
+            while (validRooms.Count > 0)
+            {
+                // Get new random room prefab data
+                RoomPrefabData randomRoom = popRandom(validRooms);
+                node.roomPrefabData = randomRoom;
+
+                // Get all entrances matching the exit direction of last room
+                List<RoomEntrance> validEntrances = new List<RoomEntrance>();
+                EntranceDirection entranceDirection = getOppositeEntranceDirection(node.parentExit.direction);
+                // No specified direction, can use any entrance
+                if (entranceDirection == EntranceDirection.NONE) validEntrances = new List<RoomEntrance>(randomRoom.entrances);
+                // Only find entrances of specified direction
+                else
+                {
+                    for (int i = 0; i < randomRoom.entrances.Count; i++)
+                    {
+                        if (randomRoom.entrances[i].direction == entranceDirection) validEntrances.Add(randomRoom.entrances[i]);
+                    }
+                }
+                // Verify that there exists at least 1 valid entrance
+                if (validEntrances.Count == 0) { node.roomPrefabData = null; continue; }
+
+                // Randomly pick a valid entrance to position current room
+                while (validEntrances.Count > 0)
+                {
+                    // Get entrance and room positioning data
+                    RoomEntrance randomEntrance = popRandom(validEntrances);
+                    node.roomCenter = node.parentExit.position - randomEntrance.position;
+
+                    // Get open entrances (Remove used entrance and keep others)
+                    node.openExits = new List<RoomEntrance>(randomRoom.entrances);
+                    node.openExits.Remove(randomEntrance);
+
+                    // Validate room
+                    if (!validateRoom(node, graph)) continue;
+
+                    // Room fits, mark it as visited
+                    node.visited = true;
+
+                    // Recurse
+                    bool childrenResult = true;
+                    for (int i = 0; i < node.connections.Count; i++)
+                    {
+                        RoomNode connectedRoom = findRoomById(node.connections[i], graph);
+
+                        // Check that the room is not already generated
+                        //     (FOR GENERATION OF LOOPS)
+                        if (connectedRoom.visited) continue;
+
+                        // Randomly pick an open exit
+                        bool childResult = false;
+                        List<RoomEntrance> validExits = new List<RoomEntrance>(node.openExits);
+                        while (validExits.Count > 0)
+                        {
+                            // Get random exit
+                            RoomEntrance randomExit = popRandom(validExits);
+
+                            // Remove this exit from list of open exits of current node
+                            node.openExits.Remove(randomExit);
+
+                            // Calculate world position of exit for current room
+                            connectedRoom.parentExit = new RoomEntrance(node.roomCenter + randomExit.position, randomExit.direction);
+
+                            // Try to generate room at this exit
+                            yield return parseRoom(connectedRoom, graph, (result) => childResult = result);
+                            // Generation successful
+                            if (childResult) break;
+                            // Generation at this exit failed, try next open exit
+                            node.openExits.Add(randomExit);
+                        }
+
+                        if (childResult) continue;
+
+                        // Return false if any children fail
+                        childrenResult = false;
+                        break;
+                    }
+
+                    // All recursions successful
+                    if (childrenResult)
+                    {
+                        result(true);
+                        yield break;
+                    }
+
+                    // Generation of connected nodes failed somehow, clean up and try next entrance
+                    resetRoom(node, graph);
+                }
+
+                // No valid entrances, try next room
+                node.roomPrefabData = null;
+                node.openExits = new List<RoomEntrance>();
+            }
+
+            // No suitable rooms found
+            //Debug.Log("No suitable rooms found on " + node.type);
+            result(false);
             yield break;
         }
 
-        private void parseSuccessCallback(List<RoomNode> parseResult)
+        private void roomParseSuccessCallback(List<RoomNode> parseResult, bool result)
         {
+            runningRoomParseCoroutines--;
+            if (!result) return;
             StopAllCoroutines();
             roomGraph = parseResult;
             createRoomGameObjects();
@@ -441,6 +567,19 @@ namespace Loppy.Level
             return null;
         }
 
+        private RoomNode findFirstRoomNode(List<RoomNode> graph)
+        {
+            // Find start node and return its connection
+            foreach (RoomNode node in roomGraph)
+            {
+                if (node.type == "startNode")
+                {
+                    return findRoomById(node.connections[0], graph);
+                }
+            }
+            return null;
+        }
+
         private void removeById(int id, List<RoomNode> rooms)
         {
             List<RoomNode> roomsToRemove = new List<RoomNode>();
@@ -482,9 +621,218 @@ namespace Loppy.Level
             return newRoomGraph;
         }
 
-        private void destroyGeneratedRooms()
+        private T popRandom<T>(List<T> possibilities)
         {
-            foreach (RoomNode node in roomGraph)
+            int randomIndex = UnityEngine.Random.Range(0, possibilities.Count);
+            T result = possibilities[randomIndex];
+            possibilities.RemoveAt(randomIndex);
+            return result;
+        }
+
+        private EntranceDirection getOppositeEntranceDirection(EntranceDirection direction)
+        {
+            switch (direction)
+            {
+                case EntranceDirection.LEFT:
+                    return EntranceDirection.RIGHT;
+                case EntranceDirection.RIGHT:
+                    return EntranceDirection.LEFT;
+                case EntranceDirection.TOP:
+                    return EntranceDirection.BOTTOM;
+                case EntranceDirection.BOTTOM:
+                    return EntranceDirection.TOP;
+                default:
+                    return EntranceDirection.NONE;
+            }
+        }
+
+        #region Room validation
+
+        private bool validateRoom(RoomNode node, List<RoomNode> graph)
+        {
+            // Check if room overlaps any existing rooms
+            if (checkRoomOverlap(node, graph)) return false;
+
+            // Check if any open exits are blocked by an already existing room
+            if (checkExitsBlocked(node, graph)) return false;
+
+            // Check if new room will block an open exit of any other room
+            if (checkBlockingOtherExits(node, graph)) return false;
+
+            // Check if room is connected to every generated connected room that it should be connected to
+            //     (FOR GENERATION OF LOOPS)
+            if (!checkConnected(node, graph)) return false;
+            return true;
+        }
+
+        // Returns true if given room (roomData and roomCenter) overlaps room stored in node or any of its children
+        private bool checkRoomOverlap(RoomNode node, List<RoomNode> graph)
+        {
+            foreach (RoomNode otherRoom in graph)
+            {
+                // Check if other node has no instantiated room
+                if (!otherRoom.visited || !otherRoom.roomPrefabData) continue;
+
+                // Check for overlap with current room node
+                if (Mathf.Abs(node.roomCenter.x - otherRoom.roomCenter.x) * 2 < (node.roomPrefabData.size.x + otherRoom.roomPrefabData.size.x) &&
+                    Mathf.Abs(node.roomCenter.y - otherRoom.roomCenter.y) * 2 < (node.roomPrefabData.size.y + otherRoom.roomPrefabData.size.y))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // Returns true if any exit is blocked
+        private bool checkExitsBlocked(RoomNode room, List<RoomNode> graph)
+        {
+            List<RoomEntrance> exits = room.openExits;
+            foreach (RoomEntrance exit in exits)
+            {
+                Vector2 checkPosition = exit.position + room.roomCenter;
+                switch (exit.direction)
+                {
+                    case EntranceDirection.LEFT:
+                        checkPosition.x -= 0.1f;
+                        break;
+                    case EntranceDirection.RIGHT:
+                        checkPosition.x += 0.1f;
+                        break;
+                    case EntranceDirection.TOP:
+                        checkPosition.y += 0.1f;
+                        break;
+                    case EntranceDirection.BOTTOM:
+                        checkPosition.y -= 0.1f;
+                        break;
+                    default:
+                        // Undefined exit error
+                        Debug.Log("Checking exit with undefined direction");
+                        return true;
+                }
+
+                foreach (RoomNode otherRoom in graph)
+                {
+                    // Check if other node has no instantiated room
+                    if (!otherRoom.visited || !otherRoom.roomPrefabData) continue;
+
+                    // Check if the room should be connected anyways
+                    if (otherRoom.connections.Contains(room.id)) continue;
+
+                    float otherRoomLeft = otherRoom.roomCenter.x - otherRoom.roomPrefabData.size.x / 2;
+                    float otherRoomRight = otherRoom.roomCenter.x + otherRoom.roomPrefabData.size.x / 2;
+                    float otherRoomTop = otherRoom.roomCenter.y + otherRoom.roomPrefabData.size.y / 2;
+                    float otherRoomBottom = otherRoom.roomCenter.y - otherRoom.roomPrefabData.size.y / 2;
+
+                    // Check for overlap with current room node
+                    if (otherRoomLeft <= checkPosition.x && checkPosition.x <= otherRoomRight &&
+                        otherRoomBottom <= checkPosition.y && checkPosition.y <= otherRoomTop)
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        // Returns true if current room blocks open exits of any other room
+        private bool checkBlockingOtherExits(RoomNode room, List<RoomNode> graph)
+        {
+            float roomLeft = room.roomCenter.x - room.roomPrefabData.size.x / 2;
+            float roomRight = room.roomCenter.x + room.roomPrefabData.size.x / 2;
+            float roomTop = room.roomCenter.y + room.roomPrefabData.size.y / 2;
+            float roomBottom = room.roomCenter.y - room.roomPrefabData.size.y / 2;
+
+            foreach (RoomNode otherRoom in graph)
+            {
+                // Check if other node has no instantiated room
+                if (!otherRoom.visited || !otherRoom.roomPrefabData) continue;
+
+                // Check if other room should be connected to current room anyways
+                if (otherRoom.connections.Contains(room.id)) continue;
+
+                //if (otherRoom.type == "basicTestJunction") Debug.Log("JUNCTION WITH " + otherRoom.openExits.Count + " OPEN EXITS");
+
+                foreach (RoomEntrance exit in otherRoom.openExits)
+                {
+                    Vector2 checkPosition = exit.position + otherRoom.roomCenter;
+                    switch (exit.direction)
+                    {
+                        case EntranceDirection.LEFT:
+                            checkPosition.x -= 0.1f;
+                            break;
+                        case EntranceDirection.RIGHT:
+                            checkPosition.x += 0.1f;
+                            break;
+                        case EntranceDirection.TOP:
+                            checkPosition.y += 0.1f;
+                            break;
+                        case EntranceDirection.BOTTOM:
+                            checkPosition.y -= 0.1f;
+                            break;
+                        default:
+                            // Undefined exit error
+                            Debug.Log("Checking exit with undefined direction");
+                            return true;
+                    }
+
+                    // Check for overlap with current room node
+                    if (roomLeft <= checkPosition.x && checkPosition.x <= roomRight &&
+                        roomBottom <= checkPosition.y && checkPosition.y <= roomTop)
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        private bool checkConnected(RoomNode room, List<RoomNode> graph)
+        {
+            if (!room.roomPrefabData) return false;
+
+            foreach (int connection in room.connections)
+            {
+                RoomNode connectedRoom = findRoomById(connection, graph);
+                if (!connectedRoom.visited || !connectedRoom.roomPrefabData) continue;
+
+                // Check if any entrances match
+                bool isConnected = false;
+                foreach (RoomEntrance entrance in room.roomPrefabData.entrances)
+                {
+                    foreach (RoomEntrance connectedEntrance in connectedRoom.roomPrefabData.entrances)
+                    {
+                        if (entrance.position + room.roomCenter == connectedEntrance.position + connectedRoom.roomCenter)
+                        {
+                            isConnected = true;
+                            break;
+                        }
+                    }
+                    if (isConnected) break;
+                }
+                if (!isConnected) return false;
+            }
+
+            // All rooms connected
+            return true;
+        }
+
+        #endregion
+
+        private void resetRoom(RoomNode room, List<RoomNode> graph)
+        {
+            room.visited = false;
+            room.openExits = new List<RoomEntrance>();
+
+            // Recursively destroy children nodes
+            foreach (int connection in room.connections)
+            {
+                if (connection != room.parentId) resetRoom(findRoomById(connection, graph), graph);
+            }
+        }
+
+        private void destroyGeneratedRooms(List<RoomNode> graph)
+        {
+            foreach (RoomNode node in graph)
             {
                 if (node.roomGameObject != null) Destroy(node.roomGameObject);
             }

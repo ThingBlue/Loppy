@@ -28,7 +28,7 @@ namespace Loppy.Level
         private Dictionary<string, List<RoomPrefabData>> roomDictionary;
         private Dictionary<string, List<List<RoomNode>>> patternDictionary;
 
-        private Queue<KeyValuePair<List<RoomNode>, int>> patternParseQueue;
+        private Queue<List<RoomNode>> patternParseQueue;
         private uint runningPatternParseCoroutines = 0;
         private List<List<RoomNode>> patternParseResults;
 
@@ -50,7 +50,7 @@ namespace Loppy.Level
             // Initialize storage
             roomDictionary = new Dictionary<string, List<RoomPrefabData>>();
             patternDictionary = new Dictionary<string, List<List<RoomNode>>>();
-            patternParseQueue = new Queue<KeyValuePair<List<RoomNode>, int>>();
+            patternParseQueue = new Queue<List<RoomNode>>();
             patternParseResults = new List<List<RoomNode>>();
             roomParseQueue = new Queue<List<RoomNode>>();
             roomGraph = new List<RoomNode>();
@@ -194,12 +194,12 @@ namespace Loppy.Level
             // Parse patterns
             patternParseQueue.Clear();
             patternParseResults.Clear();
-            patternParseQueue.Enqueue(new KeyValuePair<List<RoomNode>, int>(roomGraph, findRoomByType("startNode", roomGraph).id));
+            patternParseQueue.Enqueue(roomGraph);
             while (patternParseQueue.Count > 0 || runningPatternParseCoroutines > 0)
             {
-                KeyValuePair<List<RoomNode>, int> cloneToParse = patternParseQueue.Dequeue();
+                List<RoomNode> cloneToParse = patternParseQueue.Dequeue();
                 runningPatternParseCoroutines++;
-                StartCoroutine(parsePatterns(cloneToParse.Key, cloneToParse.Value));
+                StartCoroutine(parsePatterns(cloneToParse));
 
                 yield return new WaitUntil(() => patternParseQueue.Count > 0 || runningPatternParseCoroutines == 0);
             }
@@ -244,12 +244,13 @@ namespace Loppy.Level
 
         #region Pattern parsing
 
-        private IEnumerator parsePatterns(List<RoomNode> graph, int startId)
+        private IEnumerator parsePatterns(List<RoomNode> graph)
         {
             // Find first pattern node reachable from the start node
             RoomNode patternNode = null;
             Queue<RoomNode> nodesToVisit = new Queue<RoomNode>();
-            nodesToVisit.Enqueue(findRoomById(startId, graph));
+            nodesToVisit.Enqueue(findRoomByType("startNode", graph));
+            //nodesToVisit.Enqueue(findRoomById(startId, graph));
             while (nodesToVisit.Count > 0)
             {
                 RoomNode node = nodesToVisit.Dequeue();
@@ -289,7 +290,12 @@ namespace Loppy.Level
             {
                 // Create clone
                 List<RoomNode> clone = new List<RoomNode>();
-                foreach (RoomNode node in graph) clone.Add(new RoomNode(node));
+                foreach (RoomNode node in graph)
+                {
+                    RoomNode newRoomNode = new RoomNode(node);
+                    newRoomNode.visited = false;
+                    clone.Add(newRoomNode);
+                }
 
                 // Replace pattern with new pattern
                 List<RoomNode> patternResult = new List<RoomNode>();
@@ -306,10 +312,22 @@ namespace Loppy.Level
                 clone.AddRange(patternResult);
                 removeById(patternNode.id, clone);
 
-                // Find first node
-                RoomNode firstNode = findRoomById(startNode.connections[0], clone);
-                // Find previous node
-                RoomNode previousNode = findRoomById(patternNode.parentId, clone);
+                // Find first, last, next, and previous nodes
+                RoomNode firstNode = null;
+                RoomNode previousNode = null;
+                RoomNode lastNode = null;
+                RoomNode nextNode = null;
+                foreach (RoomNode node in clone)
+                {
+                    if (node.id == startNode.connections[0]) firstNode = node;
+                    if (node.id == patternNode.parentId) previousNode = node;
+                    if (endNode != null)
+                    {
+                        if (node.id == endNode.connections[0]) lastNode = node;
+                        if (node.parentId == patternNode.id) nextNode = node;
+                    }
+                }
+
                 // Connect first node to previous node
                 previousNode.connections.Add(firstNode.id);
                 firstNode.connections.Add(previousNode.id);
@@ -320,19 +338,6 @@ namespace Loppy.Level
                 // Connect last node to next node if it exists
                 if (endNode != null)
                 {
-                    // Find last node
-                    RoomNode lastNode = findRoomById(endNode.connections[0], clone);
-                    // Find next node
-                    RoomNode nextNode = null;
-                    foreach (RoomNode otherNode in clone)
-                    {
-                        if (otherNode.parentId == patternNode.id)
-                        {
-                            nextNode = otherNode;
-                            break;
-                        }
-                    }
-
                     // Link with last node
                     lastNode.connections.Add(nextNode.id);
                     nextNode.connections.Add(lastNode.id);
@@ -349,7 +354,9 @@ namespace Loppy.Level
                 patternResult.Clear();
 
                 // Push clone to queue
-                patternParseQueue.Enqueue(new KeyValuePair<List<RoomNode>, int>(clone, patternNode.parentId));
+                //runningPatternParseCoroutines++;
+                //StartCoroutine(parsePatterns(clone));
+                patternParseQueue.Enqueue(clone);
             }
 
             // Don't need current graph anymore, clean up

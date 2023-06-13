@@ -69,9 +69,8 @@ namespace Loppy.Level
                 StartCoroutine(generateLevel("basicTestLevel"));
             }
             
-            //Debug.Log("runningCoroutines: " + runningPatternParseCoroutines + ", queue: " + patternParseQueue.Count);
-            //Debug.Log("runningCoroutines: " + runningCoroutines + ", queue: " + parseQueue.Count);
-
+            //Debug.Log("runningPatternCoroutines: " + runningPatternParseCoroutines + ", patternQueue: " + patternParseQueue.Count + ", runningRoomCoroutines: " + runningRoomParseCoroutines + ", roomQueue: " + roomParseQueue.Count);
+            
         }
 
         #region Initialization
@@ -213,9 +212,12 @@ namespace Loppy.Level
                 StartCoroutine(parsePatterns(cloneToParse));
 
                 if (patternParseQueue.Count == 0 ||
-                    runningPatternParseCoroutines >= maxPatternParseCoroutines)
+                    runningPatternParseCoroutines >= maxPatternParseCoroutines ||
+                    roomParseQueue.Count >= maxRoomParseCoroutines)
                 {
-                    yield return new WaitUntil(() => (patternParseQueue.Count > 0 && runningPatternParseCoroutines < maxPatternParseCoroutines) ||
+                    yield return new WaitUntil(() => (patternParseQueue.Count > 0 &&
+                                                     runningPatternParseCoroutines < maxPatternParseCoroutines &&
+                                                     roomParseQueue.Count < maxRoomParseCoroutines) ||
                                                      runningPatternParseCoroutines == 0);
                 }
             }
@@ -234,6 +236,8 @@ namespace Loppy.Level
 
         private IEnumerator parsePatterns(List<RoomNode> graph)
         {
+            //yield return new WaitForSeconds(0.1f);
+
             // Find first pattern node reachable from the start node
             RoomNode patternNode = null;
             Queue<RoomNode> nodesToVisit = new Queue<RoomNode>();
@@ -272,6 +276,9 @@ namespace Loppy.Level
                 runningPatternParseCoroutines--;
                 yield break;
             }
+
+            // Only parse graph when more is needed by the room parser
+            if (roomParseQueue.Count >= maxRoomParseCoroutines) yield return new WaitUntil(() => roomParseQueue.Count < maxRoomParseCoroutines);
 
             // Create a clone of the graph for every choice of pattern result
             for (int i = 0; i < patternDictionary[patternNode.type].Count; i++)
@@ -371,7 +378,7 @@ namespace Loppy.Level
             Debug.Log("Started room parsing");
 
             // Start parse
-            while (roomParseQueue.Count > 0 || runningRoomParseCoroutines > 0)
+            while (!success)
             {
                 List<RoomNode> cloneToParse = roomParseQueue.Dequeue();
                 RoomNode startNode = findRoomByType("startNode", cloneToParse);
@@ -392,6 +399,8 @@ namespace Loppy.Level
 
         private IEnumerator parseRoom(RoomNode node, List<RoomNode> graph, Action<bool> result)
         {
+            //yield return new WaitForSeconds(0.1f);
+
             if (node.type == "endNode")
             {
                 result(true);
@@ -504,9 +513,20 @@ namespace Loppy.Level
         {
             runningRoomParseCoroutines--;
             if (!result) return;
+
+            // Stop generation
             StopAllCoroutines();
+
+            // Create room game objects
             roomGraph = parseResult;
             createRoomGameObjects();
+
+            // Clean up
+            patternParseQueue.Clear();
+            roomParseQueue.Clear();
+            runningPatternParseCoroutines = 0;
+            runningRoomParseCoroutines = 0;
+
             success = true;
             Debug.Log("Level successfully generated");
         }

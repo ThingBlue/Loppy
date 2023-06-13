@@ -139,7 +139,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &389017624
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -153,6 +153,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   editorDataPath: C:\Users\ThingBlue\Documents\LoppyLevelPatterns
+  maxConcurrentCoroutines: 0
   roomPrefabs:
   - {fileID: 1545915187575959443, guid: fc841dcec68006f41b8f0b4122c35a52, type: 3}
   - {fileID: 1545915187575959443, guid: a653a51c61246d04e8a822266b490ed7, type: 3}
@@ -408,7 +409,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1737311853
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -422,6 +423,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   editorDataPath: C:\Users\ThingBlue\Documents\LoppyLevelPatterns
+  maxConcurrentCoroutines: 10
   roomPrefabs:
   - {fileID: 5920931384760467256, guid: e4c4cd6e13a1d6a4383462bf0787c1fe, type: 3}
   - {fileID: 9170282334753474944, guid: 3b0e866733c59b04ca2e1a39450ced7a, type: 3}

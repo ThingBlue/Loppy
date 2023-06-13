@@ -16,7 +16,7 @@ namespace Loppy.Level
 
     // Data for each pattern node imported from the editor
     [Serializable]
-    public class DataNode
+    public class DataNode : IDisposable
     {
         public int id;
         public string name;
@@ -26,6 +26,8 @@ namespace Loppy.Level
         public int entranceCount;
         public List<int> connections;
         public Vector2 editorPosition;
+
+        bool disposed = false;
 
         public DataNode(int id, string name, string region, string type, bool terminal, int entranceCount, List<int> connections, Vector2 editorPosition)
         {
@@ -50,6 +52,27 @@ namespace Loppy.Level
             this.connections = new List<int>(other.connections);
             this.editorPosition = other.editorPosition;
         }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        public void Dispose(bool disposing)
+        {
+            if (disposed) return;
+
+            //if (disposing) // TODO: dispose managed state (managed objects).
+
+            connections.Clear();
+            name = null;
+            region = null;
+            type = null;
+
+            disposed = true;
+        }
+
     }
 
     // Data for the pattern dictionary
@@ -63,18 +86,18 @@ namespace Loppy.Level
     // Data for each node in the final room graph,
     //     including the generated gameObject
     [Serializable]
-    public class RoomNode : IEquatable<RoomNode>
+    public class RoomNode : IEquatable<RoomNode>, IDisposable
     {
         public string type;
         public int entranceCount;
-        public List<RoomNode> connectedRooms;
 
         // Imported from DataNode
         public int id;
         public List<int> connections;
         public bool terminal;
 
-        // Members that will be assigned after the best room to generate is determined
+        // Parsing
+        public bool visited = false;
         public bool generated = false;
         public RoomPrefabData roomPrefabData = null;
         public Vector2 roomCenter = Vector2.zero;
@@ -83,23 +106,24 @@ namespace Loppy.Level
         // Decision tree
         public DecisionType decisionType = DecisionType.NONE;
         public int parentId;
-        public RoomNode parent = null;
         public RoomEntrance parentExit = null;
         public RoomEntrance entrance = null;
 
         // Temporary list of unused entrances to help with room generation
         public List<RoomEntrance> openExits;
 
+        public bool disposed = false;
+
         public RoomNode(string type, int entranceCount, int id, List<int> connections, bool terminal)
         {
             this.type = type;
             this.entranceCount = entranceCount;
-            this.connectedRooms = new List<RoomNode>();
 
             this.id = id;
             this.connections = new List<int>(connections);
             this.terminal = terminal;
 
+            this.visited = false;
             this.generated = false;
             this.roomPrefabData = null;
             this.roomCenter = Vector2.zero;
@@ -117,12 +141,12 @@ namespace Loppy.Level
         {
             this.type = other.type;
             this.entranceCount = other.entranceCount;
-            this.connectedRooms = new List<RoomNode>();
 
             this.id = other.id;
             this.connections = new List<int>(other.connections);
             this.terminal = other.terminal;
 
+            this.visited = other.visited;
             this.generated = other.generated;
             this.roomPrefabData = other.roomPrefabData;
             this.roomCenter = other.roomCenter;
@@ -130,12 +154,36 @@ namespace Loppy.Level
 
             this.decisionType = other.decisionType;
             this.parentId = other.parentId;
-            this.parent = other.parent;
             this.parentExit = other.parentExit == null ? null : new RoomEntrance(other.parentExit);
             this.entrance = other.entrance == null ? null : new RoomEntrance(other.entrance);
 
             this.openExits = new List<RoomEntrance>(other.openExits);
         }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        public void Dispose(bool disposing)
+        {
+            if (disposed) return;
+
+            //if (disposing) // TODO: dispose managed state (managed objects).
+
+            type = null;
+            connections.Clear();
+            roomPrefabData = null;
+            roomGameObject = null;
+            parentExit = null;
+            entrance = null;
+            openExits.Clear();
+            openExits = null;
+
+            disposed = true;
+        }
+
         public bool Equals(RoomNode other)
         {
             return this.id == other.id;

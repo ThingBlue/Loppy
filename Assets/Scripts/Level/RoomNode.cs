@@ -5,15 +5,6 @@ using UnityEngine;
 
 namespace Loppy.Level
 {
-    public enum DecisionType
-    {
-        NONE = 0,
-        PATTERN,
-        EXIT,
-        ROOM,
-        ENTRANCE
-    }
-
     // Data for each pattern node imported from the editor
     [Serializable]
     public class DataNode : IDisposable
@@ -27,7 +18,9 @@ namespace Loppy.Level
         public List<int> connections;
         public Vector2 editorPosition;
 
-        bool disposed = false;
+        public bool visited = false;
+
+        private bool disposed = false;
 
         public DataNode(int id, string name, string region, string type, bool terminal, int entranceCount, List<int> connections, Vector2 editorPosition)
         {
@@ -86,14 +79,13 @@ namespace Loppy.Level
     // Data for each node in the final room graph,
     //     including the generated gameObject
     [Serializable]
-    public class RoomNode : IEquatable<RoomNode>, IDisposable
+    public class RoomNode : IDisposable
     {
         public string type;
         public int entranceCount;
 
         // Imported from DataNode
-        public int id;
-        public List<int> connections;
+        public List<RoomNode> connectedNodes;
         public bool terminal;
 
         // Parsing
@@ -103,8 +95,7 @@ namespace Loppy.Level
         public GameObject roomGameObject = null;
 
         // Decision tree
-        //public DecisionType decisionType = DecisionType.NONE;
-        public int parentId;
+        public RoomNode parentNode;
         public RoomEntrance parentExit = null;
         public RoomEntrance entrance = null;
 
@@ -113,13 +104,12 @@ namespace Loppy.Level
 
         public bool disposed = false;
 
-        public RoomNode(string type, int entranceCount, int id, List<int> connections, bool terminal)
+        public RoomNode(string type, int entranceCount, List<RoomNode> connectedNodes, bool terminal)
         {
             this.type = type;
             this.entranceCount = entranceCount;
 
-            this.id = id;
-            this.connections = new List<int>(connections);
+            this.connectedNodes = new List<RoomNode>(connectedNodes);
             this.terminal = terminal;
 
             this.visited = false;
@@ -127,8 +117,7 @@ namespace Loppy.Level
             this.roomCenter = Vector2.zero;
             this.roomGameObject = null;
 
-            //this.decisionType = DecisionType.NONE;
-            this.parentId = 0;
+            this.parentNode = null;
             this.parentExit = null;
             this.entrance = null;
 
@@ -140,8 +129,7 @@ namespace Loppy.Level
             this.type = other.type;
             this.entranceCount = other.entranceCount;
 
-            this.id = other.id;
-            this.connections = new List<int>(other.connections);
+            this.connectedNodes = new List<RoomNode>(other.connectedNodes);
             this.terminal = other.terminal;
 
             this.visited = other.visited;
@@ -149,8 +137,7 @@ namespace Loppy.Level
             this.roomCenter = other.roomCenter;
             this.roomGameObject = null;
 
-            //this.decisionType = other.decisionType;
-            this.parentId = other.parentId;
+            this.parentNode = other.parentNode;
             this.parentExit = other.parentExit == null ? null : new RoomEntrance(other.parentExit);
             this.entrance = other.entrance == null ? null : new RoomEntrance(other.entrance);
 
@@ -170,7 +157,7 @@ namespace Loppy.Level
             //if (disposing) // TODO: dispose managed state (managed objects).
 
             type = null;
-            connections.Clear();
+            connectedNodes.Clear();
             roomPrefabData = null;
             roomGameObject = null;
             parentExit = null;
@@ -179,11 +166,6 @@ namespace Loppy.Level
             openExits = null;
 
             disposed = true;
-        }
-
-        public bool Equals(RoomNode other)
-        {
-            return this.id == other.id;
         }
     }
 }

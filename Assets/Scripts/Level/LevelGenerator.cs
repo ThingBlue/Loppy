@@ -569,46 +569,33 @@ namespace Loppy.Level
             }
         }
 
-        private RoomNode findRoomById(int id, List<RoomNode> rooms)
+        private RoomNode findRoomById(int id, List<RoomNode> graph)
         {
-            foreach (RoomNode nodeData in rooms)
+            foreach (RoomNode node in graph)
             {
-                if (nodeData.id == id) return nodeData;
+                if (node.id == id) return node;
             }
             return null;
         }
 
-        private RoomNode findRoomByType(string type, List<RoomNode> rooms)
+        private RoomNode findRoomByType(string type, List<RoomNode> graph)
         {
-            foreach (RoomNode room in rooms)
+            foreach (RoomNode node in graph)
             {
-                if (room.type == type) return room;
+                if (node.type == type) return node;
             }
             return null;
         }
 
-        private RoomNode findFirstRoomNode(List<RoomNode> graph)
+        private void removeById(int id, List<RoomNode> graph)
         {
-            // Find start node and return its connection
-            foreach (RoomNode node in roomGraph)
+            List<RoomNode> nodesToRemove = new List<RoomNode>();
+            foreach (RoomNode node in graph)
             {
-                if (node.type == "startNode")
-                {
-                    return findRoomById(node.connections[0], graph);
-                }
+                if (node.id == id) nodesToRemove.Add(node);
             }
-            return null;
-        }
-
-        private void removeById(int id, List<RoomNode> rooms)
-        {
-            List<RoomNode> roomsToRemove = new List<RoomNode>();
-            foreach (RoomNode room in rooms)
-            {
-                if (room.id == id) roomsToRemove.Add(room);
-            }
-            foreach (RoomNode roomToRemove in roomsToRemove) rooms.Remove(roomToRemove);
-            roomsToRemove.Clear();
+            foreach (RoomNode nodeToRemove in nodesToRemove) graph.Remove(nodeToRemove);
+            nodesToRemove.Clear();
         }
 
         // Returns a NEW list containing a random dictionary entry with given pattern as its key
@@ -704,12 +691,12 @@ namespace Loppy.Level
         }
 
         // Returns true if any exit is blocked
-        private bool checkExitsBlocked(RoomNode room, List<RoomNode> graph)
+        private bool checkExitsBlocked(RoomNode node, List<RoomNode> graph)
         {
-            List<RoomEntrance> exits = room.openExits;
+            List<RoomEntrance> exits = node.openExits;
             foreach (RoomEntrance exit in exits)
             {
-                Vector2 checkPosition = exit.position + room.roomCenter;
+                Vector2 checkPosition = exit.position + node.roomCenter;
                 switch (exit.direction)
                 {
                     case EntranceDirection.LEFT:
@@ -730,18 +717,18 @@ namespace Loppy.Level
                         return true;
                 }
 
-                foreach (RoomNode otherRoom in graph)
+                foreach (RoomNode otherNode in graph)
                 {
                     // Check if other node has no instantiated room
-                    if (!otherRoom.visited || !otherRoom.roomPrefabData) continue;
+                    if (!otherNode.visited || !otherNode.roomPrefabData) continue;
 
                     // Check if the room should be connected anyways
-                    if (otherRoom.connections.Contains(room.id)) continue;
+                    if (otherNode.connections.Contains(node.id)) continue;
 
-                    float otherRoomLeft = otherRoom.roomCenter.x - otherRoom.roomPrefabData.size.x / 2;
-                    float otherRoomRight = otherRoom.roomCenter.x + otherRoom.roomPrefabData.size.x / 2;
-                    float otherRoomTop = otherRoom.roomCenter.y + otherRoom.roomPrefabData.size.y / 2;
-                    float otherRoomBottom = otherRoom.roomCenter.y - otherRoom.roomPrefabData.size.y / 2;
+                    float otherRoomLeft = otherNode.roomCenter.x - otherNode.roomPrefabData.size.x / 2;
+                    float otherRoomRight = otherNode.roomCenter.x + otherNode.roomPrefabData.size.x / 2;
+                    float otherRoomTop = otherNode.roomCenter.y + otherNode.roomPrefabData.size.y / 2;
+                    float otherRoomBottom = otherNode.roomCenter.y - otherNode.roomPrefabData.size.y / 2;
 
                     // Check for overlap with current room node
                     if (otherRoomLeft <= checkPosition.x && checkPosition.x <= otherRoomRight &&
@@ -755,26 +742,26 @@ namespace Loppy.Level
         }
 
         // Returns true if current room blocks open exits of any other room
-        private bool checkBlockingOtherExits(RoomNode room, List<RoomNode> graph)
+        private bool checkBlockingOtherExits(RoomNode node, List<RoomNode> graph)
         {
-            float roomLeft = room.roomCenter.x - room.roomPrefabData.size.x / 2;
-            float roomRight = room.roomCenter.x + room.roomPrefabData.size.x / 2;
-            float roomTop = room.roomCenter.y + room.roomPrefabData.size.y / 2;
-            float roomBottom = room.roomCenter.y - room.roomPrefabData.size.y / 2;
+            float roomLeft = node.roomCenter.x - node.roomPrefabData.size.x / 2;
+            float roomRight = node.roomCenter.x + node.roomPrefabData.size.x / 2;
+            float roomTop = node.roomCenter.y + node.roomPrefabData.size.y / 2;
+            float roomBottom = node.roomCenter.y - node.roomPrefabData.size.y / 2;
 
-            foreach (RoomNode otherRoom in graph)
+            foreach (RoomNode otherNode in graph)
             {
                 // Check if other node has no instantiated room
-                if (!otherRoom.visited || !otherRoom.roomPrefabData) continue;
+                if (!otherNode.visited || !otherNode.roomPrefabData) continue;
 
                 // Check if other room should be connected to current room anyways
-                if (otherRoom.connections.Contains(room.id)) continue;
+                if (otherNode.connections.Contains(node.id)) continue;
 
                 //if (otherRoom.type == "basicTestJunction") Debug.Log("JUNCTION WITH " + otherRoom.openExits.Count + " OPEN EXITS");
 
-                foreach (RoomEntrance exit in otherRoom.openExits)
+                foreach (RoomEntrance exit in otherNode.openExits)
                 {
-                    Vector2 checkPosition = exit.position + otherRoom.roomCenter;
+                    Vector2 checkPosition = exit.position + otherNode.roomCenter;
                     switch (exit.direction)
                     {
                         case EntranceDirection.LEFT:
@@ -806,22 +793,22 @@ namespace Loppy.Level
             return false;
         }
 
-        private bool checkConnected(RoomNode room, List<RoomNode> graph)
+        private bool checkConnected(RoomNode node, List<RoomNode> graph)
         {
-            if (!room.roomPrefabData) return false;
+            if (!node.roomPrefabData) return false;
 
-            foreach (int connection in room.connections)
+            foreach (int connection in node.connections)
             {
-                RoomNode connectedRoom = findRoomById(connection, graph);
-                if (!connectedRoom.visited || !connectedRoom.roomPrefabData) continue;
+                RoomNode connectedNode = findRoomById(connection, graph);
+                if (!connectedNode.visited || !connectedNode.roomPrefabData) continue;
 
                 // Check if any entrances match
                 bool isConnected = false;
-                foreach (RoomEntrance entrance in room.roomPrefabData.entrances)
+                foreach (RoomEntrance entrance in node.roomPrefabData.entrances)
                 {
-                    foreach (RoomEntrance connectedEntrance in connectedRoom.roomPrefabData.entrances)
+                    foreach (RoomEntrance connectedEntrance in connectedNode.roomPrefabData.entrances)
                     {
-                        if (entrance.position + room.roomCenter == connectedEntrance.position + connectedRoom.roomCenter)
+                        if (entrance.position + node.roomCenter == connectedEntrance.position + connectedNode.roomCenter)
                         {
                             isConnected = true;
                             break;
@@ -841,12 +828,15 @@ namespace Loppy.Level
         private void resetRoom(RoomNode room, List<RoomNode> graph)
         {
             room.visited = false;
-            room.openExits = new List<RoomEntrance>();
+            room.openExits.Clear();
 
             // Recursively destroy children nodes
             foreach (int connection in room.connections)
             {
-                if (connection != room.parentId) resetRoom(findRoomById(connection, graph), graph);
+                if (connection != room.parentId)
+                {
+                    resetRoom(findRoomById(connection, graph), graph);
+                }
             }
         }
 

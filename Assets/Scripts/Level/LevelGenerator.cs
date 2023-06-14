@@ -67,6 +67,23 @@ namespace Loppy.Level
                 // Generate test level
                 StartCoroutine(generateLevel("basicTestLevel"));
             }
+            if (Input.GetKeyDown(KeyCode.O))
+            {
+                List<RoomNode> og = new List<RoomNode>();
+                RoomNode a = new RoomNode("startNode", 0, new List<RoomNode>(), true);
+                RoomNode b = new RoomNode("b", 0, new List<RoomNode>(), true);
+                RoomNode c = new RoomNode("c", 0, new List<RoomNode>(), true);
+                a.connectedNodes.Add(b);
+                b.connectedNodes.Add(a);
+                b.connectedNodes.Add(c);
+                c.connectedNodes.Add(b);
+                og.Add(a);
+                og.Add(b);
+                og.Add(c);
+                List<RoomNode> cl = cloneGraph(og);
+                cl[1].connectedNodes[1].terminal = false;
+                Debug.Log("Terminal: " + cl[2].terminal);
+            }
 
             //Debug.Log("runningPatternCoroutines: " + runningPatternParseCoroutines + ", patternQueue: " + patternParseQueue.Count + ", runningRoomCoroutines: " + runningRoomParseCoroutines + ", roomQueue: " + roomParseQueue.Count);
 
@@ -619,8 +636,8 @@ namespace Loppy.Level
             // Randomly pick pattern
             int randomIndex = UnityEngine.Random.Range(0, patternDictionary[pattern].Count);
 
-            List<RoomNode> result = new List<RoomNode>();
-            foreach (RoomNode node in patternDictionary[pattern][randomIndex]) result.Add(new RoomNode(node));
+            List<RoomNode> result = cloneGraph(patternDictionary[pattern][randomIndex]);
+            //foreach (RoomNode node in patternDictionary[pattern][randomIndex]) result.Add(new RoomNode(node));
             return result;
         }
 
@@ -719,7 +736,7 @@ namespace Loppy.Level
                 }
 
                 // Find connected nodes to recurse
-                FOR SOME REASON CONNECTED NODE IS DESYNCED FROM THE ACTUAL NODE
+                //FOR SOME REASON CONNECTED NODE IS DESYNCED FROM THE ACTUAL NODE
                 nextNode.Key.visited = true;
                 foreach (RoomNode node in nextNode.Key.connectedNodes)
                 {

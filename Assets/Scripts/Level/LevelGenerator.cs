@@ -1,3 +1,4 @@
+using Codice.Client.BaseCommands;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -77,12 +78,53 @@ namespace Loppy.Level
                 b.connectedNodes.Add(a);
                 b.connectedNodes.Add(c);
                 c.connectedNodes.Add(b);
+                a.parentNode = null;
+                b.parentNode = a;
+                c.parentNode = b;
                 og.Add(a);
                 og.Add(b);
                 og.Add(c);
                 List<RoomNode> cl = cloneGraph(og);
                 cl[1].connectedNodes[1].terminal = false;
                 Debug.Log("Terminal: " + cl[2].terminal);
+            }
+            if (Input.GetKeyDown(KeyCode.I))
+            {
+                List<RoomNode> og = new List<RoomNode>();
+                RoomNode a = new RoomNode("startNode", 0, new List<RoomNode>(), true);
+                RoomNode b = new RoomNode("b", 0, new List<RoomNode>(), true);
+                RoomNode c = new RoomNode("c", 0, new List<RoomNode>(), true);
+                a.connectedNodes.Add(b);
+                b.connectedNodes.Add(a);
+                b.connectedNodes.Add(c);
+                c.connectedNodes.Add(b);
+                a.parentNode = null;
+                b.parentNode = a;
+                c.parentNode = b;
+                og.Add(a);
+                og.Add(b);
+                og.Add(c);
+                List<RoomNode> cl = cloneGraph(og);
+                cl[2].parentNode.terminal = false;
+            }
+            if (Input.GetKeyDown(KeyCode.P))
+            {
+                List<RoomNode> og = new List<RoomNode>();
+                RoomNode a = new RoomNode("startNode", 0, new List<RoomNode>(), true);
+                RoomNode b = new RoomNode("basicTestCorridor", 0, new List<RoomNode>(), true);
+                RoomNode c = new RoomNode("basicTestShopPattern", 0, new List<RoomNode>(), false);
+                a.connectedNodes.Add(b);
+                b.connectedNodes.Add(a);
+                b.connectedNodes.Add(c);
+                c.connectedNodes.Add(b);
+                a.parentNode = null;
+                b.parentNode = a;
+                c.parentNode = b;
+                og.Add(a);
+                og.Add(b);
+                og.Add(c);
+                replacePattern(c, 1, og);
+                replacePattern(og[2], 0, og);
             }
 
             //Debug.Log("runningPatternCoroutines: " + runningPatternParseCoroutines + ", patternQueue: " + patternParseQueue.Count + ", runningRoomCoroutines: " + runningRoomParseCoroutines + ", roomQueue: " + roomParseQueue.Count);
@@ -238,6 +280,7 @@ namespace Loppy.Level
                 }
             }
 
+            /*
             foreach (List<RoomNode> patternParseResultClone in roomParseQueue)
             {
                 string patternDebugString = "Clone: ";
@@ -248,11 +291,15 @@ namespace Loppy.Level
                 Debug.Log(patternDebugString);
             }
             Debug.Log("Total patterns: " + roomParseQueue.Count);
+            */
         }
 
         private IEnumerator parsePatterns(List<RoomNode> graph)
         {
             //yield return new WaitForSeconds(0.1f);
+
+            // Reset visited status for all nodes
+            foreach (RoomNode node in graph) node.visited = false;
 
             // Find first pattern node reachable from the start node
             RoomNode patternNode = null;
@@ -269,7 +316,7 @@ namespace Loppy.Level
                     if (connectedNode == null) Debug.LogError("Null node connected to: " + node.type);
                     if (!connectedNode.visited)
                     {
-                        connectedNode.parentNode = node;
+                        //connectedNode.parentNode = node;
                         nodesToVisit.Enqueue(connectedNode);
                     }
                 }
@@ -286,8 +333,18 @@ namespace Loppy.Level
             // Check if all nodes are terminal
             if (patternNode == null)
             {
-                foreach (RoomNode node in graph) node.visited = node.type == "startNode";
+                //foreach (RoomNode node in graph) node.visited = node.type == "startNode";
                 roomParseQueue.Enqueue(graph);
+
+                /*
+                string patternDebugString = "Clone: ";
+                foreach (RoomNode node in graph)
+                {
+                    patternDebugString += " [" + node.type + "]";
+                }
+                Debug.Log(patternDebugString);
+                */
+
                 runningPatternParseCoroutines--;
                 yield break;
             }
@@ -299,10 +356,12 @@ namespace Loppy.Level
             for (int i = 0; i < patternDictionary[patternNode.type].Count; i++)
             {
                 // Create clone
-                List<RoomNode> clone = cloneGraph(graph);
+                //List<RoomNode> clone = cloneGraph(graph);
+                RoomNode patternNodeDoppelganger = null;
+                List<RoomNode> clone = cloneGraphAndGetDoppelganger(graph, patternNode, ref patternNodeDoppelganger);
 
                 // Replace pattern with new pattern
-                replacePattern(patternNode, i, clone);
+                replacePattern(patternNodeDoppelganger, i, clone);
 
                 // Push clone to queue
                 patternParseQueue.Enqueue(clone);
@@ -319,8 +378,7 @@ namespace Loppy.Level
         private void replacePattern(RoomNode patternNode, int resultIndex, List<RoomNode> graph)
         {
             // Replace pattern with new pattern
-            List<RoomNode> patternResult = new List<RoomNode>();
-            foreach (RoomNode patternResultNode in patternDictionary[patternNode.type][resultIndex]) patternResult.Add(new RoomNode(patternResultNode));
+            List<RoomNode> patternResult = cloneGraph(patternDictionary[patternNode.type][resultIndex]);
             //assignNewIds(patternResult);
 
             // Find start and end nodes
@@ -331,7 +389,7 @@ namespace Loppy.Level
             patternResult.Remove(startNode);
             if (endNode != null) patternResult.Remove(endNode);
             graph.AddRange(patternResult);
-            graph.Remove(patternNode);
+            if (!graph.Remove(patternNode)) Debug.LogError("Failed to remove pattern node from graph");
 
             // Find first, last, next, and previous nodes
             RoomNode firstNode = startNode.connectedNodes[0];
@@ -340,11 +398,11 @@ namespace Loppy.Level
             RoomNode nextNode = null;
             if (endNode != null)
             {
-                foreach (RoomNode node in graph)
+                foreach (RoomNode connectedNode in patternNode.connectedNodes)
                 {
-                    if (node.parentNode == patternNode)
+                    if (connectedNode.parentNode != null && connectedNode.parentNode.Equals(patternNode))
                     {
-                        nextNode = node;
+                        nextNode = connectedNode;
                         break;
                     }
                 }
@@ -353,17 +411,29 @@ namespace Loppy.Level
             // Connect first node to previous node
             previousNode.connectedNodes.Add(firstNode);
             firstNode.connectedNodes.Add(previousNode);
+            // Remove old connection
             previousNode.connectedNodes.Remove(patternNode);
+            // Set new parent
+            firstNode.parentNode = previousNode;
             // Remove start node from first node
             firstNode.connectedNodes.Remove(startNode);
 
             // Connect last node to next node if it exists
             if (endNode != null)
             {
+                if (nextNode == null)
+                {
+                    Debug.LogWarning("nextNode null");
+                }
+                if (lastNode == null) Debug.LogWarning("lastNode null");
+
                 // Link with last node
                 lastNode.connectedNodes.Add(nextNode);
                 nextNode.connectedNodes.Add(lastNode);
+                // Remove old connection
                 nextNode.connectedNodes.Remove(patternNode);
+                // Set new parent
+                nextNode.parentNode = lastNode;
                 // Remove end node from last node
                 lastNode.connectedNodes.Remove(endNode);
 
@@ -402,7 +472,7 @@ namespace Loppy.Level
                     runningRoomParseCoroutines >= maxRoomParseCoroutines)
                 {
                     yield return new WaitUntil(() => (roomParseQueue.Count > 0 && runningRoomParseCoroutines < maxRoomParseCoroutines) ||
-                                                     runningRoomParseCoroutines == 0);
+                                                     success);
                 }
             }
         }
@@ -547,7 +617,10 @@ namespace Loppy.Level
             {
                 if (node.type == "startNode" || node.type == "endNode") continue;
 
-                if (node.roomPrefabData == null) Debug.Log("NO ROOM PREFAB DATA");
+                if (node.roomPrefabData == null)
+                {
+                    Debug.Log("NO ROOM PREFAB DATA");
+                }
                 if (node.roomPrefabData.roomPrefab == null) Debug.Log("NO ROOM PREFAB OBJECT");
                 // Room fits, generate it
                 GameObject newRoomGameObject = Instantiate(node.roomPrefabData.roomPrefab, node.roomCenter, Quaternion.identity);
@@ -591,6 +664,15 @@ namespace Loppy.Level
             return null;
         }
         */
+
+        private DataNode findRoomById(int id, List<DataNode> graph)
+        {
+            foreach (DataNode node in graph)
+            {
+                if (node.id == id) return node;
+            }
+            return null;
+        }
 
         private RoomNode findRoomByType(string type, List<RoomNode> graph)
         {
@@ -637,113 +719,163 @@ namespace Loppy.Level
             int randomIndex = UnityEngine.Random.Range(0, patternDictionary[pattern].Count);
 
             List<RoomNode> result = cloneGraph(patternDictionary[pattern][randomIndex]);
-            //foreach (RoomNode node in patternDictionary[pattern][randomIndex]) result.Add(new RoomNode(node));
             return result;
         }
 
         private List<RoomNode> convertToRoomGraph(List<DataNode> dataGraph)
         {
-            List<RoomNode> newRoomGraph = new List<RoomNode>();
+            // Find start node and make new one
+            DataNode oldStartNode = findRoomByType("startNode", dataGraph);
+            RoomNode newStartNode = new RoomNode("startNode", 1, new List<RoomNode>(), true);
 
-            // Clear visited flags
-            foreach (DataNode node in dataGraph) node.visited = false;
+            // Initialize clone list
+            List<RoomNode> newRoomGraph = new List<RoomNode>();
+            newRoomGraph.Add(newStartNode);
 
             // Initialize queue
-            // KeyValuePair: original node in data node graph, parent node in room node graph
-            Queue<KeyValuePair<DataNode, RoomNode>> convertQueue = new Queue<KeyValuePair<DataNode, RoomNode>>();
-            convertQueue.Enqueue(new KeyValuePair<DataNode, RoomNode>(findRoomByType("startNode", dataGraph), null));
+            Queue<DataNode> convertQueue = new Queue<DataNode>();
+            convertQueue.Enqueue(oldStartNode);
+
+            // Initialize map
+            Dictionary<DataNode, RoomNode> convertMap = new Dictionary<DataNode, RoomNode>();
+            convertMap.Add(oldStartNode, newStartNode);
 
             // Clone each node
             while (convertQueue.Count > 0)
             {
-                // Create new node
-                KeyValuePair<DataNode, RoomNode> nextNode = convertQueue.Dequeue();
-                RoomNode newNode = new RoomNode(nextNode.Key.type, nextNode.Key.entranceCount, new List<RoomNode>(), nextNode.Key.terminal);
-                newRoomGraph.Add(newNode);
+                // Get node from queue
+                DataNode currentNode = convertQueue.Dequeue();
 
-                // Create connection to and from parent
-                if (nextNode.Value != null)
+                // Connect it to each neighbour node that has already been cloned
+                foreach (int connection in currentNode.connections)
                 {
-                    nextNode.Value.connectedNodes.Add(newNode);
-                    newNode.connectedNodes.Add(nextNode.Value);
-                }
+                    DataNode neighbour = findRoomById(connection, dataGraph);
 
-                // Find connected nodes to recurse
-                nextNode.Key.visited = true;
-                foreach (DataNode node in dataGraph)
-                {
-                    if (nextNode.Key.connections.Contains(node.id) && !node.visited) convertQueue.Enqueue(new KeyValuePair<DataNode, RoomNode>(node, newNode));
+                    if (!convertMap.ContainsKey(neighbour))
+                    {
+                        // Clone of neighbour node does not exist yet, create it
+                        RoomNode neighbourClone = new RoomNode(neighbour.type, neighbour.entranceCount, new List<RoomNode>(), neighbour.terminal);
+                        convertMap.Add(neighbour, neighbourClone);
+                        newRoomGraph.Add(neighbourClone);
+
+                        // Create connection
+                        convertMap[currentNode].connectedNodes.Add(neighbourClone);
+                        neighbourClone.parentNode = convertMap[currentNode];
+
+                        // Enqueue
+                        convertQueue.Enqueue(neighbour);
+                    }
+                    else
+                    {
+                        // Clone of neighbour exists, create connection
+                        convertMap[currentNode].connectedNodes.Add(convertMap[neighbour]);
+                    }
                 }
             }
-
-
-            /*
-            // Start converting from start node
-            DataNode startNode = findRoomByType("startNode", dataGraph);
-            convertToRoomNode(startNode, dataGraph, newRoomGraph);
-            */
 
             return newRoomGraph;
         }
 
-        private RoomNode convertToRoomNode(DataNode dataNode, List<DataNode> dataGraph, List<RoomNode> newRoomGraph)
-        {
-            // Create new room node based on current data node
-            dataNode.visited = true;
-            RoomNode newRoomNode = new RoomNode(dataNode.type, dataNode.entranceCount, new List<RoomNode>(), dataNode.terminal);
-            newRoomGraph.Add(newRoomNode);
-
-            // Recurse over each connected child node
-            foreach (DataNode otherNode in dataGraph)
-            {
-                if (dataNode.connections.Contains(otherNode.id) && !otherNode.visited)
-                {
-                    RoomNode otherRoomNode = convertToRoomNode(otherNode, dataGraph, newRoomGraph);
-                    
-                    // Add connection between the two nodes
-                    newRoomNode.connectedNodes.Add(otherRoomNode);
-                    otherRoomNode.connectedNodes.Add(newRoomNode);
-                }
-            }
-
-            return newRoomNode;
-        }
-
         private List<RoomNode> cloneGraph(List<RoomNode> graph)
         {
-            // Clear visited flag
-            foreach (RoomNode node in graph) node.visited = false;
+            // Find start node and make new one
+            RoomNode oldStartNode = findRoomByType("startNode", graph);
+            RoomNode newStartNode = new RoomNode("startNode", 1, new List<RoomNode>(), true);
+
+            // Initialize clone list
+            List<RoomNode> clone = new List<RoomNode>();
+            clone.Add(newStartNode);
 
             // Initialize queue
-            List<RoomNode> clone = new List<RoomNode>();
-            // KeyValuePair: original node in graph, parent node in clone
-            Queue<KeyValuePair<RoomNode, RoomNode>> cloneQueue = new Queue<KeyValuePair<RoomNode, RoomNode>>();
-            cloneQueue.Enqueue(new KeyValuePair<RoomNode, RoomNode>(findRoomByType("startNode", graph), null));
+            Queue<RoomNode> cloneQueue = new Queue<RoomNode>();
+            cloneQueue.Enqueue(oldStartNode);
+
+            // Initialize map
+            Dictionary<RoomNode, RoomNode> cloneMap = new Dictionary<RoomNode, RoomNode>();
+            cloneMap.Add(oldStartNode, newStartNode);
 
             // Clone each node
             while (cloneQueue.Count > 0)
             {
-                // Create new node
-                KeyValuePair<RoomNode, RoomNode> nextNode = cloneQueue.Dequeue();
-                RoomNode newNode = new RoomNode(nextNode.Key.type, nextNode.Key.entranceCount, new List<RoomNode>(), nextNode.Key.terminal);
-                clone.Add(newNode);
+                // Get node from queue
+                RoomNode currentNode = cloneQueue.Dequeue();
 
-                // Create connection to and from parent
-                if (nextNode.Value != null)
+                // Connect it to each neighbour node that has already been cloned
+                foreach (RoomNode neighbour in currentNode.connectedNodes)
                 {
-                    nextNode.Value.connectedNodes.Add(newNode);
-                    newNode.connectedNodes.Add(nextNode.Value);
-                }
+                    if (!cloneMap.ContainsKey(neighbour))
+                    {
+                        // Clone of neighbour node does not exist yet, create it
+                        RoomNode neighbourClone = new RoomNode(neighbour.type, neighbour.entranceCount, new List<RoomNode>(), neighbour.terminal);
+                        cloneMap.Add(neighbour, neighbourClone);
+                        clone.Add(neighbourClone);
 
-                // Find connected nodes to recurse
-                //FOR SOME REASON CONNECTED NODE IS DESYNCED FROM THE ACTUAL NODE
-                nextNode.Key.visited = true;
-                foreach (RoomNode node in nextNode.Key.connectedNodes)
-                {
-                    if (!node.visited) cloneQueue.Enqueue(new KeyValuePair<RoomNode, RoomNode>(node, newNode));
+                        // Create connection
+                        cloneMap[currentNode].connectedNodes.Add(neighbourClone);
+                        neighbourClone.parentNode = cloneMap[currentNode];
+
+                        // Enqueue
+                        cloneQueue.Enqueue(neighbour);
+                    }
+                    else
+                    {
+                        // Clone of neighbour exists, create connection
+                        cloneMap[currentNode].connectedNodes.Add(cloneMap[neighbour]);
+                    }
                 }
             }
+            return clone;
+        }
 
+        private List<RoomNode> cloneGraphAndGetDoppelganger(List<RoomNode> graph, RoomNode original, ref RoomNode doppelganger)
+        {
+            // Find start node and make new one
+            RoomNode oldStartNode = findRoomByType("startNode", graph);
+            RoomNode newStartNode = new RoomNode("startNode", 1, new List<RoomNode>(), true);
+
+            // Initialize clone list
+            List<RoomNode> clone = new List<RoomNode>();
+            clone.Add(newStartNode);
+
+            // Initialize queue
+            Queue<RoomNode> cloneQueue = new Queue<RoomNode>();
+            cloneQueue.Enqueue(oldStartNode);
+
+            // Initialize map
+            Dictionary<RoomNode, RoomNode> cloneMap = new Dictionary<RoomNode, RoomNode>();
+            cloneMap.Add(oldStartNode, newStartNode);
+
+            // Clone each node
+            while (cloneQueue.Count > 0)
+            {
+                // Get node from queue
+                RoomNode currentNode = cloneQueue.Dequeue();
+
+                // Connect it to each neighbour node that has already been cloned
+                foreach (RoomNode neighbour in currentNode.connectedNodes)
+                {
+                    if (!cloneMap.ContainsKey(neighbour))
+                    {
+                        // Clone of neighbour node does not exist yet, create it
+                        RoomNode neighbourClone = new RoomNode(neighbour.type, neighbour.entranceCount, new List<RoomNode>(), neighbour.terminal);
+                        cloneMap.Add(neighbour, neighbourClone);
+                        clone.Add(neighbourClone);
+
+                        // Create connection
+                        cloneMap[currentNode].connectedNodes.Add(neighbourClone);
+                        neighbourClone.parentNode = cloneMap[currentNode];
+
+                        // Enqueue
+                        cloneQueue.Enqueue(neighbour);
+                    }
+                    else
+                    {
+                        // Clone of neighbour exists, create connection
+                        cloneMap[currentNode].connectedNodes.Add(cloneMap[neighbour]);
+                    }
+                }
+            }
+            doppelganger = cloneMap[original];
             return clone;
         }
 

@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using static UnityEngine.Mesh;
 
 namespace Loppy.Level
 {
@@ -79,7 +80,7 @@ namespace Loppy.Level
     // Data for each node in the final room graph,
     //     including the generated gameObject
     [Serializable]
-    public class RoomNode : IDisposable
+    public class RoomNode : IEquatable<RoomNode>, IDisposable
     {
         public string type;
         public int entranceCount;
@@ -142,6 +143,24 @@ namespace Loppy.Level
             this.entrance = other.entrance == null ? null : new RoomEntrance(other.entrance);
 
             this.openExits = new List<RoomEntrance>(other.openExits);
+        }
+
+        public override bool Equals(object obj)
+        {
+            var other = obj as RoomNode;
+            if (other == null) return false;
+
+            return Equals(other);
+        }
+
+        public bool Equals(RoomNode other)
+        {
+            return (type == other.type &&
+                    entranceCount == other.entranceCount &&
+                    terminal == other.terminal &&
+                    visited == other.visited &&
+                    roomCenter == other.roomCenter &&
+                    disposed == other.disposed);
         }
 
         public void Dispose()

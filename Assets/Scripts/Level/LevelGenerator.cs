@@ -460,7 +460,13 @@ namespace Loppy.Level
             // Start parse
             while (!success)
             {
+                // Grab next finished map
                 List<RoomNode> cloneToParse = roomParseQueue.Dequeue();
+
+                // Reset visited status of all nodes
+                foreach (RoomNode node in cloneToParse) node.visited = false;
+
+                // Start parsing through start node
                 RoomNode startNode = findRoomByType("startNode", cloneToParse);
                 startNode.visited = true;
                 RoomNode firstNode = startNode.connectedNodes[0];
@@ -468,6 +474,7 @@ namespace Loppy.Level
                 runningRoomParseCoroutines++;
                 StartCoroutine(parseRoom(firstNode, cloneToParse, (result) => roomParseSuccessCallback(cloneToParse, result)));
 
+                // Wait until we have another finished map to parse
                 if (roomParseQueue.Count == 0 ||
                     runningRoomParseCoroutines >= maxRoomParseCoroutines)
                 {
@@ -1083,7 +1090,7 @@ namespace Loppy.Level
             // Recursively destroy children nodes
             foreach (RoomNode connectedNode in node.connectedNodes)
             {
-                if (connectedNode != node.parentNode) resetRoom(connectedNode, graph);
+                if (connectedNode != node.parentNode && node.visited) resetRoom(connectedNode, graph);
             }
         }
 

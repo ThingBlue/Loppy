@@ -80,7 +80,7 @@ namespace Loppy.Level
     // Data for each node in the final room graph,
     //     including the generated gameObject
     [Serializable]
-    public class RoomNode : IEquatable<RoomNode>, IDisposable
+    public class RoomNode : IDisposable//, IEquatable<RoomNode>
     {
         public string type;
         public int entranceCount;
@@ -145,6 +145,7 @@ namespace Loppy.Level
             this.openExits = new List<RoomEntrance>(other.openExits);
         }
 
+        /*
         public override bool Equals(object obj)
         {
             var other = obj as RoomNode;
@@ -162,6 +163,7 @@ namespace Loppy.Level
                     roomCenter == other.roomCenter &&
                     disposed == other.disposed);
         }
+        */
 
         public void Dispose()
         {

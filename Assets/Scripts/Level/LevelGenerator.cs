@@ -396,17 +396,6 @@ namespace Loppy.Level
             RoomNode previousNode = patternNode.parentNode;
             RoomNode lastNode = endNode != null ? endNode.connectedNodes[0] : null;
             RoomNode nextNode = null;
-            if (endNode != null)
-            {
-                foreach (RoomNode connectedNode in patternNode.connectedNodes)
-                {
-                    if (connectedNode.parentNode != null && connectedNode.parentNode.Equals(patternNode))
-                    {
-                        nextNode = connectedNode;
-                        break;
-                    }
-                }
-            }
 
             // Connect first node to previous node
             previousNode.connectedNodes.Add(firstNode);
@@ -421,9 +410,25 @@ namespace Loppy.Level
             // Connect last node to next node if it exists
             if (endNode != null)
             {
+                foreach (RoomNode connectedNode in patternNode.connectedNodes)
+                {
+                    if (!patternNode.parentNode.Equals(connectedNode))
+                    {
+                        nextNode = connectedNode;
+                        break;
+                    }
+                }
                 if (nextNode == null)
                 {
                     Debug.LogWarning("nextNode null");
+                }
+                foreach (RoomNode connectedNode in patternNode.connectedNodes)
+                {
+                    if (!patternNode.parentNode.Equals(connectedNode))
+                    {
+                        nextNode = connectedNode;
+                        break;
+                    }
                 }
                 if (lastNode == null) Debug.LogWarning("lastNode null");
 

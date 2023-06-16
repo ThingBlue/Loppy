@@ -663,6 +663,7 @@ namespace Loppy.Level
             }
 
             Debug.Log("Level successfully generated");
+            yield break;
         }
 
         #endregion

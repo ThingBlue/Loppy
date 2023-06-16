@@ -153,8 +153,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   editorDataPath: C:\Users\ThingBlue\Documents\LoppyLevelPatterns
-  maxPatternParseCoroutines: 100
-  maxRoomParseCoroutines: 40
+  maxPatternParseCoroutines: 20
+  maxRoomParseCoroutines: 20
   roomPrefabs:
   - {fileID: 1545915187575959443, guid: fc841dcec68006f41b8f0b4122c35a52, type: 3}
   - {fileID: 1545915187575959443, guid: a653a51c61246d04e8a822266b490ed7, type: 3}

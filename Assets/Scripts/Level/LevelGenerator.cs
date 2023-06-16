@@ -29,12 +29,13 @@ namespace Loppy.Level
 
         private Queue<List<RoomNode>> patternParseQueue;
         private uint runningPatternParseCoroutines = 0;
+        private DecisionNode decisionTree;
 
         private Queue<List<RoomNode>> roomParseQueue;
         private uint runningRoomParseCoroutines = 0;
 
         private List<RoomNode> roomGraph;
-        private bool success = false;
+        private bool parseSuccess = false;
 
         private void Awake()
         {
@@ -123,6 +124,21 @@ namespace Loppy.Level
                 og.Add(c);
                 replacePattern(c, 1, og);
                 replacePattern(og[2], 0, og);
+            }
+            if (Input.GetKeyDown(KeyCode.M))
+            {
+                /*
+                foreach (List<RoomNode> patternParseResultClone in roomParseQueue)
+                {
+                    string patternDebugString = "Clone: ";
+                    foreach (RoomNode node in patternParseResultClone)
+                    {
+                        patternDebugString += " [" + node.type + "]";
+                    }
+                    Debug.Log(patternDebugString);
+                }
+                */
+                Debug.Log("Total patterns: " + roomParseQueue.Count);
             }
 
             //Debug.Log("runningPatternCoroutines: " + runningPatternParseCoroutines + ", patternQueue: " + patternParseQueue.Count + ", runningRoomCoroutines: " + runningRoomParseCoroutines + ", roomQueue: " + roomParseQueue.Count);
@@ -232,7 +248,7 @@ namespace Loppy.Level
         {
             // Reset flags
             StopAllCoroutines();
-            success = false;
+            parseSuccess = false;
             runningPatternParseCoroutines = 0;
             runningRoomParseCoroutines = 0;
             patternParseQueue.Clear();
@@ -279,146 +295,132 @@ namespace Loppy.Level
             }
 
             // Stop generation
+            parseSuccess = true;
             StopAllCoroutines();
 
             // Create room game objects
             roomGraph = parseResult;
-            createRoomGameObjects();
+            StartCoroutine(createRoomGameObjects());
 
             // Clean up
             patternParseQueue.Clear();
             roomParseQueue.Clear();
             runningPatternParseCoroutines = 0;
             runningRoomParseCoroutines = 0;
-
-            success = true;
-            Debug.Log("Level successfully generated");
         }
 
         #region Pattern parsing
 
         private IEnumerator startPatternParse()
         {
+            decisionTree = new DecisionNode();
             patternParseQueue.Clear();
-            roomParseQueue.Clear();
             patternParseQueue.Enqueue(roomGraph);
-            while (patternParseQueue.Count > 0 || runningPatternParseCoroutines > 0)
-            {
-                List<RoomNode> cloneToParse = patternParseQueue.Dequeue();
-                runningPatternParseCoroutines++;
-                StartCoroutine(parsePatterns(cloneToParse));
 
-                if (patternParseQueue.Count == 0 ||
-                    runningPatternParseCoroutines >= maxPatternParseCoroutines ||
-                    roomParseQueue.Count >= maxRoomParseCoroutines)
-                {
-                    yield return new WaitUntil(() => (patternParseQueue.Count > 0 &&
-                                                     runningPatternParseCoroutines < maxPatternParseCoroutines &&
-                                                     roomParseQueue.Count < maxRoomParseCoroutines) ||
-                                                     runningPatternParseCoroutines == 0);
-                }
+            for (int i = 0; i < maxPatternParseCoroutines; i++)
+            {
+                StartCoroutine(parsePatterns(roomGraph));
             }
 
-            /*
-            foreach (List<RoomNode> patternParseResultClone in roomParseQueue)
-            {
-                string patternDebugString = "Clone: ";
-                foreach (RoomNode node in patternParseResultClone)
-                {
-                    patternDebugString += " [" + node.type + "]";
-                }
-                Debug.Log(patternDebugString);
-            }
-            Debug.Log("Total patterns: " + roomParseQueue.Count);
-            */
+            yield break;            
         }
 
         private IEnumerator parsePatterns(List<RoomNode> graph)
         {
-            //yield return new WaitForSeconds(0.1f);
+            Queue<RoomNode> parseQueue = new Queue<RoomNode>();
 
-            // Reset visited status for all nodes
-            foreach (RoomNode node in graph) node.visited = false;
-
-            // Find first pattern node reachable from the start node
-            RoomNode patternNode = null;
-            Queue<RoomNode> nodesToVisit = new Queue<RoomNode>();
-            nodesToVisit.Enqueue(findRoomByType("startNode", graph));
-            while (nodesToVisit.Count > 0)
+            // Keep producing new rooms until room parse finishes
+            while (!parseSuccess)
             {
-                RoomNode node = nodesToVisit.Dequeue();
-                node.visited = true;
+                // Slow down evaluation to reduce load
+                yield return new WaitForSeconds(0.1f);
 
-                // Enqueue connected and unvisited children nodes
-                foreach (RoomNode connectedNode in node.connectedNodes)
+                // Initialize/reset for loop
+                List<RoomNode> clone = new List<RoomNode>(cloneGraph(graph));
+                foreach (RoomNode node in clone) node.visited = false;
+
+                parseQueue.Clear();
+                RoomNode startNode = findRoomByType("startNode", clone);
+                parseQueue.Enqueue(startNode);
+
+                DecisionNode decisionNode = decisionTree;
+
+                // Iteratively go through every node
+                bool exists = true;
+                while (parseQueue.Count > 0)
                 {
-                    if (connectedNode == null) Debug.LogError("Null node connected to: " + node.type);
-                    if (!connectedNode.visited)
+                    // Get node from queue
+                    RoomNode node = parseQueue.Dequeue();
+                    node.visited = true;
+
+                    // Find neighbours
+                    List<RoomNode> nonterminalNeighbours = new List<RoomNode>();
+                    foreach (RoomNode neighbour in node.connectedNodes)
                     {
-                        //connectedNode.parentNode = node;
-                        nodesToVisit.Enqueue(connectedNode);
+                        if (neighbour.visited) continue;
+
+                        // Check for terminal node
+                        if (neighbour.terminal)
+                        {
+                            // Enqueue and recurse
+                            parseQueue.Enqueue(neighbour);
+                            continue;
+                        }
+
+                        // Nonterminal node
+                        nonterminalNeighbours.Add(neighbour);
                     }
+
+                    // Parse nonterminal neighbours
+                    if (nonterminalNeighbours.Count > 0) parseQueue.Enqueue(node);
+                    foreach (RoomNode nonterminalNeighbour in nonterminalNeighbours)
+                    {
+                        // Make random decision and replace pattern
+                        int randomIndex = UnityEngine.Random.Range(0, patternDictionary[nonterminalNeighbour.type].Count);
+                        RoomNode firstNode = replacePattern(nonterminalNeighbour, randomIndex, clone);
+
+                        // Update decision tree
+                        // Current sequence already exists
+                        if (decisionNode.children.ContainsKey(randomIndex))
+                        {
+                            decisionNode = decisionNode.children[randomIndex];
+                        }
+                        // Current sequence does not exist
+                        else
+                        {
+                            exists = false;
+                            decisionNode.children.Add(randomIndex, new DecisionNode());
+                            decisionNode = decisionNode.children[randomIndex];
+                        }
+
+                        // Clean up
+                        nonterminalNeighbour.Dispose();
+                    }
+                    // Clean up
+                    nonterminalNeighbours.Clear();
                 }
 
-                // Check for pattern node
-                if (!node.terminal)
+                // Report this result if it does not already exist
+                if (!exists) roomParseQueue.Enqueue(clone);
+                else
                 {
-                    patternNode = node;
-                    break;
+                    // Clean up
+                    foreach (RoomNode node in clone) node.Dispose();
+                    clone.Clear();
                 }
+
+                // We have enough finished patterns for now
+                if (roomParseQueue.Count >= maxRoomParseCoroutines) yield return new WaitUntil(() => roomParseQueue.Count < maxRoomParseCoroutines);
             }
-            nodesToVisit.Clear();
-
-            // Check if all nodes are terminal
-            if (patternNode == null)
-            {
-                //foreach (RoomNode node in graph) node.visited = node.type == "startNode";
-                roomParseQueue.Enqueue(graph);
-
-                /*
-                string patternDebugString = "Clone: ";
-                foreach (RoomNode node in graph)
-                {
-                    patternDebugString += " [" + node.type + "]";
-                }
-                Debug.Log(patternDebugString);
-                */
-
-                runningPatternParseCoroutines--;
-                yield break;
-            }
-
-            // Only parse graph when more is needed by the room parser
-            if (roomParseQueue.Count >= maxRoomParseCoroutines) yield return new WaitUntil(() => roomParseQueue.Count < maxRoomParseCoroutines);
-
-            // Create a clone of the graph for every choice of pattern result
-            for (int i = 0; i < patternDictionary[patternNode.type].Count; i++)
-            {
-                // Create clone
-                //List<RoomNode> clone = cloneGraph(graph);
-                RoomNode patternNodeDoppelganger = null;
-                List<RoomNode> clone = cloneGraphAndGetDoppelganger(graph, patternNode, ref patternNodeDoppelganger);
-
-                // Replace pattern with new pattern
-                replacePattern(patternNodeDoppelganger, i, clone);
-
-                // Push clone to queue
-                patternParseQueue.Enqueue(clone);
-            }
-
-            // Don't need current graph anymore, clean up
-            foreach (RoomNode node in graph) node.Dispose();
-            graph.Clear();
-
-            runningPatternParseCoroutines--;
-            yield break;
         }
 
-        private void replacePattern(RoomNode patternNode, int resultIndex, List<RoomNode> graph)
+
+        // Replaces pattern using the resultIndex-th result in patternDictionary
+        // Returns the first non-startNode node of the new pattern
+        private RoomNode replacePattern(RoomNode patternNode, int resultIndex, List<RoomNode> graph)
         {
             // Replace pattern with new pattern
             List<RoomNode> patternResult = cloneGraph(patternDictionary[patternNode.type][resultIndex]);
-            //assignNewIds(patternResult);
 
             // Find start and end nodes
             RoomNode startNode = findRoomByType("startNode", patternResult);
@@ -488,6 +490,8 @@ namespace Loppy.Level
             // Clean up
             startNode.Dispose();
             patternResult.Clear();
+
+            return firstNode;
         }
 
         #endregion
@@ -500,7 +504,7 @@ namespace Loppy.Level
             if (roomParseQueue.Count == 0) yield return new WaitUntil(() => roomParseQueue.Count > 0);
 
             // Start parse
-            while (!success)
+            while (!parseSuccess)
             {
                 // Grab next finished map
                 List<RoomNode> cloneToParse = roomParseQueue.Dequeue();
@@ -521,14 +525,15 @@ namespace Loppy.Level
                     runningRoomParseCoroutines >= maxRoomParseCoroutines)
                 {
                     yield return new WaitUntil(() => (roomParseQueue.Count > 0 && runningRoomParseCoroutines < maxRoomParseCoroutines) ||
-                                                     success);
+                                                     parseSuccess);
                 }
             }
         }
 
         private IEnumerator parseRoom(RoomNode node, List<RoomNode> graph, Action<bool> result)
         {
-            //yield return new WaitForSeconds(0.1f);
+            // Slow down evaluation to reduce load
+            yield return new WaitForSeconds(0.01f);
 
             if (node.type == "endNode")
             {
@@ -638,10 +643,13 @@ namespace Loppy.Level
             yield break;
         }
 
-        private void createRoomGameObjects()
+        private IEnumerator createRoomGameObjects()
         {
             foreach (RoomNode node in roomGraph)
             {
+                // Slow down evaluation to reduce load
+                //yield return new WaitForSeconds(0.1f);
+
                 if (node.type == "startNode" || node.type == "endNode") continue;
 
                 if (node.roomPrefabData == null)
@@ -653,6 +661,9 @@ namespace Loppy.Level
                 GameObject newRoomGameObject = Instantiate(node.roomPrefabData.roomPrefab, node.roomCenter, Quaternion.identity);
                 node.roomGameObject = newRoomGameObject;
             }
+
+            Debug.Log("Level successfully generated");
+            yield break;
         }
 
         #endregion

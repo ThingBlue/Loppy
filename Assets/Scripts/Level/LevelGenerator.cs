@@ -1,9 +1,7 @@
-using Codice.Client.BaseCommands;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using UnityEditor.Graphs;
 using UnityEngine;
 
 namespace Loppy.Level
@@ -71,9 +69,9 @@ namespace Loppy.Level
             if (Input.GetKeyDown(KeyCode.O))
             {
                 List<RoomNode> og = new List<RoomNode>();
-                RoomNode a = new RoomNode("startNode", 0, new List<RoomNode>(), true);
-                RoomNode b = new RoomNode("b", 0, new List<RoomNode>(), true);
-                RoomNode c = new RoomNode("c", 0, new List<RoomNode>(), true);
+                RoomNode a = new RoomNode("startNode", true, new List<RoomNode>());
+                RoomNode b = new RoomNode("b", true, new List<RoomNode>());
+                RoomNode c = new RoomNode("c", true, new List<RoomNode>());
                 a.connectedNodes.Add(b);
                 b.connectedNodes.Add(a);
                 b.connectedNodes.Add(c);
@@ -91,9 +89,9 @@ namespace Loppy.Level
             if (Input.GetKeyDown(KeyCode.I))
             {
                 List<RoomNode> og = new List<RoomNode>();
-                RoomNode a = new RoomNode("startNode", 0, new List<RoomNode>(), true);
-                RoomNode b = new RoomNode("b", 0, new List<RoomNode>(), true);
-                RoomNode c = new RoomNode("c", 0, new List<RoomNode>(), true);
+                RoomNode a = new RoomNode("startNode", true, new List<RoomNode>());
+                RoomNode b = new RoomNode("b", true, new List<RoomNode>());
+                RoomNode c = new RoomNode("c", true, new List<RoomNode>());
                 a.connectedNodes.Add(b);
                 b.connectedNodes.Add(a);
                 b.connectedNodes.Add(c);
@@ -110,9 +108,9 @@ namespace Loppy.Level
             if (Input.GetKeyDown(KeyCode.P))
             {
                 List<RoomNode> og = new List<RoomNode>();
-                RoomNode a = new RoomNode("startNode", 0, new List<RoomNode>(), true);
-                RoomNode b = new RoomNode("basicTestCorridor", 0, new List<RoomNode>(), true);
-                RoomNode c = new RoomNode("basicTestShopPattern", 0, new List<RoomNode>(), false);
+                RoomNode a = new RoomNode("startNode", true, new List<RoomNode>());
+                RoomNode b = new RoomNode("basicTestCorridor", true, new List<RoomNode>());
+                RoomNode c = new RoomNode("basicTestShopPattern", false, new List<RoomNode>());
                 a.connectedNodes.Add(b);
                 b.connectedNodes.Add(a);
                 b.connectedNodes.Add(c);
@@ -232,7 +230,13 @@ namespace Loppy.Level
 
         private IEnumerator generateLevel(string level)
         {
+            // Reset flags
+            StopAllCoroutines();
             success = false;
+            runningPatternParseCoroutines = 0;
+            runningRoomParseCoroutines = 0;
+            patternParseQueue.Clear();
+            roomParseQueue.Clear();
 
             // Assert that the level exists as a key in patterns
             if (!patternDictionary.ContainsKey(level))
@@ -254,6 +258,41 @@ namespace Loppy.Level
             StartCoroutine(startRoomParse());
 
             yield break;
+        }
+
+        private void roomParseSuccessCallback(List<RoomNode> parseResult, bool result)
+        {
+            runningRoomParseCoroutines--;
+
+            // Check result returned from parsing
+            if (!result) return;
+
+            // Check that all nodes have the correct number of connections
+            foreach (RoomNode node in parseResult)
+            {
+                if (node.type == "startNode" || node.type == "endNode") continue;
+                if (node.connectedNodes.Count != node.roomPrefabData.entrances.Count)
+                {
+                    Debug.Log("Generated level does not have correct connections, check level graph in editor");
+                    return;
+                }
+            }
+
+            // Stop generation
+            StopAllCoroutines();
+
+            // Create room game objects
+            roomGraph = parseResult;
+            createRoomGameObjects();
+
+            // Clean up
+            patternParseQueue.Clear();
+            roomParseQueue.Clear();
+            runningPatternParseCoroutines = 0;
+            runningRoomParseCoroutines = 0;
+
+            success = true;
+            Debug.Log("Level successfully generated");
         }
 
         #region Pattern parsing
@@ -460,8 +499,6 @@ namespace Loppy.Level
             // Wait until pattern parse yields enough results to begin new coroutine
             if (roomParseQueue.Count == 0) yield return new WaitUntil(() => roomParseQueue.Count > 0);
 
-            Debug.Log("Started room parsing");
-
             // Start parse
             while (!success)
             {
@@ -601,28 +638,6 @@ namespace Loppy.Level
             yield break;
         }
 
-        private void roomParseSuccessCallback(List<RoomNode> parseResult, bool result)
-        {
-            runningRoomParseCoroutines--;
-            if (!result) return;
-
-            // Stop generation
-            StopAllCoroutines();
-
-            // Create room game objects
-            roomGraph = parseResult;
-            createRoomGameObjects();
-
-            // Clean up
-            patternParseQueue.Clear();
-            roomParseQueue.Clear();
-            runningPatternParseCoroutines = 0;
-            runningRoomParseCoroutines = 0;
-
-            success = true;
-            Debug.Log("Level successfully generated");
-        }
-
         private void createRoomGameObjects()
         {
             foreach (RoomNode node in roomGraph)
@@ -738,7 +753,7 @@ namespace Loppy.Level
         {
             // Find start node and make new one
             DataNode oldStartNode = findRoomByType("startNode", dataGraph);
-            RoomNode newStartNode = new RoomNode("startNode", 1, new List<RoomNode>(), true);
+            RoomNode newStartNode = new RoomNode("startNode", true, new List<RoomNode>());
 
             // Initialize clone list
             List<RoomNode> newRoomGraph = new List<RoomNode>();
@@ -766,7 +781,7 @@ namespace Loppy.Level
                     if (!convertMap.ContainsKey(neighbour))
                     {
                         // Clone of neighbour node does not exist yet, create it
-                        RoomNode neighbourClone = new RoomNode(neighbour.type, neighbour.entranceCount, new List<RoomNode>(), neighbour.terminal);
+                        RoomNode neighbourClone = new RoomNode(neighbour.type, neighbour.terminal, new List<RoomNode>());
                         convertMap.Add(neighbour, neighbourClone);
                         newRoomGraph.Add(neighbourClone);
 
@@ -792,7 +807,7 @@ namespace Loppy.Level
         {
             // Find start node and make new one
             RoomNode oldStartNode = findRoomByType("startNode", graph);
-            RoomNode newStartNode = new RoomNode("startNode", 1, new List<RoomNode>(), true);
+            RoomNode newStartNode = new RoomNode("startNode", true, new List<RoomNode>());
 
             // Initialize clone list
             List<RoomNode> clone = new List<RoomNode>();
@@ -818,7 +833,7 @@ namespace Loppy.Level
                     if (!cloneMap.ContainsKey(neighbour))
                     {
                         // Clone of neighbour node does not exist yet, create it
-                        RoomNode neighbourClone = new RoomNode(neighbour.type, neighbour.entranceCount, new List<RoomNode>(), neighbour.terminal);
+                        RoomNode neighbourClone = new RoomNode(neighbour.type, neighbour.terminal, new List<RoomNode>());
                         cloneMap.Add(neighbour, neighbourClone);
                         clone.Add(neighbourClone);
 
@@ -843,7 +858,7 @@ namespace Loppy.Level
         {
             // Find start node and make new one
             RoomNode oldStartNode = findRoomByType("startNode", graph);
-            RoomNode newStartNode = new RoomNode("startNode", 1, new List<RoomNode>(), true);
+            RoomNode newStartNode = new RoomNode("startNode", true, new List<RoomNode>());
 
             // Initialize clone list
             List<RoomNode> clone = new List<RoomNode>();
@@ -869,7 +884,7 @@ namespace Loppy.Level
                     if (!cloneMap.ContainsKey(neighbour))
                     {
                         // Clone of neighbour node does not exist yet, create it
-                        RoomNode neighbourClone = new RoomNode(neighbour.type, neighbour.entranceCount, new List<RoomNode>(), neighbour.terminal);
+                        RoomNode neighbourClone = new RoomNode(neighbour.type, neighbour.terminal, new List<RoomNode>());
                         cloneMap.Add(neighbour, neighbourClone);
                         clone.Add(neighbourClone);
 

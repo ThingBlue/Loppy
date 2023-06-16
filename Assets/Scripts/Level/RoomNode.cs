@@ -83,65 +83,54 @@ namespace Loppy.Level
     public class RoomNode : IDisposable//, IEquatable<RoomNode>
     {
         public string type;
-        public int entranceCount;
-
-        // Imported from DataNode
-        public List<RoomNode> connectedNodes;
         public bool terminal;
+        public List<RoomNode> connectedNodes;
 
-        // Parsing
-        public bool visited = false;
+        // Room data
         public RoomPrefabData roomPrefabData = null;
         public Vector2 roomCenter = Vector2.zero;
         public GameObject roomGameObject = null;
 
-        // Decision tree
+        // Parsing
+        public bool visited = false;
         public RoomNode parentNode;
         public RoomEntrance parentExit = null;
         public RoomEntrance entrance = null;
-
-        // Temporary list of unused entrances to help with room generation
         public List<RoomEntrance> openExits;
 
         public bool disposed = false;
 
-        public RoomNode(string type, int entranceCount, List<RoomNode> connectedNodes, bool terminal)
+        public RoomNode(string type, bool terminal, List<RoomNode> connectedNodes)
         {
             this.type = type;
-            this.entranceCount = entranceCount;
-
-            this.connectedNodes = new List<RoomNode>(connectedNodes);
             this.terminal = terminal;
-
-            this.visited = false;
+            this.connectedNodes = new List<RoomNode>(connectedNodes);
+            
             this.roomPrefabData = null;
             this.roomCenter = Vector2.zero;
             this.roomGameObject = null;
 
+            this.visited = false;
             this.parentNode = null;
             this.parentExit = null;
             this.entrance = null;
-
             this.openExits = new List<RoomEntrance>();
         }
 
         public RoomNode(RoomNode other)
         {
             this.type = other.type;
-            this.entranceCount = other.entranceCount;
-
-            this.connectedNodes = new List<RoomNode>(other.connectedNodes);
             this.terminal = other.terminal;
+            this.connectedNodes = new List<RoomNode>(other.connectedNodes);
 
-            this.visited = other.visited;
             this.roomPrefabData = other.roomPrefabData;
             this.roomCenter = other.roomCenter;
             this.roomGameObject = null;
 
+            this.visited = other.visited;
             this.parentNode = other.parentNode;
             this.parentExit = other.parentExit == null ? null : new RoomEntrance(other.parentExit);
             this.entrance = other.entrance == null ? null : new RoomEntrance(other.entrance);
-
             this.openExits = new List<RoomEntrance>(other.openExits);
         }
 

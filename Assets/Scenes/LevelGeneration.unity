@@ -153,6 +153,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   editorDataPath: C:\Users\ThingBlue\Documents\LoppyLevelPatterns
+  maxPatternParseCoroutines: 100
+  maxRoomParseCoroutines: 40
   roomPrefabs:
   - {fileID: 1545915187575959443, guid: fc841dcec68006f41b8f0b4122c35a52, type: 3}
   - {fileID: 1545915187575959443, guid: a653a51c61246d04e8a822266b490ed7, type: 3}
@@ -328,7 +330,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 8
+  orthographic size: 12
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -422,25 +424,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   editorDataPath: C:\Users\ThingBlue\Documents\LoppyLevelPatterns
+  maxPatternParseCoroutines: 10000
+  maxRoomParseCoroutines: 0
   roomPrefabs:
   - {fileID: 5920931384760467256, guid: e4c4cd6e13a1d6a4383462bf0787c1fe, type: 3}
   - {fileID: 9170282334753474944, guid: 3b0e866733c59b04ca2e1a39450ced7a, type: 3}
-  - {fileID: 1545915187575959443, guid: 9e7f54032ce3cc94da6089607c565b02, type: 3}
-  - {fileID: 1545915187575959443, guid: 6b016081da566744786d673ee499b45c, type: 3}
   - {fileID: 5211390174303199085, guid: fc9a9f10b765d2843bb57a6520602147, type: 3}
   - {fileID: 1545915187575959443, guid: a653a51c61246d04e8a822266b490ed7, type: 3}
   - {fileID: 4942241973497353112, guid: 1029c546051097a45b51da231f68b2f3, type: 3}
-  - {fileID: 5139249586478869005, guid: ba0d9fd9ad10c0f4da3fc4c1eb9743b9, type: 3}
-  - {fileID: 9170282334753474944, guid: 03c30d1989e0f6b4582eb641bb931232, type: 3}
-  - {fileID: 1545915187575959443, guid: fc841dcec68006f41b8f0b4122c35a52, type: 3}
-  - {fileID: 1545915187575959443, guid: a653a51c61246d04e8a822266b490ed7, type: 3}
-  - {fileID: 1545915187575959443, guid: 596f264f50c465143822ab735d1ec428, type: 3}
-  - {fileID: 1545915187575959443, guid: 7e49dd4771d993f4a9298cc525a7234e, type: 3}
-  - {fileID: 1545915187575959443, guid: 711cdc742f8b92547bec26d57bcd1a11, type: 3}
-  - {fileID: 5139249586478869005, guid: ba0d9fd9ad10c0f4da3fc4c1eb9743b9, type: 3}
-  - {fileID: 5139249586478869005, guid: ba0d9fd9ad10c0f4da3fc4c1eb9743b9, type: 3}
-  - {fileID: 5139249586478869005, guid: ba0d9fd9ad10c0f4da3fc4c1eb9743b9, type: 3}
-  - {fileID: 5139249586478869005, guid: ba0d9fd9ad10c0f4da3fc4c1eb9743b9, type: 3}
   - {fileID: 5139249586478869005, guid: ba0d9fd9ad10c0f4da3fc4c1eb9743b9, type: 3}
   randomSeed: 0
   nextId: 0

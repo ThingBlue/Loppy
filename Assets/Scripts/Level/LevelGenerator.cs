@@ -333,9 +333,6 @@ namespace Loppy.Level
             // Keep producing new rooms until room parse finishes
             while (!parseSuccess)
             {
-                // Slow down evaluation to reduce load
-                yield return new WaitForSeconds(0.1f);
-
                 // Initialize/reset for loop
                 List<RoomNode> clone = new List<RoomNode>(cloneGraph(graph));
                 foreach (RoomNode node in clone) node.visited = false;
@@ -350,6 +347,9 @@ namespace Loppy.Level
                 bool exists = true;
                 while (parseQueue.Count > 0)
                 {
+                    // Slow down evaluation to reduce load
+                    yield return new WaitForSeconds(0.01f);
+
                     // Get node from queue
                     RoomNode node = parseQueue.Dequeue();
                     node.visited = true;

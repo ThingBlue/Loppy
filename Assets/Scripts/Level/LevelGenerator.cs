@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using static PlasticGui.LaunchDiffParameters;
 
 namespace Loppy.Level
 {
@@ -373,35 +374,70 @@ namespace Loppy.Level
 
                     // Parse nonterminal neighbours
                     if (nonterminalNeighbours.Count > 0) parseQueue.Enqueue(node);
+                    bool allChildrenComplete = false;
                     foreach (RoomNode nonterminalNeighbour in nonterminalNeighbours)
                     {
-                        // Make random decision and replace pattern
-                        int randomIndex = UnityEngine.Random.Range(0, patternDictionary[nonterminalNeighbour.type].Count);
-                        RoomNode firstNode = replacePattern(nonterminalNeighbour, randomIndex, clone);
+                        // Get a list of incomplete possible decisions
+                        List<int> incompleteDecisions = new List<int>();
+                        for (int i = 0; i < patternDictionary[nonterminalNeighbour.type].Count; i++)
+                        {
+                            if (!decisionNode.children.ContainsKey(i)) incompleteDecisions.Add(i);
+                            else if (!decisionNode.children[i].complete) incompleteDecisions.Add(i);
+                        }
+
+                        // All children are complete, mark current node as complete and restart parse
+                        if (incompleteDecisions.Count == 0)
+                        {
+                            decisionNode.complete = true;
+                            allChildrenComplete = true;
+                            break;
+                        }
+
+                        // Make random decision
+                        int randomIndex = UnityEngine.Random.Range(0, incompleteDecisions.Count);
+                        int randomDecision = incompleteDecisions[randomIndex];
+
+                        // Replace pattern
+                        RoomNode firstNode = replacePattern(nonterminalNeighbour, randomDecision, clone);
 
                         // Update decision tree
                         // Current sequence already exists
-                        if (decisionNode.children.ContainsKey(randomIndex))
+                        if (decisionNode.children.ContainsKey(randomDecision))
                         {
-                            decisionNode = decisionNode.children[randomIndex];
+                            decisionNode = decisionNode.children[randomDecision];
                         }
                         // Current sequence does not exist
                         else
                         {
                             exists = false;
-                            decisionNode.children.Add(randomIndex, new DecisionNode());
-                            decisionNode = decisionNode.children[randomIndex];
+                            decisionNode.children.Add(randomDecision, new DecisionNode());
+                            decisionNode = decisionNode.children[randomDecision];
                         }
 
                         // Clean up
+                        incompleteDecisions.Clear();
                         nonterminalNeighbour.Dispose();
                     }
                     // Clean up
                     nonterminalNeighbours.Clear();
+
+                    // This path has arleady been fully explored, restart
+                    if (allChildrenComplete)
+                    {
+                        exists = true;
+                        break;
+                    }
                 }
 
                 // Report this result if it does not already exist
-                if (!exists) roomParseQueue.Enqueue(clone);
+                if (!exists)
+                {
+                    roomParseQueue.Enqueue(clone);
+                    //Debug.Log(roomParseQueue.Count);
+
+                    // Mark current decision tree leaf node as complete
+                    decisionNode.complete = true;
+                }
                 else
                 {
                     // Clean up

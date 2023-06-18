@@ -1,0 +1,18 @@
+{
+    "name": "Loppy.Enemy.Controllers",
+    "rootNamespace": "",
+    "references": [
+        "GUID:87cb0f647998bb74dbadbc40e0d7b675",
+        "GUID:272b626a777953d4680ad615a3d5840c",
+        "GUID:b077787859db9a342a039e813aff3f3d"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

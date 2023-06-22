@@ -404,9 +404,8 @@ namespace Loppy.Level
 
                         // Update decision tree
                         // Current sequence already exists
-                        if (decisionNode.children.ContainsKey(randomDecision))
+                        if (decisionNode.children.ContainsKey(randomIndex))
                         {
-                            exists = true;
                             decisionNode = decisionNode.children[randomIndex];
                         }
                         // Current sequence does not exist
@@ -423,7 +422,7 @@ namespace Loppy.Level
                     // Clean up
                     nonterminalNeighbours.Clear();
 
-                    // This path has arleady been fully explored, restart
+                    // This path has already been fully explored, restart
                     if (allChildrenComplete)
                     {
                         exists = true;

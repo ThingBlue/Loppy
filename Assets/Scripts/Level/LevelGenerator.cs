@@ -335,9 +335,6 @@ namespace Loppy.Level
             // Keep producing new rooms until room parse finishes
             while (!parseSuccess)
             {
-                // Slow down evaluation to reduce load
-                yield return new WaitForSeconds(0.1f);
-
                 // Initialize/reset for loop
                 List<RoomNode> clone = new List<RoomNode>(cloneGraph(graph));
                 foreach (RoomNode node in clone) node.visited = false;
@@ -352,6 +349,9 @@ namespace Loppy.Level
                 bool exists = false;
                 while (parseQueue.Count > 0)
                 {
+                    // Slow down evaluation to reduce load
+                    yield return new WaitForSeconds(0.01f);
+
                     // Get node from queue
                     RoomNode node = parseQueue.Dequeue();
                     node.visited = true;
@@ -376,15 +376,35 @@ namespace Loppy.Level
 
                     // Parse nonterminal neighbours
                     if (nonterminalNeighbours.Count > 0) parseQueue.Enqueue(node);
+                    bool allChildrenComplete = false;
                     foreach (RoomNode nonterminalNeighbour in nonterminalNeighbours)
                     {
-                        // Make random decision and replace pattern
-                        int randomIndex = UnityEngine.Random.Range(0, patternDictionary[nonterminalNeighbour.type].Count);
-                        RoomNode firstNode = replacePattern(nonterminalNeighbour, randomIndex, clone);
+                        // Get a list of incomplete possible decisions
+                        List<int> incompleteDecisions = new List<int>();
+                        for (int i = 0; i < patternDictionary[nonterminalNeighbour.type].Count; i++)
+                        {
+                            if (!decisionNode.children.ContainsKey(i)) incompleteDecisions.Add(i);
+                            else if (!decisionNode.children[i].complete) incompleteDecisions.Add(i);
+                        }
+
+                        // All children are complete, mark current node as complete and restart parse
+                        if (incompleteDecisions.Count == 0)
+                        {
+                            decisionNode.complete = true;
+                            allChildrenComplete = true;
+                            break;
+                        }
+
+                        // Make random decision
+                        int randomIndex = UnityEngine.Random.Range(0, incompleteDecisions.Count);
+                        int randomDecision = incompleteDecisions[randomIndex];
+
+                        // Replace pattern
+                        RoomNode firstNode = replacePattern(nonterminalNeighbour, randomDecision, clone);
 
                         // Update decision tree
                         // Current sequence already exists
-                        if (decisionNode.children.ContainsKey(randomIndex))
+                        if (decisionNode.children.ContainsKey(randomDecision))
                         {
                             exists = true;
                             decisionNode = decisionNode.children[randomIndex];
@@ -397,10 +417,18 @@ namespace Loppy.Level
                         }
 
                         // Clean up
+                        incompleteDecisions.Clear();
                         nonterminalNeighbour.Dispose();
                     }
                     // Clean up
                     nonterminalNeighbours.Clear();
+
+                    // This path has arleady been fully explored, restart
+                    if (allChildrenComplete)
+                    {
+                        exists = true;
+                        break;
+                    }
                 }
 
                 // Report this result if it does not already exist
@@ -414,6 +442,10 @@ namespace Loppy.Level
                     Debug.Log(patternDebugString);
 
                     roomParseQueue.Enqueue(clone);
+                    //Debug.Log(roomParseQueue.Count);
+
+                    // Mark current decision tree leaf node as complete
+                    decisionNode.complete = true;
                 }
                 else
                 {

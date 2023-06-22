@@ -28,10 +28,12 @@ namespace Loppy.Level
         private Dictionary<string, List<List<RoomNode>>> patternDictionary;
 
         private Queue<List<RoomNode>> patternParseQueue;
+        [SerializeField]
         private uint runningPatternParseCoroutines = 0;
         private DecisionNode decisionTree;
 
         private Queue<List<RoomNode>> roomParseQueue;
+        [SerializeField]
         private uint runningRoomParseCoroutines = 0;
 
         private List<RoomNode> roomGraph;
@@ -65,7 +67,8 @@ namespace Loppy.Level
                 StopAllCoroutines();
 
                 // Generate test level
-                StartCoroutine(generateLevel("basicTestLevel"));
+                //StartCoroutine(generateLevel("basicTestLevel"));
+                StartCoroutine(generateLevel("largeTestLevel"));
             }
             if (Input.GetKeyDown(KeyCode.O))
             {
@@ -343,7 +346,7 @@ namespace Loppy.Level
                 DecisionNode decisionNode = decisionTree;
 
                 // Iteratively go through every node
-                bool exists = true;
+                bool exists = false;
                 while (parseQueue.Count > 0)
                 {
                     // Slow down evaluation to reduce load
@@ -403,14 +406,14 @@ namespace Loppy.Level
                         // Current sequence already exists
                         if (decisionNode.children.ContainsKey(randomDecision))
                         {
-                            decisionNode = decisionNode.children[randomDecision];
+                            exists = true;
+                            decisionNode = decisionNode.children[randomIndex];
                         }
                         // Current sequence does not exist
                         else
                         {
-                            exists = false;
-                            decisionNode.children.Add(randomDecision, new DecisionNode());
-                            decisionNode = decisionNode.children[randomDecision];
+                            decisionNode.children.Add(randomIndex, new DecisionNode());
+                            decisionNode = decisionNode.children[randomIndex];
                         }
 
                         // Clean up
@@ -431,6 +434,13 @@ namespace Loppy.Level
                 // Report this result if it does not already exist
                 if (!exists)
                 {
+                    string patternDebugString = "Clone: ";
+                    foreach (RoomNode node in clone)
+                    {
+                        patternDebugString += " [" + node.type + "]";
+                    }
+                    Debug.Log(patternDebugString);
+
                     roomParseQueue.Enqueue(clone);
                     //Debug.Log(roomParseQueue.Count);
 
@@ -1080,8 +1090,6 @@ namespace Loppy.Level
 
                 // Check if other room should be connected to current room anyways
                 if (otherNode.connectedNodes.Contains(node)) continue;
-
-                //if (otherRoom.type == "basicTestJunction") Debug.Log("JUNCTION WITH " + otherRoom.openExits.Count + " OPEN EXITS");
 
                 foreach (RoomEntrance exit in otherNode.openExits)
                 {

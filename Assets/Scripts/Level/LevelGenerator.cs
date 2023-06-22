@@ -1,3 +1,4 @@
+using Codice.Client.Common.TreeGrouper;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -65,7 +66,8 @@ namespace Loppy.Level
                 StopAllCoroutines();
 
                 // Generate test level
-                StartCoroutine(generateLevel("basicTestLevel"));
+                //StartCoroutine(generateLevel("basicTestLevel"));
+                StartCoroutine(generateLevel("largeTestLevel"));
             }
             if (Input.GetKeyDown(KeyCode.O))
             {
@@ -346,7 +348,7 @@ namespace Loppy.Level
                 DecisionNode decisionNode = decisionTree;
 
                 // Iteratively go through every node
-                bool exists = true;
+                bool exists = false;
                 while (parseQueue.Count > 0)
                 {
                     // Get node from queue
@@ -383,12 +385,12 @@ namespace Loppy.Level
                         // Current sequence already exists
                         if (decisionNode.children.ContainsKey(randomIndex))
                         {
+                            exists = true;
                             decisionNode = decisionNode.children[randomIndex];
                         }
                         // Current sequence does not exist
                         else
                         {
-                            exists = false;
                             decisionNode.children.Add(randomIndex, new DecisionNode());
                             decisionNode = decisionNode.children[randomIndex];
                         }
@@ -401,7 +403,17 @@ namespace Loppy.Level
                 }
 
                 // Report this result if it does not already exist
-                if (!exists) roomParseQueue.Enqueue(clone);
+                if (!exists)
+                {
+                    string patternDebugString = "Clone: ";
+                    foreach (RoomNode node in clone)
+                    {
+                        patternDebugString += " [" + node.type + "]";
+                    }
+                    Debug.Log(patternDebugString);
+
+                    roomParseQueue.Enqueue(clone);
+                }
                 else
                 {
                     // Clean up
@@ -520,6 +532,8 @@ namespace Loppy.Level
                 runningRoomParseCoroutines++;
                 StartCoroutine(parseRoom(firstNode, cloneToParse, (result) => roomParseSuccessCallback(cloneToParse, result)));
 
+                Debug.Log("Thread started");
+
                 // Wait until we have another finished map to parse
                 if (roomParseQueue.Count == 0 ||
                     runningRoomParseCoroutines >= maxRoomParseCoroutines)
@@ -532,6 +546,9 @@ namespace Loppy.Level
 
         private IEnumerator parseRoom(RoomNode node, List<RoomNode> graph, Action<bool> result)
         {
+
+            Debug.Log("Progress: " + node.type);
+
             // Slow down evaluation to reduce load
             yield return new WaitForSeconds(0.01f);
 

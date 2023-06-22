@@ -193,6 +193,8 @@ MonoBehaviour:
   - {fileID: 9170282334753474944, guid: 6a5d4fe902a3bb54085f56cbeff8cae5, type: 3}
   randomSeed: 0
   nextId: 0
+  runningPatternParseCoroutines: 0
+  runningRoomParseCoroutines: 0
 --- !u!4 &389017625
 Transform:
   m_ObjectHideFlags: 0
@@ -307,7 +309,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   editorDataPath: C:\Users\ThingBlue\Documents\LoppyLevelPatterns
   maxPatternParseCoroutines: 20
-  maxRoomParseCoroutines: 20
+  maxRoomParseCoroutines: 50
   roomPrefabs:
   - {fileID: 6186112427772658526, guid: 6df648e1f717674428761be30182eda4, type: 3}
   - {fileID: 3143840094434998515, guid: 013b842ff909a8b4ba65b07371b558d6, type: 3}
@@ -363,6 +365,8 @@ MonoBehaviour:
   - {fileID: 2640612519549630528, guid: 8185f66df1b015d4ea24fb38ef2ee90b, type: 3}
   randomSeed: 0
   nextId: 0
+  runningPatternParseCoroutines: 0
+  runningRoomParseCoroutines: 0
 --- !u!4 &809587778
 Transform:
   m_ObjectHideFlags: 0
@@ -432,7 +436,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 12
+  orthographic size: 80
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -537,6 +541,8 @@ MonoBehaviour:
   - {fileID: 5139249586478869005, guid: ba0d9fd9ad10c0f4da3fc4c1eb9743b9, type: 3}
   randomSeed: 0
   nextId: 0
+  runningPatternParseCoroutines: 0
+  runningRoomParseCoroutines: 0
 --- !u!4 &1737311854
 Transform:
   m_ObjectHideFlags: 0

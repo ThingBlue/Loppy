@@ -1,4 +1,3 @@
-using Codice.Client.Common.TreeGrouper;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -29,10 +28,12 @@ namespace Loppy.Level
         private Dictionary<string, List<List<RoomNode>>> patternDictionary;
 
         private Queue<List<RoomNode>> patternParseQueue;
+        [SerializeField]
         private uint runningPatternParseCoroutines = 0;
         private DecisionNode decisionTree;
 
         private Queue<List<RoomNode>> roomParseQueue;
+        [SerializeField]
         private uint runningRoomParseCoroutines = 0;
 
         private List<RoomNode> roomGraph;
@@ -532,8 +533,6 @@ namespace Loppy.Level
                 runningRoomParseCoroutines++;
                 StartCoroutine(parseRoom(firstNode, cloneToParse, (result) => roomParseSuccessCallback(cloneToParse, result)));
 
-                Debug.Log("Thread started");
-
                 // Wait until we have another finished map to parse
                 if (roomParseQueue.Count == 0 ||
                     runningRoomParseCoroutines >= maxRoomParseCoroutines)
@@ -546,9 +545,6 @@ namespace Loppy.Level
 
         private IEnumerator parseRoom(RoomNode node, List<RoomNode> graph, Action<bool> result)
         {
-
-            Debug.Log("Progress: " + node.type);
-
             // Slow down evaluation to reduce load
             yield return new WaitForSeconds(0.01f);
 
@@ -1062,8 +1058,6 @@ namespace Loppy.Level
 
                 // Check if other room should be connected to current room anyways
                 if (otherNode.connectedNodes.Contains(node)) continue;
-
-                //if (otherRoom.type == "basicTestJunction") Debug.Log("JUNCTION WITH " + otherRoom.openExits.Count + " OPEN EXITS");
 
                 foreach (RoomEntrance exit in otherNode.openExits)
                 {

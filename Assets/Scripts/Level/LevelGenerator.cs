@@ -433,12 +433,14 @@ namespace Loppy.Level
                 // Report this result if it does not already exist
                 if (!exists)
                 {
+                    /*
                     string patternDebugString = "Clone: ";
                     foreach (RoomNode node in clone)
                     {
                         patternDebugString += " [" + node.type + "]";
                     }
                     Debug.Log(patternDebugString);
+                    */
 
                     roomParseQueue.Enqueue(clone);
                     //Debug.Log(roomParseQueue.Count);

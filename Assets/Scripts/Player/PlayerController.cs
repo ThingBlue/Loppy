@@ -493,7 +493,8 @@ namespace Loppy.Player
             if (!onGround && groundHitCount > 0 &&               // Ground detected
                 groundAngle <= playerPhysicsData.maxWalkAngle && // Walkable angle
                 !fallingThroughPlatform &&                       // Player is not trying to fall through platform
-                !dashing)                                        // Treat as airborne when dashing
+                !(groundHits[0].collider.gameObject.tag == "Platform" && velocity.y > 0) && // Player is not moving up through a platform
+                !dashing)                                     // Treat as airborne when dashing
             {
                 onGround = true;
                 leavingGround = false;

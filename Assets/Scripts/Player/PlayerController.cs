@@ -478,8 +478,10 @@ namespace Loppy.Player
 
             // Raycast to check for vertical collisions
             Physics2D.queriesHitTriggers = false;
-            groundHitCount = Physics2D.BoxCastNonAlloc(activeCollider.bounds.center, activeCollider.size, 0, Vector2.down, groundHits, playerPhysicsData.raycastDistance, playerPhysicsData.terrainLayer);
-            ceilingHitCount = Physics2D.BoxCastNonAlloc(activeCollider.bounds.center, activeCollider.size, 0, Vector2.up, ceilingHits, playerPhysicsData.raycastDistance, playerPhysicsData.terrainLayer);
+            Vector2 verticalCastSize = activeCollider.size - new Vector2(0, playerPhysicsData.boxcastSizeOffset.y);
+            float verticalCastDistance = playerPhysicsData.raycastDistance + (playerPhysicsData.boxcastSizeOffset.y / 2);
+            groundHitCount = Physics2D.BoxCastNonAlloc(activeCollider.bounds.center, verticalCastSize, 0, Vector2.down, groundHits, verticalCastDistance, playerPhysicsData.terrainLayer);
+            ceilingHitCount = Physics2D.BoxCastNonAlloc(activeCollider.bounds.center, verticalCastSize, 0, Vector2.up, ceilingHits, verticalCastDistance, playerPhysicsData.terrainLayer);
             Physics2D.queriesHitTriggers = detectTriggers;
 
             // Get normals
@@ -640,7 +642,9 @@ namespace Loppy.Player
 
             // Raycast to check for horizontal collisions
             Physics2D.queriesHitTriggers = false;
-            wallHitCount = Physics2D.BoxCastNonAlloc(activeCollider.bounds.center, activeCollider.size, 0, new(lastPlayerInput.x, 0), wallHits, playerPhysicsData.raycastDistance, playerPhysicsData.terrainLayer);
+            Vector2 horizontalCastSize = activeCollider.size - new Vector2(playerPhysicsData.boxcastSizeOffset.x, 0);
+            float horizontalCastDistance = playerPhysicsData.raycastDistance + (playerPhysicsData.boxcastSizeOffset.x / 2);
+            wallHitCount = Physics2D.BoxCastNonAlloc(activeCollider.bounds.center, horizontalCastSize, 0, new(lastPlayerInput.x, 0), wallHits, horizontalCastDistance, playerPhysicsData.terrainLayer);
             Physics2D.queriesHitTriggers = detectTriggers;
 
             // Get normal
@@ -728,11 +732,15 @@ namespace Loppy.Player
 
         private Vector2 getRaycastNormal(Vector2 castDirection)
         {
-            Physics2D.queriesHitTriggers = false;
-            var hit = Physics2D.BoxCast(activeCollider.bounds.center, activeCollider.size, 0, castDirection, playerPhysicsData.normalRaycastDistance, playerPhysicsData.terrainLayer);
-            Physics2D.queriesHitTriggers = detectTriggers;
+            // Decide which direction of size offset to use based on cast direction
+            Vector2 sizeOffset = new Vector2(playerPhysicsData.boxcastSizeOffset.x, 0);
+            if (castDirection.x == 0 && castDirection.y != 0) sizeOffset = new Vector2(0, playerPhysicsData.boxcastSizeOffset.y);
 
-            if (!hit.collider) return Vector2.zero;
+            Physics2D.queriesHitTriggers = false;
+            Vector2 castSize = activeCollider.size - playerPhysicsData.boxcastSizeOffset;
+            float castDistance = playerPhysicsData.normalRaycastDistance + Mathf.Max(sizeOffset.x / 2, sizeOffset.y / 2);
+            var hit = Physics2D.BoxCast(activeCollider.bounds.center, castSize, 0, castDirection, castDistance, playerPhysicsData.terrainLayer);
+            Physics2D.queriesHitTriggers = detectTriggers;
 
             return hit.normal; // Defaults to Vector2.zero if nothing was hit
         }
@@ -750,14 +758,6 @@ namespace Loppy.Player
             fallingThroughPlatform = false;
             platformCoroutines[platformCollider] = null;
         }
-
-        /*
-        bool debugDrawAngledCast;
-        Vector2 debugDrawAngledCastPosition;
-        Vector2 debugDrawWallVector;
-        Vector2 debugDrawPointHitPosition;
-        Vector2 debugDrawAngledCornerPosition;
-        */
 
         private bool getLedgeCorner(out Vector2 cornerPos)
         {
@@ -1556,20 +1556,7 @@ namespace Loppy.Player
 
         private void OnDrawGizmos()
         {
-            Gizmos.color = Color.green;
-            Vector2 topCastOrigin = activeCollider.bounds.center + new Vector3(0, activeCollider.size.y / 2);
-            Gizmos.DrawWireSphere(topCastOrigin, 0.3f);
-            Gizmos.DrawLine(topCastOrigin, new Vector2(topCastOrigin.x + (wallDirection * ((activeCollider.size.x / 2) + playerPhysicsData.ledgeRaycastDistance)), topCastOrigin.y));
-            /*
-            if (debugDrawAngledCast)
-            {
-                Gizmos.DrawWireSphere(debugDrawAngledCastPosition, 0.5f);
-                Gizmos.DrawLine(debugDrawAngledCastPosition, debugDrawAngledCastPosition - debugDrawWallVector * 2);
-                Gizmos.color = Color.black;
-                Gizmos.DrawWireSphere(debugDrawPointHitPosition, 0.5f);
-                Gizmos.DrawWireSphere(debugDrawAngledCornerPosition, 0.5f);
-            }
-            */
+
         }
 
         #endregion

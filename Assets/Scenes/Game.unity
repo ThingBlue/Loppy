@@ -10529,7 +10529,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 989294147}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 3, y: -20, z: 0}
+  m_LocalPosition: {x: 3, y: -20.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -23597,6 +23597,7 @@ MonoBehaviour:
   playerPhysicsData: {fileID: 11400000, guid: 183c791e7c8d4f546ad06f273935b08f, type: 2}
   playerUnlocks: {fileID: 11400000, guid: e3b6fbaf92780564d8378bf73cb1e57c, type: 2}
   playerAnimationData: {fileID: 11400000, guid: b4454766c814bff4ba998cda5ed3e76d, type: 2}
+  lastPlayerInput: {x: 1, y: 0}
   velocity: {x: 0, y: 0}
   onGround: 0
   groundNormal: {x: 0, y: 0}

@@ -202,6 +202,9 @@ namespace Loppy.Player
         [Tooltip("The raycast distance for collision detection")]
         public float raycastDistance = 0.1f;
 
+        [Tooltip("The size penalty we apply to the box upon raycast to prevent casts from failing if we clip a tiny bit")]
+        public Vector2 boxcastSizeOffset = new Vector2(0.2f, 0.2f);
+
         [Tooltip("The raycast distance for normal checking")]
         public float normalRaycastDistance = 0.2f;
 

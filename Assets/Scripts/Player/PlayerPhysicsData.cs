@@ -159,6 +159,9 @@ namespace Loppy.Player
         [Tooltip("Magnitude of velocity applied when grappling")]
         public float grappleVelocity = 10;
 
+        [Tooltip("Lerp factor to use when reducing velocity during grapple aim")]
+        public float grappleAimVelocityLerpFactor = 0.5f;
+
         [Tooltip("Amount of time a grapple is buffered")]
         public float grappleBufferTime = 0.1f;
 
@@ -167,32 +170,6 @@ namespace Loppy.Player
 
         [Tooltip("Distance that the grapple target position is moved back to prevent getting stuck")]
         public float grappleTargetOffset = 0.4f;
-
-        #endregion
-
-        #region Alternate grapple
-
-        [Header("ALTERNATE GRAPPLE")]
-        [Tooltip("Magnitude of velocity applied when grappling")]
-        public float alternateGrappleVelocity = 10;
-
-        [Tooltip("Amount of time a grapple is buffered")]
-        public float alternateGrappleBufferTime = 0.1f;
-
-        [Tooltip("Amount of time before full horizontal movement is returned after a grapple")]
-        public float alternateGrappleControlLossTime = 0.5f;
-
-        [Tooltip("Distance that the grapple target position is moved back to prevent getting stuck")]
-        public float alternateGrappleTargetOffset = 0.4f;
-
-        [Tooltip("Amount of time a grapple freeze lasts")]
-        public float alternateGrappleFreezeTime = 4;
-
-        [Tooltip("Factor of timescale reduction per frame")]
-        public float timeScaleLerpFactor = 0.5f;
-
-        [Tooltip("Amount of time between each time scale lerp")]
-        public float timeScaleLerpTime = (1f / 60f);
 
         #endregion
 

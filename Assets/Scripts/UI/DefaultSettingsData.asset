@@ -38,33 +38,6 @@ MonoBehaviour:
     keys: 32010000
   - name: grapple
     keys: 44010000
-  - name: alternateGrapple
-    keys: 65000000
-  - name: pause
-    keys: 1b000000
-  - name: advanceDialogue
-    keys: 43010000
-  - name: startDialogue
-    keys: 6c000000
-  defaultKeyBinds:
-  - name: up
-    keys: 7700000011010000
-  - name: down
-    keys: 7300000012010000
-  - name: left
-    keys: 6100000014010000
-  - name: right
-    keys: 6400000013010000
-  - name: jump
-    keys: 20000000
-  - name: dash
-    keys: 30010000
-  - name: glide
-    keys: 32010000
-  - name: grapple
-    keys: 44010000
-  - name: alternateGrapple
-    keys: 65000000
   - name: pause
     keys: 1b000000
   - name: advanceDialogue

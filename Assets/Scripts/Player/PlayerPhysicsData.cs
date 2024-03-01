@@ -108,6 +108,9 @@ namespace Loppy.Player
         [Tooltip("Ledge climb animation time")]
         public float ledgeClimbDuration = 0.2f;
 
+        [Tooltip("Decreases size of casted shape when checking for obstruction")]
+        public Vector2 ledgePositionCheckSizeDecrease = new(0.1f, 0.1f);
+
         #endregion
 
         #region Dash

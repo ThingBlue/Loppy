@@ -42,7 +42,7 @@ namespace Loppy.Player
         public LineRenderer alternateGrappleArrowLineRenderer;
 
         public Rigidbody2D rigidbody;
-        public CapsuleCollider2D standingCollider;
+        public BoxCollider2D standingCollider;
 
         public PlayerPhysicsData playerPhysicsData;
         public PlayerUnlocks playerUnlocks;
@@ -55,7 +55,7 @@ namespace Loppy.Player
         private bool hasControl = true;
 
         private Vector2 playerInput = Vector2.zero;
-        private Vector2 lastPlayerInput = new(1, 0);
+        public Vector2 lastPlayerInput = new(1, 0);
         private Vector2 playerInputDown = Vector2.zero; // Only true on the first frame of key down
 
         private bool jumpKey = false;
@@ -156,7 +156,7 @@ namespace Loppy.Player
 
         #region Collision variables
 
-        private CapsuleCollider2D activeCollider;
+        private BoxCollider2D activeCollider;
 
         public bool onGround = false;
         private bool leavingGround = false;
@@ -478,8 +478,8 @@ namespace Loppy.Player
 
             // Raycast to check for vertical collisions
             Physics2D.queriesHitTriggers = false;
-            groundHitCount = Physics2D.CapsuleCastNonAlloc(activeCollider.bounds.center, activeCollider.size, activeCollider.direction, 0, Vector2.down, groundHits, playerPhysicsData.raycastDistance, playerPhysicsData.terrainLayer);
-            ceilingHitCount = Physics2D.CapsuleCastNonAlloc(activeCollider.bounds.center, activeCollider.size, activeCollider.direction, 0, Vector2.up, ceilingHits, playerPhysicsData.raycastDistance, playerPhysicsData.terrainLayer);
+            groundHitCount = Physics2D.BoxCastNonAlloc(activeCollider.bounds.center, activeCollider.size, 0, Vector2.down, groundHits, playerPhysicsData.raycastDistance, playerPhysicsData.terrainLayer);
+            ceilingHitCount = Physics2D.BoxCastNonAlloc(activeCollider.bounds.center, activeCollider.size, 0, Vector2.up, ceilingHits, playerPhysicsData.raycastDistance, playerPhysicsData.terrainLayer);
             Physics2D.queriesHitTriggers = detectTriggers;
 
             // Get normals
@@ -490,7 +490,8 @@ namespace Loppy.Player
             // Enter ground
             if (!onGround && groundHitCount > 0 &&               // Ground detected
                 groundAngle <= playerPhysicsData.maxWalkAngle && // Walkable angle
-                !fallingThroughPlatform)                         // Player is not trying to fall through platform
+                !fallingThroughPlatform &&                       // Player is not trying to fall through platform
+                !dashing)                                        // Treat as airborne when dashing
             {
                 onGround = true;
                 leavingGround = false;
@@ -639,7 +640,7 @@ namespace Loppy.Player
 
             // Raycast to check for horizontal collisions
             Physics2D.queriesHitTriggers = false;
-            wallHitCount = Physics2D.CapsuleCastNonAlloc(activeCollider.bounds.center, activeCollider.size, activeCollider.direction, 0, new(lastPlayerInput.x, 0), wallHits, playerPhysicsData.raycastDistance, playerPhysicsData.terrainLayer);
+            wallHitCount = Physics2D.BoxCastNonAlloc(activeCollider.bounds.center, activeCollider.size, 0, new(lastPlayerInput.x, 0), wallHits, playerPhysicsData.raycastDistance, playerPhysicsData.terrainLayer);
             Physics2D.queriesHitTriggers = detectTriggers;
 
             // Get normal
@@ -728,7 +729,7 @@ namespace Loppy.Player
         private Vector2 getRaycastNormal(Vector2 castDirection)
         {
             Physics2D.queriesHitTriggers = false;
-            var hit = Physics2D.CapsuleCast(activeCollider.bounds.center, activeCollider.size, activeCollider.direction, 0, castDirection, playerPhysicsData.normalRaycastDistance, playerPhysicsData.terrainLayer);
+            var hit = Physics2D.BoxCast(activeCollider.bounds.center, activeCollider.size, 0, castDirection, playerPhysicsData.normalRaycastDistance, playerPhysicsData.terrainLayer);
             Physics2D.queriesHitTriggers = detectTriggers;
 
             if (!hit.collider) return Vector2.zero;
@@ -750,21 +751,29 @@ namespace Loppy.Player
             platformCoroutines[platformCollider] = null;
         }
 
+        /*
+        bool debugDrawAngledCast;
+        Vector2 debugDrawAngledCastPosition;
+        Vector2 debugDrawWallVector;
+        Vector2 debugDrawPointHitPosition;
+        Vector2 debugDrawAngledCornerPosition;
+        */
+
         private bool getLedgeCorner(out Vector2 cornerPos)
         {
             // Reset corner position
             cornerPos = Vector2.zero;
 
-            // Check if player is on wall
+            // Don't grab ledge if player is not on wall
             if (!onWall) return false;
 
             Physics2D.queriesHitTriggers = false;
 
             // Can grab ledge if a raycast from the top does not hit any walls
-            RaycastHit2D topHit = Physics2D.Raycast(activeCollider.bounds.center + new Vector3(0, activeCollider.size.y / 2), wallDirection * Vector2.right, (wallDirection * activeCollider.size.x / 2) + playerPhysicsData.ledgeRaycastDistance, playerPhysicsData.terrainLayer);
-            
+            RaycastHit2D topHit = Physics2D.Raycast(activeCollider.bounds.center + new Vector3(0, activeCollider.size.y / 2), wallDirection * Vector2.right, (activeCollider.size.x / 2) + playerPhysicsData.ledgeRaycastDistance, playerPhysicsData.terrainLayer);
+
             // Get x position of corner
-            RaycastHit2D wallHit = Physics2D.CapsuleCast(activeCollider.bounds.center, activeCollider.size, activeCollider.direction, 0, wallDirection * Vector2.right, playerPhysicsData.ledgeRaycastDistance, playerPhysicsData.terrainLayer);
+            RaycastHit2D wallHit = Physics2D.BoxCast(activeCollider.bounds.center, activeCollider.size, 0, wallDirection * Vector2.right, playerPhysicsData.ledgeRaycastDistance, playerPhysicsData.terrainLayer);
             // Get y position of corner
             RaycastHit2D cornerHit = Physics2D.Raycast(activeCollider.bounds.center + new Vector3(wallDirection * playerPhysicsData.ledgeGrabPoint.x * 2, activeCollider.size.y / 2), Vector2.down, activeCollider.size.y, playerPhysicsData.terrainLayer);
             
@@ -827,7 +836,7 @@ namespace Loppy.Player
         private bool checkPositionClear(Vector2 position)
         {
             Physics2D.queriesHitTriggers = false;
-            var hit = Physics2D.OverlapCapsule(position + activeCollider.offset, activeCollider.size - new Vector2(0.1f, 0.1f), activeCollider.direction, 0, playerPhysicsData.terrainLayer);
+            var hit = Physics2D.OverlapCapsule(position + activeCollider.offset, activeCollider.size - playerPhysicsData.ledgePositionCheckSizeDecrease, CapsuleDirection2D.Vertical, 0, playerPhysicsData.terrainLayer);
             Physics2D.queriesHitTriggers = detectTriggers;
 
             return !hit;
@@ -1539,6 +1548,28 @@ namespace Loppy.Player
             else if (onGround) playerState = PlayerState.IDLE;
             else if (onWall)   playerState = PlayerState.ON_WALL;
             else if (!gliding) playerState = PlayerState.AIRBORNE;
+        }
+
+        #endregion
+
+        #region Debug
+
+        private void OnDrawGizmos()
+        {
+            Gizmos.color = Color.green;
+            Vector2 topCastOrigin = activeCollider.bounds.center + new Vector3(0, activeCollider.size.y / 2);
+            Gizmos.DrawWireSphere(topCastOrigin, 0.3f);
+            Gizmos.DrawLine(topCastOrigin, new Vector2(topCastOrigin.x + (wallDirection * ((activeCollider.size.x / 2) + playerPhysicsData.ledgeRaycastDistance)), topCastOrigin.y));
+            /*
+            if (debugDrawAngledCast)
+            {
+                Gizmos.DrawWireSphere(debugDrawAngledCastPosition, 0.5f);
+                Gizmos.DrawLine(debugDrawAngledCastPosition, debugDrawAngledCastPosition - debugDrawWallVector * 2);
+                Gizmos.color = Color.black;
+                Gizmos.DrawWireSphere(debugDrawPointHitPosition, 0.5f);
+                Gizmos.DrawWireSphere(debugDrawAngledCornerPosition, 0.5f);
+            }
+            */
         }
 
         #endregion

@@ -159,7 +159,6 @@ namespace Loppy.UI
             settingsData.defaultKeyBinds.Add(new KeyBind("dash", new List<KeyCode> { KeyCode.LeftShift }));
             settingsData.defaultKeyBinds.Add(new KeyBind("glide", new List<KeyCode> { KeyCode.LeftControl }));
             settingsData.defaultKeyBinds.Add(new KeyBind("grapple", new List<KeyCode> { KeyCode.Mouse1 }));
-            settingsData.defaultKeyBinds.Add(new KeyBind("alternateGrapple", new List<KeyCode> { KeyCode.E }));
 
             // Menu controls
             settingsData.defaultKeyBinds.Add(new KeyBind("pause", new List<KeyCode> { KeyCode.Escape }));

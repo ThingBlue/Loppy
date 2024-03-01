@@ -56,6 +56,7 @@ MonoBehaviour:
   glideFallSpeed: 5
   glideFallAcceleration: 20
   grappleVelocity: 27
+  grappleAimVelocityLerpFactor: 0.1
   grappleBufferTime: 0.1
   grappleControlLossTime: 0.2
   grappleTargetOffset: 0.4

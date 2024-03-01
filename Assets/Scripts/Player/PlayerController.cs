@@ -24,7 +24,9 @@ namespace Loppy.Player
         ON_LEDGE,
         CLIMB_LEDGE,
         DASH,
-        GLIDE
+        GLIDE,
+        GRAPPLE_AIMING,
+        GRAPPLING
     }
 
     [RequireComponent(typeof(Rigidbody2D), typeof(Collider2D))]
@@ -37,9 +39,6 @@ namespace Loppy.Player
 
         public GameObject grappleRangeCircle;
         public LineRenderer grappleArrowLineRenderer;
-
-        public GameObject alternateGrappleRangeCircle;
-        public LineRenderer alternateGrappleArrowLineRenderer;
 
         public Rigidbody2D rigidbody;
         public BoxCollider2D standingCollider;
@@ -64,8 +63,6 @@ namespace Loppy.Player
         private bool glideKey = false;
         private bool grappleKey = false;
         private bool grappleToConsume = false;
-        private bool alternateGrappleKey = false;
-        private bool alternateGrappleToConsume = false;
 
         #endregion
 
@@ -129,28 +126,6 @@ namespace Loppy.Player
         private float grappleBufferTimer = 0;
         private float grappleControlLossMultiplier = 1;
         private float grappleControlLossTimer = 0;
-
-        // Alternate grapple
-        private bool alternateGrappleAiming = false;
-        private bool alternateGrappling = false;
-        private bool canAlternateGrapple = false;
-        private bool alternateGrappleBufferUsable = false;
-
-        private Vector2 alternateGrappleAimDirection = Vector2.zero;
-
-        private Collider2D alternateGrappleAimTargetCollider = null;
-        private Vector3 alternateGrappleAimTargetPosition = Vector2.zero;
-        private bool alternateGrappleAimHitEnemy = false;
-
-        private Collider2D alternateGrappleTargetCollider = null;
-        private Vector3 alternateGrappleTargetPosition = Vector2.zero;
-        private bool alternateGrappleHitEnemy = false;
-
-        private float alternateGrappleFreezeTimer = 0;
-
-        private float alternateGrappleBufferTimer = 0;
-        private float alternateGrappleControlLossMultiplier = 1;
-        private float alternateGrappleControlLossTimer = 0;
 
         #endregion
 
@@ -238,10 +213,6 @@ namespace Loppy.Player
             grappleArrowLineRenderer.positionCount = 2;
             grappleArrowLineRenderer.startWidth = 0.2f;
             grappleArrowLineRenderer.endWidth = 0.2f;
-
-            alternateGrappleArrowLineRenderer.positionCount = 2;
-            alternateGrappleArrowLineRenderer.startWidth = 0.2f;
-            alternateGrappleArrowLineRenderer.endWidth = 0.2f;
         }
 
         private void Start()
@@ -249,8 +220,6 @@ namespace Loppy.Player
             // Disable grapple indicators
             grappleRangeCircle.SetActive(false);
             grappleArrowLineRenderer.enabled = false;
-            alternateGrappleRangeCircle.SetActive(false);
-            alternateGrappleArrowLineRenderer.enabled = false;
         }
 
         private void Update()
@@ -274,10 +243,6 @@ namespace Loppy.Player
             grappleBufferTimer += Time.fixedDeltaTime;
             grappleControlLossTimer += Time.fixedDeltaTime;
 
-            alternateGrappleFreezeTimer += Time.fixedDeltaTime;
-            alternateGrappleBufferTimer += Time.fixedDeltaTime;
-            alternateGrappleControlLossTimer += Time.fixedDeltaTime;
-
             handlePhysics();
             handleCollisions();
 
@@ -289,7 +254,6 @@ namespace Loppy.Player
                 handleDash();
                 handleGlide();
                 handleGrapple();
-                handleAlternateGrapple();
             }
 
             move();
@@ -354,13 +318,6 @@ namespace Loppy.Player
                 grappleBufferTimer = 0;
             }
 
-            alternateGrappleKey = InputManager.instance.getKey("alternateGrapple");
-            if (InputManager.instance.getKeyDown("alternateGrapple"))
-            {
-                alternateGrappleToConsume = true;
-                alternateGrappleBufferTimer = 0;
-            }
-
             // Set player's facing direction to last horizontal input
             facingDirection = lastPlayerInput.x >= 0 ? 1 : -1;
         }
@@ -375,13 +332,11 @@ namespace Loppy.Player
             wallJumpControlLossMultiplier = Mathf.Clamp(wallJumpControlLossTimer / playerPhysicsData.wallJumpControlLossTime, 0f, 1f);
             dashJumpControlLossMultiplier = Mathf.Clamp(dashJumpControlLossTimer / playerPhysicsData.dashJumpControlLossTime, 0f, 1f);
             grappleControlLossMultiplier = Mathf.Clamp(grappleControlLossTimer / playerPhysicsData.grappleControlLossTime, 0f, 1f);
-            alternateGrappleControlLossMultiplier = Mathf.Clamp(alternateGrappleControlLossTimer / playerPhysicsData.alternateGrappleControlLossTime, 0f, 1f);
 
-            bool noControlLoss = (wallJumpControlLossMultiplier == 1 && dashJumpControlLossMultiplier == 1 && grappleControlLossMultiplier == 1 && alternateGrappleControlLossMultiplier == 1);
+            bool noControlLoss = (wallJumpControlLossMultiplier == 1 && dashJumpControlLossMultiplier == 1 && grappleControlLossMultiplier == 1);
 
             if (dashing) return;
             if (grappling) return;
-            if (alternateGrappling) return;
                 
             #region Vertical physics
 
@@ -390,6 +345,11 @@ namespace Loppy.Player
             {
                 // Reset y velocity
                 velocity.y = 0;
+            }
+            // Grapple aiming
+            else if (grappleAiming)
+            {
+                // Do nothing
             }
             // Wall
             else if (onWall)
@@ -436,6 +396,11 @@ namespace Loppy.Player
                 // Instantly reset velocity
                 velocity.x = 0;
             }
+            // Grapple aiming
+            else if (grappleAiming)
+            {
+                // Do nothing
+            }
             // Deceleration
             else if (playerInput.x == 0 && noControlLoss)
             {
@@ -449,7 +414,7 @@ namespace Loppy.Player
             {
                 // Accelerate towards max speed
                 // Take into account control loss multipliers
-                velocity.x = Mathf.MoveTowards(velocity.x, playerInput.x * playerPhysicsData.maxRunSpeed, wallJumpControlLossMultiplier * dashJumpControlLossMultiplier * grappleControlLossMultiplier * alternateGrappleControlLossMultiplier * playerPhysicsData.acceleration * Time.fixedDeltaTime);
+                velocity.x = Mathf.MoveTowards(velocity.x, playerInput.x * playerPhysicsData.maxRunSpeed, wallJumpControlLossMultiplier * dashJumpControlLossMultiplier * grappleControlLossMultiplier * playerPhysicsData.acceleration * Time.fixedDeltaTime);
 
                 // Reset x velocity when on wall
                 if (onWall) velocity.x = 0;
@@ -502,7 +467,6 @@ namespace Loppy.Player
                 resetJump();
                 resetDash();
                 resetGrapple();
-                resetAlternateGrapple();
 
                 // Invoke event action
                 onGrounded?.Invoke(true, Mathf.Abs(velocity.y));
@@ -666,7 +630,6 @@ namespace Loppy.Player
                 resetJump();
                 resetDash();
                 resetGrapple();
-                resetAlternateGrapple();
 
                 // Invoke event action
                 onWallCling?.Invoke(true, Mathf.Abs(velocity.x));
@@ -912,7 +875,6 @@ namespace Loppy.Player
             // End other movement abilities
             endGlide();
             endGrapple();
-            endAlternateGrapple();
 
             // Reset jump flags
             endedJumpEarly = false;
@@ -983,7 +945,6 @@ namespace Loppy.Player
                 // End other movement abilities
                 endGlide();
                 endGrapple();
-                endAlternateGrapple();
 
                 // Reset grounded flags
                 onGround = false;
@@ -1119,6 +1080,9 @@ namespace Loppy.Player
             // Handle grapple aim
             if (grappleAiming)
             {
+                // Decrease velocity
+                velocity = Vector3.Lerp(velocity, Vector3.zero, playerPhysicsData.grappleAimVelocityLerpFactor);
+
                 // Get grapple direction
                 grappleAimDirection = InputManager.instance.getMousePositionInWorld() - activeCollider.bounds.center;
                 grappleAimDirection = grappleAimDirection.normalized;
@@ -1226,6 +1190,14 @@ namespace Loppy.Player
                 {
                     velocity = (grappleTargetPosition - activeCollider.bounds.center).normalized * playerPhysicsData.grappleVelocity;
                 }
+
+                // Check for other conditions to end grapple
+                if (InputManager.instance.getKeyDown("grapple") ||
+                    InputManager.instance.getKeyDown("jump") ||
+                    InputManager.instance.getKeyDown("dash"))
+                {
+                    endGrapple();
+                }
             }
 
             // Consume grapple flag
@@ -1249,182 +1221,6 @@ namespace Loppy.Player
             // Reset grapple
             canGrapple = true;
             grappleBufferUsable = true;
-        }
-
-        #endregion
-
-        #region Alternate grapple
-
-        private void handleAlternateGrapple()
-        {
-            bool canUseAlternateGrappleBuffer = alternateGrappleBufferUsable && alternateGrappleBufferTimer < playerPhysicsData.alternateGrappleBufferTime;
-
-            // Check for conditions to initiate grapple aim
-            if (playerUnlocks.grappleUnlocked && !alternateGrappleAiming && (alternateGrappleToConsume || canUseAlternateGrappleBuffer) && canAlternateGrapple)
-            {
-                StartCoroutine(alternateGrappleFreeze());
-            }
-
-            // Handle grapple
-            if (alternateGrappling)
-            {
-                // Target is an enemy, get current enemy position
-                if (alternateGrappleHitEnemy) alternateGrappleTargetPosition = alternateGrappleTargetCollider.ClosestPoint(activeCollider.bounds.center);
-
-                // Check if we have reached target position
-                if (activeCollider.OverlapPoint(alternateGrappleTargetPosition))
-                {
-                    endAlternateGrapple();
-
-                    // Start grapple control loss
-                    alternateGrappleControlLossTimer = 0;
-                    alternateGrappleControlLossMultiplier = 0;
-                }
-                // Move towards target
-                else
-                {
-                    velocity = (alternateGrappleTargetPosition - activeCollider.bounds.center).normalized * playerPhysicsData.alternateGrappleVelocity;
-                }
-            }
-
-            // Consume grapple flag
-            alternateGrappleToConsume = false;
-        }
-
-        private IEnumerator alternateGrappleFreeze()
-        {
-            // Invoke event action
-            onGrappleAim?.Invoke(true);
-
-            // Start grapple aim
-            alternateGrappleAiming = true;
-            alternateGrappleFreezeTimer = 0;
-
-            // Timer to keep track of time scale lerping
-            float timeScaleLerpTimer = 0;
-
-            // Activate grapple indicators
-            alternateGrappleRangeCircle.SetActive(true);
-            alternateGrappleArrowLineRenderer.enabled = true;
-
-            // Loop until grapple end
-            while (alternateGrappleKey && alternateGrappleFreezeTimer< playerPhysicsData.alternateGrappleFreezeTime)
-            {
-                // Get grapple direction
-                alternateGrappleAimDirection = InputManager.instance.getMousePositionInWorld() - activeCollider.bounds.center;
-                alternateGrappleAimDirection = alternateGrappleAimDirection.normalized;
-
-                // Search for grapple target
-                Physics2D.queriesHitTriggers = true;
-                Physics2D.queriesStartInColliders = true;
-                RaycastHit2D enemyHit = Physics2D.Raycast(activeCollider.bounds.center, alternateGrappleAimDirection, playerUnlocks.grappleDistance, playerPhysicsData.enemyLayer);
-                RaycastHit2D terrainHit = Physics2D.Raycast(activeCollider.bounds.center, alternateGrappleAimDirection, playerUnlocks.grappleDistance, playerPhysicsData.terrainLayer);
-                Physics2D.queriesHitTriggers = detectTriggers;
-                Physics2D.queriesStartInColliders = false;
-                // Enemy hit detected
-                if (enemyHit.collider)
-                {
-                    alternateGrappleAimHitEnemy = true;
-                    alternateGrappleAimTargetCollider = enemyHit.collider;
-                }
-                // Terrain hit detected
-                else if (terrainHit.collider)
-                {
-                    alternateGrappleAimHitEnemy = false;
-                    alternateGrappleAimTargetCollider = terrainHit.collider;
-                    alternateGrappleAimTargetPosition = terrainHit.point;
-                }
-                // No hits
-                else
-                {
-                    alternateGrappleAimTargetCollider = null;
-                }
-
-                // Draw indicators
-                alternateGrappleRangeCircle.transform.localScale = new Vector2(playerUnlocks.grappleDistance * 2, playerUnlocks.grappleDistance * 2);
-                alternateGrappleArrowLineRenderer.SetPosition(0, new Vector2(activeCollider.bounds.center.x, activeCollider.bounds.center.y) + (alternateGrappleAimDirection * playerAnimationData.alternateGrappleLineRendererOffset));
-                alternateGrappleArrowLineRenderer.SetPosition(1, new Vector2(activeCollider.bounds.center.x, activeCollider.bounds.center.y) + (alternateGrappleAimDirection * playerUnlocks.grappleDistance));
-
-                // Check for "fixed update"
-                if (timeScaleLerpTimer > playerPhysicsData.timeScaleLerpTime)
-                {
-                    // Slow time
-                    Time.timeScale = Mathf.Lerp(Time.timeScale, 0, playerPhysicsData.timeScaleLerpFactor);
-
-                    // Decrement timer
-                    timeScaleLerpTimer -= playerPhysicsData.timeScaleLerpTime;
-                }
-
-                // Increment timers
-                alternateGrappleFreezeTimer += Time.unscaledDeltaTime;
-                timeScaleLerpTimer += Time.unscaledDeltaTime;
-
-                yield return new WaitForEndOfFrame();
-            }
-
-            // End grapple freeze
-            alternateGrappleAiming = false;
-            Time.timeScale = 1;
-
-            // End other movement abilities
-            endDash();
-            endGlide();
-
-            // Make sure jump flags are set to false
-            endedJumpEarly = false;
-            canEndJumpEarly = false;
-
-            // Set coyote flags to false
-            jumpCoyoteUsable = false;
-            wallJumpCoyoteUsable = false;
-            dashCoyoteUsable = false;
-
-            // Deactivate indicators
-            alternateGrappleRangeCircle.SetActive(false);
-            alternateGrappleArrowLineRenderer.enabled = false;
-
-            // Trigger event action
-            onGrappleAim?.Invoke(false);
-
-            // Check if grapple target found
-            if (alternateGrappleAimTargetCollider != null)
-            {
-                // Move grapple target position slightly closer to player
-                if (!alternateGrappleAimHitEnemy) alternateGrappleAimTargetPosition -= (alternateGrappleAimTargetPosition - activeCollider.bounds.center).normalized * playerPhysicsData.alternateGrappleTargetOffset;
-
-                // Set grapple target
-                alternateGrappleHitEnemy = alternateGrappleAimHitEnemy;
-                alternateGrappleTargetCollider = alternateGrappleAimTargetCollider;
-                alternateGrappleTargetPosition = alternateGrappleAimTargetPosition;
-
-                // Set grappling flag
-                alternateGrappling = true;
-
-                // Set startup velocity
-                velocity = alternateGrappleAimDirection * playerPhysicsData.alternateGrappleVelocity;
-
-                // Trigger event action
-                onGrapple?.Invoke(true);
-            }
-        }
-
-        private void endAlternateGrapple()
-        {
-            if (alternateGrappling)
-            {
-                // Stop grappling
-                alternateGrappling = false;
-
-                // Trigger event action
-                onGrapple?.Invoke(false);
-            }
-        }
-
-        private void resetAlternateGrapple()
-        {
-            // Reset grapple
-            canAlternateGrapple = true;
-            alternateGrappleBufferUsable = true;
         }
 
         #endregion

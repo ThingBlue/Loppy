@@ -56,8 +56,8 @@ namespace Loppy.Player
         private void Update()
         {
             // Get face right from player controller
-            if (playerController.velocity.x > 0) faceRight = true;
-            else if (playerController.velocity.x < 0) faceRight = false;
+            if (playerController.lastPlayerInput.x > 0) faceRight = true;
+            else if (playerController.lastPlayerInput.x < 0) faceRight = false;
 
             // Make player face the correct direction
             headSpriteRenderer.flipX = faceRight;

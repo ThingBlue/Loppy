@@ -40,10 +40,11 @@ MonoBehaviour:
   wallJumpControlLossTime: 0.15
   wallJumpCoyoteTime: 0.1
   ledgeGrabDeceleration: 8
-  ledgeGrabPoint: {x: 0.3, y: 1}
+  ledgeGrabPoint: {x: 0.3, y: 0.8}
   standUpOffset: {x: 0.3, y: 0}
-  ledgeRaycastDistance: 2
+  ledgeRaycastDistance: 0.6
   ledgeClimbDuration: 0.2
+  ledgePositionCheckSizeDecrease: {x: 0.1, y: 0.1}
   dashVelocity: 25
   dashTime: 0.2
   dashCooldownTime: 0.2
@@ -66,6 +67,7 @@ MonoBehaviour:
   timeScaleLerpFactor: 0.15
   timeScaleLerpTime: 0.016666668
   raycastDistance: 0.1
+  boxcastSizeOffset: {x: 0.2, y: 0.2}
   normalRaycastDistance: 1
   groundCheckRaycastDistance: 4
   maxWalkAngle: 30

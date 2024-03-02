@@ -25,8 +25,8 @@ namespace Loppy.Player
         CLIMB_LEDGE,
         DASH,
         GLIDE,
-        GRAPPLE_AIMING,
-        GRAPPLING
+        GRAPPLE_AIM,
+        GRAPPLE
     }
 
     [RequireComponent(typeof(Rigidbody2D), typeof(Collider2D))]
@@ -158,7 +158,7 @@ namespace Loppy.Player
         #region State machine
 
         public PlayerState playerState = PlayerState.NONE;
-        public int facingDirection = 1;
+        public int faceDirection = 1;
 
         #endregion
 
@@ -317,9 +317,6 @@ namespace Loppy.Player
                 grappleToConsume = true;
                 grappleBufferTimer = 0;
             }
-
-            // Set player's facing direction to last horizontal input
-            facingDirection = lastPlayerInput.x >= 0 ? 1 : -1;
         }
 
         #endregion
@@ -349,7 +346,8 @@ namespace Loppy.Player
             // Grapple aiming
             else if (grappleAiming)
             {
-                // Do nothing
+                // Decrease velocity
+                velocity.y = Mathf.Lerp(velocity.y, 0, playerPhysicsData.grappleAimVelocityLerpFactor);
             }
             // Wall
             else if (onWall)
@@ -399,7 +397,8 @@ namespace Loppy.Player
             // Grapple aiming
             else if (grappleAiming)
             {
-                // Do nothing
+                // Decrease velocity
+                velocity.x = Mathf.Lerp(velocity.x, 0, playerPhysicsData.grappleAimVelocityLerpFactor);
             }
             // Deceleration
             else if (playerInput.x == 0 && noControlLoss)
@@ -836,6 +835,9 @@ namespace Loppy.Player
 
         private void normalJump()
         {
+            // End other movement abilities
+            endGrappleAim();
+
             // Reset jump flags
             leavingGround = true;
             endedJumpEarly = false;
@@ -852,6 +854,9 @@ namespace Loppy.Player
 
         protected void wallJump()
         {
+            // End other movement abilities
+            endGrappleAim();
+
             // Reset jump flags
             endedJumpEarly = false;
             canEndJumpEarly = true;
@@ -874,6 +879,7 @@ namespace Loppy.Player
         {
             // End other movement abilities
             endGlide();
+            endGrappleAim();
             endGrapple();
 
             // Reset jump flags
@@ -940,10 +946,15 @@ namespace Loppy.Player
             //    Player dash input detected or buffered
             //    Can dash or use dash coyote
             //    Dash cooldown elapsed
-            if (playerUnlocks.dashUnlocked && !dashing && (dashToConsume || canUseDashBuffer) && (canDash || canUseDashCoyote) && dashCooldownTimer > playerPhysicsData.dashCooldownTime)
+            if (playerUnlocks.dashUnlocked &&
+                !dashing &&
+                (dashToConsume || canUseDashBuffer) &&
+                (canDash || canUseDashCoyote) &&
+                dashCooldownTimer > playerPhysicsData.dashCooldownTime)
             {
                 // End other movement abilities
                 endGlide();
+                endGrappleAim();
                 endGrapple();
 
                 // Reset grounded flags
@@ -1027,7 +1038,7 @@ namespace Loppy.Player
         private void handleGlide()
         {
             // Check for conditions to initate glide
-            if (playerUnlocks.glideUnlocked && !gliding && glideKey && !onGround && !onWall && !dashing)
+            if (playerUnlocks.glideUnlocked && !gliding && glideKey && !onGround && !onWall && !dashing && !grappleAiming && !grappling)
             {
                 // Set gliding flag
                 gliding = true;
@@ -1037,7 +1048,7 @@ namespace Loppy.Player
             }
 
             // Check for conditions to stop glide
-            if (gliding && (!glideKey || onGround || onWall || dashing))
+            if (gliding && (!glideKey || onGround || onWall || dashing || grappleAiming))
             {
                 endGlide();
             }
@@ -1072,6 +1083,10 @@ namespace Loppy.Player
                 // Start grapple aim
                 grappleAiming = true;
 
+                // End other movement abilities
+                endDash();
+                endGlide();
+
                 // Activate grapple indicators
                 grappleRangeCircle.SetActive(true);
                 grappleArrowLineRenderer.enabled = true;
@@ -1080,9 +1095,6 @@ namespace Loppy.Player
             // Handle grapple aim
             if (grappleAiming)
             {
-                // Decrease velocity
-                velocity = Vector3.Lerp(velocity, Vector3.zero, playerPhysicsData.grappleAimVelocityLerpFactor);
-
                 // Get grapple direction
                 grappleAimDirection = InputManager.instance.getMousePositionInWorld() - activeCollider.bounds.center;
                 grappleAimDirection = grappleAimDirection.normalized;
@@ -1123,11 +1135,7 @@ namespace Loppy.Player
             if (grappleAiming && !grappleKey)
             {
                 // End grapple freeze
-                grappleAiming = false;
-
-                // End other movement abilities
-                endDash();
-                endGlide();
+                endGrappleAim();
 
                 // Make sure jump flags are set to false
                 endedJumpEarly = false;
@@ -1137,16 +1145,6 @@ namespace Loppy.Player
                 jumpCoyoteUsable = false;
                 wallJumpCoyoteUsable = false;
                 dashCoyoteUsable = false;
-
-                // Leave ground
-                leavingGround = true;
-
-                // Deactivate indicators
-                grappleRangeCircle.SetActive(false);
-                grappleArrowLineRenderer.enabled = false;
-
-                // Trigger event action
-                onGrappleAim?.Invoke(false);
 
                 // Check if grapple target found
                 if (grappleAimTargetCollider != null)
@@ -1161,6 +1159,9 @@ namespace Loppy.Player
 
                     // Set grappling flag
                     grappling = true;
+
+                    // Leave ground
+                    leavingGround = true;
 
                     // Set startup velocity
                     velocity = grappleAimDirection * playerPhysicsData.grappleVelocity;
@@ -1204,6 +1205,22 @@ namespace Loppy.Player
             grappleToConsume = false;
         }
 
+        private void endGrappleAim()
+        {
+            if (grappleAiming)
+            {
+                // Stop grappling
+                grappleAiming = false;
+
+                // Deactivate indicators
+                grappleRangeCircle.SetActive(false);
+                grappleArrowLineRenderer.enabled = false;
+
+                // Trigger event action
+                onGrappleAim?.Invoke(false);
+            }
+        }
+
         private void endGrapple()
         {
             if (grappling)
@@ -1225,6 +1242,10 @@ namespace Loppy.Player
 
         #endregion
 
+        #region Combat
+
+        #endregion
+
         private void move()
         {
             // Check if player has control
@@ -1237,114 +1258,90 @@ namespace Loppy.Player
             externalVelocity = Vector2.MoveTowards(externalVelocity, Vector2.zero, playerPhysicsData.externalVelocityDecay * Time.fixedDeltaTime);
         }
 
-        #region Combat
-
-        #endregion
-
         #region State machine
 
         private void handleStateMachine()
         {
-            // Call corresponding state function
-            switch (playerState)
+            #region Player state
+
+            // Dash
+            if (dashing)
             {
-                case PlayerState.NONE: break;
-                case PlayerState.IDLE:
-                    idleState();
-                    break;
-                case PlayerState.RUN:
-                    runState();
-                    break;
-                case PlayerState.AIRBORNE:
-                    airborneState();
-                    break;
-                case PlayerState.ON_WALL:
-                    onWallState();
-                    break;
-                case PlayerState.ON_LEDGE:
-                    onLedgeState();
-                    break;
-                case PlayerState.CLIMB_LEDGE:
-                    climbLedgeState();
-                    break;
-                case PlayerState.DASH:
-                    dashState();
-                    break;
-                case PlayerState.GLIDE:
-                    glideState();
-                    break;
-                default: break;
+                playerState = PlayerState.DASH;
             }
-        }
+            // Grapple aim
+            else if (grappleAiming)
+            {
+                playerState = PlayerState.GRAPPLE_AIM;
+            }
+            // Grapple
+            else if (grappling)
+            {
+                playerState = PlayerState.GRAPPLE;
+            }
+            // Climb ledge
+            else if (climbingLedge)
+            {
+                playerState = PlayerState.CLIMB_LEDGE;
+            }
+            // On ledge
+            else if (onLedge)
+            {
+                playerState = PlayerState.ON_LEDGE;
+            }
+            // On wall
+            else if (onWall)
+            {
+                playerState = PlayerState.ON_WALL;
+            }
+            // Glide
+            else if (gliding)
+            {
+                playerState = PlayerState.GLIDE;
+            }
+            // Airborne
+            else if (!onGround)
+            {
+                playerState = PlayerState.AIRBORNE;
+            }
+            // Run
+            else if (playerInput.x != 0)
+            {
+                playerState = PlayerState.RUN;
+            }
+            // Idle
+            else
+            {
+                playerState = PlayerState.IDLE;
+            }
 
-        private void idleState()
-        {
-            // Switch states
-            if      (dashing)            playerState = PlayerState.DASH;
-            else if (!onGround)          playerState = PlayerState.AIRBORNE;
-            else if (playerInput.x != 0) playerState = PlayerState.RUN;
-        }
+            #endregion
 
-        private void runState()
-        {
-            // Switch states
-            if      (dashing)         playerState = PlayerState.DASH;
-            else if (!onGround)       playerState = PlayerState.AIRBORNE;
-            else if (velocity.x == 0) playerState = PlayerState.IDLE;
-        }
+            #region Face direction
 
-        private void airborneState()
-        {
-            // Switch states
-            if      (dashing)                     playerState = PlayerState.DASH;
-            else if (gliding)                     playerState = PlayerState.GLIDE;
-            else if (onGround && velocity.x == 0) playerState = PlayerState.IDLE;
-            else if (onGround)                    playerState = PlayerState.RUN;
-            else if (onWall)                      playerState = PlayerState.ON_WALL;
-        }
+            // Face direction
+            // Face dash direction
+            if (dashing)
+            {
+                faceDirection = Math.Sign(dashVelocity.x);
+            }
+            // Face grapple x direction
+            else if (grappling)
+            {
+                faceDirection = Math.Sign(velocity.x);
+            }
+            // Face mouse cursor
+            else if (grappleAiming)
+            {
+                faceDirection = Math.Sign(grappleAimDirection.x);
+            }
+            // Default: Face last input direction
+            else if (playerInput.x != 0)
+            {
+                faceDirection = Math.Sign(playerInput.x);
+            }
 
-        private void onWallState()
-        {
-            // Switch states
-            if      (climbingLedge)               playerState = PlayerState.CLIMB_LEDGE;
-            else if (onLedge)                     playerState = PlayerState.ON_LEDGE;
-            else if (dashing)                     playerState = PlayerState.DASH;
-            else if (!onWall && !onGround)        playerState = PlayerState.AIRBORNE;
-            else if (onGround && velocity.x == 0) playerState = PlayerState.IDLE;
-            else if (onGround)                    playerState = PlayerState.RUN;
-        }
-
-        private void onLedgeState()
-        {
-            // Switch states
-            if      (climbingLedge)        playerState = PlayerState.CLIMB_LEDGE;
-            else if (dashing)              playerState = PlayerState.DASH;
-            else if (!onLedge && onGround) playerState = PlayerState.IDLE;
-            else if (!onLedge && onWall)   playerState = PlayerState.ON_WALL;
-            else if (!onLedge)             playerState = PlayerState.AIRBORNE;
-        }
-
-        private void climbLedgeState()
-        {
-            // Switch states
-            if (!climbingLedge) playerState = PlayerState.IDLE;
-        }
-
-        private void dashState()
-        {
-            // Switch states
-            if      (!dashing && onGround) playerState = PlayerState.RUN;
-            else if (!dashing && onWall)   playerState = PlayerState.ON_WALL;
-            else if (!dashing)             playerState = PlayerState.AIRBORNE;
-        }
-
-        private void glideState()
-        {
-            // Switch states
-            if      (dashing)  playerState = PlayerState.DASH;
-            else if (onGround) playerState = PlayerState.IDLE;
-            else if (onWall)   playerState = PlayerState.ON_WALL;
-            else if (!gliding) playerState = PlayerState.AIRBORNE;
+            #endregion
         }
 
         #endregion

@@ -80,7 +80,7 @@ namespace Loppy.Player
                 Vector3 lookAheadPosition = new();
 
                 // x look ahead
-                lookAheadPosition.x = playerController.facingDirection * lookAheadDistance.x;
+                lookAheadPosition.x = playerController.faceDirection * lookAheadDistance.x;
                 // y look ahead, only when player is falling
                 lookAheadPosition.y = !playerController.onGround && playerController.velocity.y < 0 ? -lookAheadDistance.y : 0;
 

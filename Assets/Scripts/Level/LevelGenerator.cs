@@ -67,8 +67,8 @@ namespace Loppy.Level
                 StopAllCoroutines();
 
                 // Generate test level
-                //StartCoroutine(generateLevel("basicTestLevel"));
-                StartCoroutine(generateLevel("largeTestLevel"));
+                StartCoroutine(generateLevel("basicTestLevel"));
+                //StartCoroutine(generateLevel("largeTestLevel"));
             }
             if (Input.GetKeyDown(KeyCode.O))
             {
